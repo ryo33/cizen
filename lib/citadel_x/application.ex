@@ -1,15 +1,14 @@
 defmodule CitadelX.Application do
-  # See https://hexdocs.pm/elixir/Application.html
-  # for more information on OTP Applications
   @moduledoc false
 
   use Application
 
   def start(_type, _args) do
+    import Supervisor.Spec
     # List all child processes to be supervised
     children = [
       # Starts a worker by calling: CitadelX.Worker.start_link(arg)
-      # {CitadelX.Worker, arg},
+      worker(CitadelX.Dispatcher, [], restart: :permanent)
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
