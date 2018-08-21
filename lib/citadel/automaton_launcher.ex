@@ -7,7 +7,7 @@ defmodule Citadel.AutomatonLauncher do
   alias Citadel.AutomatonSupervisor
   alias Citadel.Dispatcher
 
-  defmodule Launch do
+  defmodule LaunchAutomaton do
     @moduledoc """
     The event to launch an automaton.
     """
@@ -23,12 +23,12 @@ defmodule Citadel.AutomatonLauncher do
 
   @impl true
   def init(_opts) do
-    Dispatcher.listen_event_type(Launch)
+    Dispatcher.listen_event_type(LaunchAutomaton)
     {:ok, :ok}
   end
 
   @impl true
-  def handle_info(%Launch{id: id, module: module, state: state}, :ok) do
+  def handle_info(%LaunchAutomaton{id: id, module: module, state: state}, :ok) do
     Supervisor.start_child(
       AutomatonSupervisor,
       %{
