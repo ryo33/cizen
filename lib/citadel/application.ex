@@ -4,11 +4,18 @@ defmodule Citadel.Application do
   use Application
 
   def start(_type, _args) do
-    import Supervisor.Spec
     # List all child processes to be supervised
     children = [
       # Starts a worker by calling: Citadel.Worker.start_link(arg)
-      worker(Citadel.Dispatcher, [], restart: :permanent)
+      %{
+        id: Citadel.Dispatcher,
+        start: {Citadel.Dispatcher, :start_link, []}
+      },
+      %{
+        id: Citadel.AutomatonLauncher,
+        start: {Citadel.AutomatonLauncher, :start_link, []}
+      },
+      Citadel.AutomatonSupervisor
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
