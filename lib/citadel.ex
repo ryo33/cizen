@@ -1,3 +1,3 @@
-defmodule CitadelX do
+defmodule Citadel do
   @moduledoc false
 end

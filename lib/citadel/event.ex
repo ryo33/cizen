@@ -1,4 +1,4 @@
-defmodule CitadelX.Event do
+defmodule Citadel.Event do
   @moduledoc """
   Helpers to handle events
   """

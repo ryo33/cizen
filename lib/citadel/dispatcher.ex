@@ -1,9 +1,9 @@
-defmodule CitadelX.Dispatcher do
+defmodule Citadel.Dispatcher do
   @moduledoc """
   The core dispatcher
   """
 
-  alias CitadelX.Event
+  alias Citadel.Event
 
   @doc false
   def start_link do
@@ -13,7 +13,7 @@ defmodule CitadelX.Dispatcher do
   @doc """
   Dispatch an event
   """
-  @spec dispatch(CitadelX.Event.t()) :: :ok
+  @spec dispatch(Citadel.Event.t()) :: :ok
   def dispatch(event) do
     Registry.dispatch(__MODULE__, :all, fn entries ->
       for {pid, :ok} <- entries, do: send(pid, event)

@@ -1,4 +1,4 @@
-defmodule CitadelX.Application do
+defmodule Citadel.Application do
   @moduledoc false
 
   use Application
@@ -7,13 +7,13 @@ defmodule CitadelX.Application do
     import Supervisor.Spec
     # List all child processes to be supervised
     children = [
-      # Starts a worker by calling: CitadelX.Worker.start_link(arg)
-      worker(CitadelX.Dispatcher, [], restart: :permanent)
+      # Starts a worker by calling: Citadel.Worker.start_link(arg)
+      worker(Citadel.Dispatcher, [], restart: :permanent)
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
-    opts = [strategy: :one_for_one, name: CitadelX.Supervisor]
+    opts = [strategy: :one_for_one, name: Citadel.Supervisor]
     Supervisor.start_link(children, opts)
   end
 end

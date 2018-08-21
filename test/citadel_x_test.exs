@@ -1,7 +1,7 @@
-defmodule CitadelXTest do
+defmodule CitadelTest do
   use ExUnit.Case
-  doctest CitadelX
-  import CitadelX.Dispatcher, only: [listen_all: 0, listen_event_type: 1, dispatch: 1]
+  doctest Citadel
+  import Citadel.Dispatcher, only: [listen_all: 0, listen_event_type: 1, dispatch: 1]
 
   defmodule(TestEvent, do: defstruct([:value]))
 
