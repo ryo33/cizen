@@ -2,14 +2,10 @@ defmodule Citadel.Event do
   @moduledoc """
   Helpers to handle events
   """
+  alias Citadel.EventType
 
   @type t :: struct
 
-  @spec type(t) :: __MODULE__.Type.t()
+  @spec type(t) :: EventType.t()
   def type(event), do: event.__struct__
-
-  defmodule Type do
-    @moduledoc false
-    @type t :: module
-  end
 end
