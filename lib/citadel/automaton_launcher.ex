@@ -6,6 +6,7 @@ defmodule Citadel.AutomatonLauncher do
   use GenServer
   alias Citadel.Automaton
   alias Citadel.Dispatcher
+  alias Citadel.Event
 
   defmodule LaunchAutomaton do
     @moduledoc """
@@ -38,13 +39,16 @@ defmodule Citadel.AutomatonLauncher do
   end
 
   @impl true
-  def handle_info(%LaunchAutomaton{id: id, module: module, state: state}, :ok) do
+  def handle_info(%Event{body: body}, :ok) do
+    handle_event(body, :ok)
+  end
+
+  def handle_event(%LaunchAutomaton{id: id, module: module, state: state}, :ok) do
     Automaton.launch(id, module, state)
     {:noreply, :ok}
   end
 
-  @impl true
-  def handle_info(%UnlaunchAutomaton{id: id}, :ok) do
+  def handle_event(%UnlaunchAutomaton{id: id}, :ok) do
     Automaton.unlaunch(id)
     {:noreply, :ok}
   end

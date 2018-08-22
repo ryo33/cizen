@@ -6,6 +6,7 @@ defmodule Citadel.AutomatonRegistryTest do
   import Citadel.Dispatcher, only: [dispatch: 1]
   alias Citadel.AutomatonLauncher
   alias Citadel.AutomatonRegistry
+  alias Citadel.Event
 
   test "launched automaton is registered" do
     id = launch_test_automaton()
@@ -16,7 +17,7 @@ defmodule Citadel.AutomatonRegistryTest do
     id = launch_test_automaton()
     assert {:ok, pid} = AutomatonRegistry.resolve_id(id)
     true = Process.exit(pid, :kill)
-    dispatch(%AutomatonLauncher.UnlaunchAutomaton{id: id})
+    dispatch(Event.new(%AutomatonLauncher.UnlaunchAutomaton{id: id}))
     :timer.sleep(50)
     assert :error = AutomatonRegistry.resolve_id(id)
   end

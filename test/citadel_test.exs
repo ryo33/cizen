@@ -3,6 +3,8 @@ defmodule CitadelTest do
   doctest Citadel
   import Citadel.Dispatcher, only: [listen_all: 0, listen_event_type: 1, dispatch: 1]
 
+  alias Citadel.Event
+
   defmodule(TestEvent, do: defstruct([:value]))
 
   defp wait_until_receive(message) do
@@ -20,22 +22,22 @@ defmodule CitadelTest do
       Task.async(fn ->
         listen_all()
         send(pid, :task1)
-        assert_receive %TestEvent{value: :a}
-        assert_receive %TestEvent{value: :b}
+        assert_receive %Event{body: %TestEvent{value: :a}}
+        assert_receive %Event{body: %TestEvent{value: :b}}
       end)
 
     task2 =
       Task.async(fn ->
         listen_all()
         send(pid, :task2)
-        assert_receive %TestEvent{value: :a}
-        assert_receive %TestEvent{value: :b}
+        assert_receive %Event{body: %TestEvent{value: :a}}
+        assert_receive %Event{body: %TestEvent{value: :b}}
       end)
 
     wait_until_receive(:task1)
     wait_until_receive(:task2)
-    dispatch(%TestEvent{value: :a})
-    dispatch(%TestEvent{value: :b})
+    dispatch(Event.new(%TestEvent{value: :a}))
+    dispatch(Event.new(%TestEvent{value: :b}))
     Task.await(task1)
     Task.await(task2)
   end
@@ -50,8 +52,8 @@ defmodule CitadelTest do
       Task.async(fn ->
         listen_event_type(TestEventA)
         send(pid, :task1)
-        assert_receive %TestEventA{value: :a}
-        refute_receive %TestEventB{value: :b}
+        assert_receive %Event{body: %TestEventA{value: :a}}
+        refute_receive %Event{body: %TestEventB{value: :b}}
       end)
 
     task2 =
@@ -59,14 +61,14 @@ defmodule CitadelTest do
         listen_event_type(TestEventA)
         listen_event_type(TestEventB)
         send(pid, :task2)
-        assert_receive %TestEventA{value: :a}
-        assert_receive %TestEventB{value: :b}
+        assert_receive %Event{body: %TestEventA{value: :a}}
+        assert_receive %Event{body: %TestEventB{value: :b}}
       end)
 
     wait_until_receive(:task1)
     wait_until_receive(:task2)
-    dispatch(%TestEventA{value: :a})
-    dispatch(%TestEventB{value: :b})
+    dispatch(Event.new(%TestEventA{value: :a}))
+    dispatch(Event.new(%TestEventB{value: :b}))
     Task.await(task1)
     Task.await(task2)
   end
