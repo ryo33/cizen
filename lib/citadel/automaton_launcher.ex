@@ -4,7 +4,7 @@ defmodule Citadel.AutomatonLauncher do
   """
 
   use GenServer
-  alias Citadel.AutomatonSupervisor
+  alias Citadel.Automaton
   alias Citadel.Dispatcher
 
   defmodule LaunchAutomaton do
@@ -13,6 +13,16 @@ defmodule Citadel.AutomatonLauncher do
     """
 
     @keys [:id, :module, :state]
+    @enforce_keys @keys
+    defstruct @keys
+  end
+
+  defmodule UnlaunchAutomaton do
+    @moduledoc """
+    The event to unlaunch an automaton.
+    """
+
+    @keys [:id]
     @enforce_keys @keys
     defstruct @keys
   end
@@ -29,14 +39,13 @@ defmodule Citadel.AutomatonLauncher do
 
   @impl true
   def handle_info(%LaunchAutomaton{id: id, module: module, state: state}, :ok) do
-    Supervisor.start_child(
-      AutomatonSupervisor,
-      %{
-        id: id,
-        start: {module, :launch, [id, state]}
-      }
-    )
+    Automaton.launch(id, module, state)
+    {:noreply, :ok}
+  end
 
+  @impl true
+  def handle_info(%UnlaunchAutomaton{id: id}, :ok) do
+    Automaton.unlaunch(id)
     {:noreply, :ok}
   end
 end

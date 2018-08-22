@@ -15,7 +15,10 @@ defmodule Citadel.Application do
         id: Citadel.AutomatonLauncher,
         start: {Citadel.AutomatonLauncher, :start_link, []}
       },
-      Citadel.AutomatonSupervisor
+      %{
+        id: Citadel.AutomatonRegistry,
+        start: {Citadel.AutomatonRegistry, :start_link, []}
+      }
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

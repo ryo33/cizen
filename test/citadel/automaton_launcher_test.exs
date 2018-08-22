@@ -1,16 +1,13 @@
 defmodule Citadel.AutomatonLauncherTest do
   use ExUnit.Case
   doctest Citadel
+  import Citadel.TestHelper, only: [launch_test_automaton: 0]
+  alias Citadel.TestAutomaton
 
   import Citadel.Dispatcher, only: [dispatch: 1]
   alias Citadel.AutomatonID
   alias Citadel.AutomatonLauncher
-
-  defmodule TestAutomaton do
-    @behaviour Citadel.Automaton
-    @impl Citadel.Automaton
-    def launch(id, func), do: Task.start_link(fn -> func.(id) end)
-  end
+  alias Citadel.AutomatonRegistry
 
   test "AutomatonLauncher.LaunchAutomaton event" do
     pid = self()
@@ -25,5 +22,13 @@ defmodule Citadel.AutomatonLauncherTest do
     })
 
     assert_receive {:ok, automaton_id}
+  end
+
+  test "AutomatonLauncher.UnlaunchAutomaton event" do
+    id = launch_test_automaton()
+    assert {:ok, pid} = AutomatonRegistry.resolve_id(id)
+    dispatch(%AutomatonLauncher.UnlaunchAutomaton{id: id})
+    :timer.sleep(50)
+    assert Process.alive?(pid)
   end
 end
