@@ -1,6 +1,6 @@
 defmodule Citadel.AutomatonRegistryTest do
   use ExUnit.Case
-  doctest Citadel
+  doctest Citadel.AutomatonRegistry
   import Citadel.TestHelper, only: [launch_test_automaton: 0]
 
   import Citadel.Dispatcher, only: [dispatch: 1]

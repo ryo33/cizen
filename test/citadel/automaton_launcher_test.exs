@@ -1,6 +1,6 @@
 defmodule Citadel.AutomatonLauncherTest do
   use ExUnit.Case
-  doctest Citadel
+  doctest Citadel.AutomatonLauncher
   import Citadel.TestHelper, only: [launch_test_automaton: 0]
   alias Citadel.TestAutomaton
 
