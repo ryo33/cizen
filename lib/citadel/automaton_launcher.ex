@@ -33,23 +33,30 @@ defmodule Citadel.AutomatonLauncher do
   end
 
   @impl true
-  def init(_opts) do
+  def init(_args) do
     Dispatcher.listen_event_type(LaunchAutomaton)
+    Dispatcher.listen_event_type(UnlaunchAutomaton)
     {:ok, :ok}
   end
 
   @impl true
   def handle_info(%Event{body: body}, :ok) do
-    handle_event(body, :ok)
+    yield(body, :ok)
   end
 
-  def handle_event(%LaunchAutomaton{id: id, module: module, state: state}, :ok) do
-    Automaton.launch(id, module, state)
+  def yield(%LaunchAutomaton{id: id, module: module, state: state}, :ok) do
+    Task.start_link(fn ->
+      Automaton.launch(id, module, state)
+    end)
+
     {:noreply, :ok}
   end
 
-  def handle_event(%UnlaunchAutomaton{id: id}, :ok) do
-    Automaton.unlaunch(id)
+  def yield(%UnlaunchAutomaton{id: id}, :ok) do
+    Task.start_link(fn ->
+      Automaton.unlaunch(id)
+    end)
+
     {:noreply, :ok}
   end
 end

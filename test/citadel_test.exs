@@ -1,7 +1,9 @@
 defmodule CitadelTest do
   use ExUnit.Case
   doctest Citadel
-  import Citadel.Dispatcher, only: [listen_all: 0, listen_event_type: 1, dispatch: 1]
+
+  import Citadel.Dispatcher,
+    only: [listen_all: 0, listen_event_type: 1, listen_event_body: 1, dispatch: 1]
 
   alias Citadel.Event
 
@@ -69,6 +71,34 @@ defmodule CitadelTest do
     wait_until_receive(:task2)
     dispatch(Event.new(%TestEventA{value: :a}))
     dispatch(Event.new(%TestEventB{value: :b}))
+    Task.await(task1)
+    Task.await(task2)
+  end
+
+  test "listen_event_body" do
+    pid = self()
+
+    task1 =
+      Task.async(fn ->
+        listen_event_body(%TestEvent{value: :a})
+        send(pid, :task1)
+        assert_receive %Event{body: %TestEvent{value: :a}}
+        refute_receive %Event{body: %TestEvent{value: :b}}
+      end)
+
+    task2 =
+      Task.async(fn ->
+        listen_event_body(%TestEvent{value: :a})
+        listen_event_body(%TestEvent{value: :b})
+        send(pid, :task2)
+        assert_receive %Event{body: %TestEvent{value: :a}}
+        assert_receive %Event{body: %TestEvent{value: :b}}
+      end)
+
+    wait_until_receive(:task1)
+    wait_until_receive(:task2)
+    dispatch(Event.new(%TestEvent{value: :a}))
+    dispatch(Event.new(%TestEvent{value: :b}))
     Task.await(task1)
     Task.await(task2)
   end

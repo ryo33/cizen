@@ -18,7 +18,7 @@ defmodule Citadel.AutomatonRegistryTest do
     assert {:ok, pid} = AutomatonRegistry.resolve_id(id)
     true = Process.exit(pid, :kill)
     dispatch(Event.new(%AutomatonLauncher.UnlaunchAutomaton{id: id}))
-    :timer.sleep(50)
+    :timer.sleep(100)
     assert :error = AutomatonRegistry.resolve_id(id)
   end
 end

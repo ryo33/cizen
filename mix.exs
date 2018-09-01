@@ -22,6 +22,7 @@ defmodule Citadel.MixProject do
 
   def application do
     [
+      start_phases: [start_children: []],
       extra_applications: [:logger],
       mod: {Citadel.Application, []}
     ]

@@ -3,6 +3,7 @@ defmodule Citadel.Application do
 
   use Application
 
+  @impl true
   def start(_type, _args) do
     # List all child processes to be supervised
     children = [
@@ -10,10 +11,6 @@ defmodule Citadel.Application do
       %{
         id: Citadel.Dispatcher,
         start: {Citadel.Dispatcher, :start_link, []}
-      },
-      %{
-        id: Citadel.AutomatonLauncher,
-        start: {Citadel.AutomatonLauncher, :start_link, []}
       },
       %{
         id: Citadel.AutomatonRegistry,
@@ -25,5 +22,15 @@ defmodule Citadel.Application do
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Citadel.Supervisor]
     Supervisor.start_link(children, opts)
+  end
+
+  @impl true
+  def start_phase(:start_children, _start_type, _args) do
+    Supervisor.start_child(Citadel.Supervisor, %{
+      id: Citadel.AutomatonLauncher,
+      start: {Citadel.AutomatonLauncher, :start_link, []}
+    })
+
+    :ok
   end
 end

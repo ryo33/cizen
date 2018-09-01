@@ -4,6 +4,7 @@ defmodule Citadel.Dispatcher do
   """
 
   alias Citadel.Event
+  alias Citadel.EventBody
   alias Citadel.EventType
 
   @doc false
@@ -23,6 +24,10 @@ defmodule Citadel.Dispatcher do
     Registry.dispatch(__MODULE__, Event.type(event), fn entries ->
       for {pid, :ok} <- entries, do: send(pid, event)
     end)
+
+    Registry.dispatch(__MODULE__, event.body, fn entries ->
+      for {pid, :ok} <- entries, do: send(pid, event)
+    end)
   end
 
   @doc """
@@ -40,6 +45,15 @@ defmodule Citadel.Dispatcher do
   @spec listen_event_type(EventType.t()) :: :ok
   def listen_event_type(event_type) do
     {:ok, _} = Registry.register(__MODULE__, event_type, :ok)
+    :ok
+  end
+
+  @doc """
+  Listen a specific event
+  """
+  @spec listen_event_body(EventBody.t()) :: :ok
+  def listen_event_body(event) do
+    {:ok, _} = Registry.register(__MODULE__, event, :ok)
     :ok
   end
 end

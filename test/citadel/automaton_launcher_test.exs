@@ -3,6 +3,7 @@ defmodule Citadel.AutomatonLauncherTest do
   doctest Citadel.AutomatonLauncher
   import Citadel.TestHelper, only: [launch_test_automaton: 0]
   alias Citadel.TestAutomaton
+  alias Citadel.TestHelper
 
   import Citadel.Dispatcher, only: [dispatch: 1]
   alias Citadel.AutomatonID
@@ -18,13 +19,17 @@ defmodule Citadel.AutomatonLauncherTest do
       Event.new(%AutomatonLauncher.LaunchAutomaton{
         id: automaton_id,
         module: TestAutomaton,
-        state: fn id ->
-          send(pid, {:ok, id})
-        end
+        state: %{
+          launch: fn id, _state ->
+            send(pid, {:ok, id})
+          end
+        }
       })
     )
 
     assert_receive {:ok, automaton_id}
+
+    TestHelper.ensure_finished(automaton_id)
   end
 
   test "AutomatonLauncher.UnlaunchAutomaton event" do
@@ -32,6 +37,6 @@ defmodule Citadel.AutomatonLauncherTest do
     assert {:ok, pid} = AutomatonRegistry.resolve_id(id)
     dispatch(Event.new(%AutomatonLauncher.UnlaunchAutomaton{id: id}))
     :timer.sleep(50)
-    assert Process.alive?(pid)
+    refute Process.alive?(pid)
   end
 end
