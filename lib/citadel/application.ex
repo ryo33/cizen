@@ -13,8 +13,8 @@ defmodule Citadel.Application do
         start: {Citadel.Dispatcher, :start_link, []}
       },
       %{
-        id: Citadel.AutomatonRegistry,
-        start: {Citadel.AutomatonRegistry, :start_link, []}
+        id: Citadel.SagaRegistry,
+        start: {Citadel.SagaRegistry, :start_link, []}
       }
     ]
 
@@ -27,8 +27,8 @@ defmodule Citadel.Application do
   @impl true
   def start_phase(:start_children, _start_type, _args) do
     Supervisor.start_child(Citadel.Supervisor, %{
-      id: Citadel.AutomatonLauncher,
-      start: {Citadel.AutomatonLauncher, :start_link, []}
+      id: Citadel.SagaLauncher,
+      start: {Citadel.SagaLauncher, :start_link, []}
     })
 
     :ok

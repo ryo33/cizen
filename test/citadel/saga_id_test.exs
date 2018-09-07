@@ -1,15 +1,15 @@
-defmodule Citadel.AutomatonIDTest do
+defmodule Citadel.SagaIDTest do
   use ExUnit.Case
-  doctest Citadel.AutomatonID
+  doctest Citadel.SagaID
 
-  alias Citadel.AutomatonID
+  alias Citadel.SagaID
 
   test "returns unique IDs" do
-    assert AutomatonID.new() != AutomatonID.new()
+    assert SagaID.new() != SagaID.new()
   end
 
   test "returns an encodable ID" do
-    id = AutomatonID.new()
+    id = SagaID.new()
     encoded = Poison.encode!(id)
     decoded = Poison.decode!(encoded)
     assert id == decoded

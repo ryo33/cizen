@@ -3,21 +3,21 @@ defmodule Citadel.TestHelper do
   import ExUnit.Assertions, only: [flunk: 0]
   import ExUnit.Callbacks, only: [on_exit: 1]
   import Citadel.Dispatcher, only: [listen_event_type: 1, dispatch: 1]
-  alias Citadel.Automaton
-  alias Citadel.AutomatonID
-  alias Citadel.AutomatonLauncher
-  alias Citadel.AutomatonRegistry
   alias Citadel.Event
-  alias Citadel.TestAutomaton
+  alias Citadel.Saga
+  alias Citadel.SagaID
+  alias Citadel.SagaLauncher
+  alias Citadel.SagaRegistry
+  alias Citadel.TestSaga
 
   def ensure_finished(id) do
-    case AutomatonRegistry.resolve_id(id) do
+    case SagaRegistry.resolve_id(id) do
       {:ok, _pid} ->
-        listen_event_type(Automaton.Finished)
-        dispatch(Event.new(%Automaton.Finish{id: id}))
+        listen_event_type(Saga.Finished)
+        dispatch(Event.new(%Saga.Finish{id: id}))
 
         receive do
-          %Event{body: %Automaton.Finished{id: ^id}} -> :ok
+          %Event{body: %Saga.Finished{id: ^id}} -> :ok
         after
           50 -> :ok
         end
@@ -27,14 +27,14 @@ defmodule Citadel.TestHelper do
     end
   end
 
-  def launch_test_automaton(opts \\ []) do
+  def launch_test_saga(opts \\ []) do
     pid = self()
-    automaton_id = AutomatonID.new()
+    saga_id = SagaID.new()
 
     dispatch(
-      Event.new(%AutomatonLauncher.LaunchAutomaton{
-        id: automaton_id,
-        module: TestAutomaton,
+      Event.new(%SagaLauncher.LaunchSaga{
+        id: saga_id,
+        module: TestSaga,
         state: %{
           launch: fn id, state ->
             launch = Keyword.get(opts, :launch, fn _id, state -> state end)
@@ -48,15 +48,15 @@ defmodule Citadel.TestHelper do
     )
 
     receive do
-      {:ok, ^automaton_id} -> :ok
+      {:ok, ^saga_id} -> :ok
     after
       50 -> flunk()
     end
 
     on_exit(fn ->
-      ensure_finished(automaton_id)
+      ensure_finished(saga_id)
     end)
 
-    automaton_id
+    saga_id
   end
 end

@@ -1,6 +1,6 @@
 defmodule Citadel.EventID do
   @moduledoc """
-  Each event has a unique automaton-id.
+  Each event has a unique saga-id.
   """
 
   @type t :: String.t()

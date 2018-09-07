@@ -1,12 +1,12 @@
-defmodule Citadel.AutomatonID do
+defmodule Citadel.SagaID do
   @moduledoc """
-  Each automaton has a unique automaton-id.
+  Each saga has a unique saga-id.
   """
 
   @type t :: String.t()
 
   @doc """
-  Create new automaton id.
+  Create new saga id.
   """
   @spec new :: t
   def new do

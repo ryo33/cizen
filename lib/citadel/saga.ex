@@ -1,22 +1,22 @@
-defmodule Citadel.Automaton do
+defmodule Citadel.Saga do
   @moduledoc """
-  The automaton behaviour
+  The saga behaviour
   """
 
   use GenServer
 
   import Citadel.Dispatcher, only: [listen_event_body: 1, dispatch: 1]
-  alias Citadel.AutomatonID
-  alias Citadel.AutomatonRegistry
   alias Citadel.Event
+  alias Citadel.SagaID
+  alias Citadel.SagaRegistry
 
   @type state :: any
 
   @doc false
-  @callback launch(AutomatonID.t(), state) :: state
+  @callback launch(SagaID.t(), state) :: state
 
   @doc false
-  @callback yield(AutomatonID.t(), Event.t(), state) :: state
+  @callback yield(SagaID.t(), Event.t(), state) :: state
 
   defmodule Finish do
     @moduledoc "A event fired to finish"
@@ -45,15 +45,13 @@ defmodule Citadel.Automaton do
 
   def launch(id, module, state) do
     {:ok, _pid} =
-      GenServer.start(__MODULE__, {id, module, state},
-        name: {:via, Registry, {AutomatonRegistry, id}}
-      )
+      GenServer.start(__MODULE__, {id, module, state}, name: {:via, Registry, {SagaRegistry, id}})
 
     dispatch(Event.new(%Launched{id: id}))
   end
 
   def unlaunch(id) do
-    :ok = GenServer.stop({:via, Registry, {AutomatonRegistry, id}}, :shutdown)
+    :ok = GenServer.stop({:via, Registry, {SagaRegistry, id}}, :shutdown)
     dispatch(Event.new(%Unlaunched{id: id}))
   end
 

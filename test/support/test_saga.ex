@@ -1,6 +1,6 @@
-defmodule Citadel.TestAutomaton do
+defmodule Citadel.TestSaga do
   @moduledoc false
-  @behaviour Citadel.Automaton
+  @behaviour Citadel.Saga
 
   @impl true
   def launch(id, state) do
