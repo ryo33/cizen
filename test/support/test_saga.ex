@@ -11,8 +11,8 @@ defmodule Citadel.TestSaga do
   end
 
   @impl true
-  def yield(id, event, %{yield: yield} = state) do
-    internal_state = yield.(id, event, state.state)
+  def handle_event(id, event, %{handle_event: handle_event} = state) do
+    internal_state = handle_event.(id, event, state.state)
     Map.put(state, :state, internal_state)
   end
 end

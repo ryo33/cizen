@@ -41,10 +41,10 @@ defmodule Citadel.SagaLauncher do
 
   @impl true
   def handle_info(%Event{body: body}, :ok) do
-    yield(body, :ok)
+    handle_event(body, :ok)
   end
 
-  def yield(%LaunchSaga{id: id, module: module, state: state}, :ok) do
+  def handle_event(%LaunchSaga{id: id, module: module, state: state}, :ok) do
     Task.start_link(fn ->
       Saga.launch(id, module, state)
     end)
@@ -52,7 +52,7 @@ defmodule Citadel.SagaLauncher do
     {:noreply, :ok}
   end
 
-  def yield(%UnlaunchSaga{id: id}, :ok) do
+  def handle_event(%UnlaunchSaga{id: id}, :ok) do
     Task.start_link(fn ->
       Saga.unlaunch(id)
     end)

@@ -16,7 +16,7 @@ defmodule Citadel.Saga do
   @callback launch(SagaID.t(), state) :: state
 
   @doc false
-  @callback yield(SagaID.t(), Event.t(), state) :: state
+  @callback handle_event(SagaID.t(), Event.t(), state) :: state
 
   defmodule Finish do
     @moduledoc "A event fired to finish"
@@ -69,7 +69,7 @@ defmodule Citadel.Saga do
 
   @impl true
   def handle_info(%Event{} = event, {id, module, state}) do
-    state = module.yield(id, event, state)
+    state = module.handle_event(id, event, state)
     {:noreply, {id, module, state}}
   rescue
     reason -> {:stop, {:shutdown, reason}, {id, module, state}}

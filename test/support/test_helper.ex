@@ -42,7 +42,7 @@ defmodule Citadel.TestHelper do
             send(pid, {:ok, id})
             state
           end,
-          yield: Keyword.get(opts, :yield, fn _id, _event, state -> state end)
+          handle_event: Keyword.get(opts, :handle_event, fn _id, _event, state -> state end)
         }
       })
     )

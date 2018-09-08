@@ -46,7 +46,7 @@ defmodule Citadel.SagaTest do
         launch: fn _id, _state ->
           listen_event_type(CrashTestEvent1)
         end,
-        yield: fn _id, %Event{body: body}, state ->
+        handle_event: fn _id, %Event{body: body}, state ->
           case body do
             %CrashTestEvent1{} ->
               raise "Crash!!!"
@@ -72,7 +72,7 @@ defmodule Citadel.SagaTest do
         launch: fn _id, _state ->
           listen_event_type(CrashTestEvent2)
         end,
-        yield: fn _id, %Event{body: body}, state ->
+        handle_event: fn _id, %Event{body: body}, state ->
           case body do
             %CrashTestEvent2{} ->
               raise "Crash!!!"
@@ -98,7 +98,7 @@ defmodule Citadel.SagaTest do
         launch: fn _id, _state ->
           listen_event_type(TestEvent)
         end,
-        yield: fn _id, %Event{body: body}, state ->
+        handle_event: fn _id, %Event{body: body}, state ->
           case body do
             %TestEvent{value: value} ->
               dispatch(Event.new(%TestEventReply{value: value}))
