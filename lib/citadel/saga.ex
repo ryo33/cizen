@@ -71,6 +71,8 @@ defmodule Citadel.Saga do
   def handle_info(%Event{} = event, {id, module, state}) do
     state = module.yield(id, event, state)
     {:noreply, {id, module, state}}
+  rescue
+    reason -> {:stop, {:shutdown, reason}, {id, module, state}}
   end
 
   @impl true
@@ -83,7 +85,7 @@ defmodule Citadel.Saga do
     :shutdown
   end
 
-  def terminate(reason, {id, _module, _state}) do
+  def terminate({:shutdown, reason}, {id, _module, _state}) do
     dispatch(Event.new(%Crashed{id: id, reason: reason}))
     :shutdown
   end
