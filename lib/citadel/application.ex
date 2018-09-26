@@ -15,6 +15,14 @@ defmodule Citadel.Application do
       %{
         id: Citadel.SagaRegistry,
         start: {Citadel.SagaRegistry, :start_link, []}
+      },
+      %{
+        id: Citadel.SubscriptionRegistry,
+        start: {Citadel.SubscriptionRegistry, :start_link, []}
+      },
+      %{
+        id: Citadel.SubscriptionRegistry.Registerer,
+        start: {Citadel.SubscriptionRegistry.Registerer, :start_link, []}
       }
     ]
 

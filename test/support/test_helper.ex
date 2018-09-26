@@ -59,4 +59,21 @@ defmodule Citadel.TestHelper do
 
     saga_id
   end
+
+  defmacro assert_condition(timeout, assertion) do
+    quote do
+      func = fn
+        func, 1 ->
+          assert unquote(assertion)
+
+        func, count ->
+          unless unquote(assertion) do
+            :timer.sleep(1)
+            func.(func, count - 1)
+          end
+      end
+
+      func.(func, unquote(timeout))
+    end
+  end
 end
