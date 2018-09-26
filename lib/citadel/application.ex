@@ -19,10 +19,6 @@ defmodule Citadel.Application do
       %{
         id: Citadel.SubscriptionRegistry,
         start: {Citadel.SubscriptionRegistry, :start_link, []}
-      },
-      %{
-        id: Citadel.SubscriptionRegistry.Registerer,
-        start: {Citadel.SubscriptionRegistry.Registerer, :start_link, []}
       }
     ]
 
@@ -37,6 +33,11 @@ defmodule Citadel.Application do
     Supervisor.start_child(Citadel.Supervisor, %{
       id: Citadel.SagaLauncher,
       start: {Citadel.SagaLauncher, :start_link, []}
+    })
+
+    Supervisor.start_child(Citadel.Supervisor, %{
+      id: Citadel.SubscriptionRegistry.Registerer,
+      start: {Citadel.SubscriptionRegistry.Registerer, :start_link, []}
     })
 
     :ok
