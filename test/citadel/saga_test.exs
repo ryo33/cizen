@@ -2,7 +2,12 @@ defmodule Citadel.SagaTest do
   use ExUnit.Case
   doctest Citadel.Saga
 
-  import Citadel.TestHelper, only: [launch_test_saga: 0, launch_test_saga: 1]
+  import Citadel.TestHelper,
+    only: [
+      launch_test_saga: 0,
+      launch_test_saga: 1,
+      assert_condition: 2
+    ]
 
   import Citadel.Dispatcher, only: [listen_event_type: 1, dispatch: 1]
   alias Citadel.Event
@@ -20,8 +25,7 @@ defmodule Citadel.SagaTest do
     listen_event_type(Saga.Launched)
     id = launch_test_saga()
     dispatch(Event.new(%Saga.Finish{id: id}))
-    :timer.sleep(100)
-    assert :error = SagaRegistry.resolve_id(id)
+    assert_condition(100, :error == SagaRegistry.resolve_id(id))
   end
 
   test "dispatches Finished event on finish" do
@@ -58,8 +62,7 @@ defmodule Citadel.SagaTest do
       )
 
     dispatch(Event.new(%CrashTestEvent1{}))
-    :timer.sleep(100)
-    assert :error = SagaRegistry.resolve_id(id)
+    assert_condition(100, :error == SagaRegistry.resolve_id(id))
   end
 
   defmodule(CrashTestEvent2, do: defstruct([]))

@@ -7,6 +7,7 @@ defmodule Citadel.SubscriptionRegistry do
   alias Citadel.Event
   alias Citadel.SagaRegistry
   alias Citadel.Subscribe
+  alias Citadel.Subscribed
   alias Citadel.Subscription
 
   @doc """
@@ -53,6 +54,7 @@ defmodule Citadel.SubscriptionRegistry do
             Registry.register(SubscriptionRegistry, :subscriptions, subscription)
             Process.link(pid)
             Process.flag(:trap_exit, true)
+            Dispatcher.dispatch(Event.new(%Subscribed{saga_id: saga_id, filter_set: filter_set}))
 
             receive do
               _ -> :ok

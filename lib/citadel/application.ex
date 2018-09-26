@@ -40,6 +40,11 @@ defmodule Citadel.Application do
       start: {Citadel.SubscriptionRegistry.Registerer, :start_link, []}
     })
 
+    Supervisor.start_child(Citadel.Supervisor, %{
+      id: Citadel.FilterSetDispatcher,
+      start: {Citadel.FilterSetDispatcher, :start_link, []}
+    })
+
     :ok
   end
 end
