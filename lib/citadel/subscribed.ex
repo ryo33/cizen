@@ -1,4 +1,4 @@
-defmodule Citadel.Subscribed do
+defmodule Citadel.FilterSetSubscribed do
   @moduledoc """
   An event which is fired after subscription is created.
   """

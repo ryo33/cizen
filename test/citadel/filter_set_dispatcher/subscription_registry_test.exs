@@ -1,4 +1,4 @@
-defmodule Citadel.SubscriptionRegistryTest do
+defmodule Citadel.FilterSetDispatcher.SubscriptionRegistryTest do
   use ExUnit.Case
 
   import Citadel.TestHelper,
@@ -11,10 +11,10 @@ defmodule Citadel.SubscriptionRegistryTest do
   alias Citadel.Event
   alias Citadel.Filter
   alias Citadel.FilterSet
-  alias Citadel.Subscribe
-  alias Citadel.Subscribed
+  alias Citadel.FilterSetDispatcher.SubscriptionRegistry
+  alias Citadel.FilterSetSubscribe
+  alias Citadel.FilterSetSubscribed
   alias Citadel.Subscription
-  alias Citadel.SubscriptionRegistry
   import Citadel.Dispatcher, only: [dispatch: 1, listen_event_type: 1]
 
   defmodule TestFilterA do
@@ -29,13 +29,13 @@ defmodule Citadel.SubscriptionRegistryTest do
     def test(_, _), do: false
   end
 
-  test "Subscribe event" do
-    listen_event_type(Subscribed)
+  test "FilterSetSubscribe event" do
+    listen_event_type(FilterSetSubscribed)
     saga_id = launch_test_saga()
     filter_set = FilterSet.new([Filter.new(TestFilterA, :a), Filter.new(TestFilterB, :b)])
 
     dispatch(
-      Event.new(%Subscribe{
+      Event.new(%FilterSetSubscribe{
         saga_id: saga_id,
         filter_set: filter_set
       })
@@ -48,7 +48,7 @@ defmodule Citadel.SubscriptionRegistryTest do
       ]
     )
 
-    assert_receive %Event{body: %Subscribed{saga_id: ^saga_id, filter_set: ^filter_set}}
+    assert_receive %Event{body: %FilterSetSubscribed{saga_id: ^saga_id, filter_set: ^filter_set}}
   end
 
   test "remove subscription when the saga finishes" do
@@ -56,7 +56,7 @@ defmodule Citadel.SubscriptionRegistryTest do
     filter_set = FilterSet.new([Filter.new(TestFilterA, :a), Filter.new(TestFilterB, :b)])
 
     dispatch(
-      Event.new(%Subscribe{
+      Event.new(%FilterSetSubscribe{
         saga_id: saga_id,
         filter_set: filter_set
       })

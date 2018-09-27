@@ -1,4 +1,4 @@
-defmodule Citadel.Subscribe do
+defmodule Citadel.FilterSetSubscribe do
   @moduledoc """
   An event to subscribe events.
   """

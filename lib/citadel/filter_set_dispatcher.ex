@@ -8,9 +8,9 @@ defmodule Citadel.FilterSetDispatcher do
   alias Citadel.Dispatcher
   alias Citadel.Event
   alias Citadel.Filter
+  alias Citadel.FilterSetDispatcher.SubscriptionRegistry
   alias Citadel.SagaRegistry
   alias Citadel.Subscription
-  alias Citadel.SubscriptionRegistry
 
   def start_link do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)

@@ -6,8 +6,8 @@ defmodule Citadel.FilterSetDispatcherTest do
   alias Citadel.Event
   alias Citadel.Filter
   alias Citadel.FilterSet
-  alias Citadel.Subscribe
-  alias Citadel.Subscribed
+  alias Citadel.FilterSetSubscribe
+  alias Citadel.FilterSetSubscribed
   import Citadel.Dispatcher, only: [dispatch: 1, listen_event_type: 1]
 
   defmodule(TestEvent, do: defstruct([:value_a, :value_b]))
@@ -26,21 +26,21 @@ defmodule Citadel.FilterSetDispatcherTest do
     def test(_, _), do: false
   end
 
-  test "Subscribe event" do
-    listen_event_type(Subscribed)
+  test "FilterSetSubscribe event" do
+    listen_event_type(FilterSetSubscribed)
     pid = self()
     saga_id = launch_test_saga(handle_event: fn _id, event, _state -> send(pid, event) end)
     filter_set = FilterSet.new([Filter.new(TestFilterA, :a), Filter.new(TestFilterB, :b)])
 
     dispatch(
-      Event.new(%Subscribe{
+      Event.new(%FilterSetSubscribe{
         saga_id: saga_id,
         filter_set: filter_set
       })
     )
 
     receive do
-      %Event{body: %Subscribed{}} -> :ok
+      %Event{body: %FilterSetSubscribed{}} -> :ok
     after
       1000 -> :ok
     end
@@ -56,7 +56,7 @@ defmodule Citadel.FilterSetDispatcherTest do
   end
 
   test "dispatches for subscriber" do
-    listen_event_type(Subscribed)
+    listen_event_type(FilterSetSubscribed)
     pid = self()
     saga_a = launch_test_saga(handle_event: fn _id, event, _state -> send(pid, {:a, event}) end)
     saga_b = launch_test_saga(handle_event: fn _id, event, _state -> send(pid, {:b, event}) end)
@@ -64,27 +64,27 @@ defmodule Citadel.FilterSetDispatcherTest do
     filter_set_b = FilterSet.new([Filter.new(TestFilterA, :a), Filter.new(TestFilterB, :a)])
 
     dispatch(
-      Event.new(%Subscribe{
+      Event.new(%FilterSetSubscribe{
         saga_id: saga_a,
         filter_set: filter_set_a
       })
     )
 
     dispatch(
-      Event.new(%Subscribe{
+      Event.new(%FilterSetSubscribe{
         saga_id: saga_b,
         filter_set: filter_set_b
       })
     )
 
     receive do
-      %Event{body: %Subscribed{}} -> :ok
+      %Event{body: %FilterSetSubscribed{}} -> :ok
     after
       1000 -> :ok
     end
 
     receive do
-      %Event{body: %Subscribed{}} -> :ok
+      %Event{body: %FilterSetSubscribed{}} -> :ok
     after
       1000 -> :ok
     end
