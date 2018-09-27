@@ -1,9 +1,9 @@
-defmodule Citadel.FilterSetSubscribed do
+defmodule Citadel.Subscribed do
   @moduledoc """
   An event which is fired after subscription is created.
   """
 
-  @keys [:saga_id, :filter_set]
+  @keys [:subscription]
   @enforce_keys @keys
   defstruct @keys
 end

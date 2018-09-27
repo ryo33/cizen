@@ -4,13 +4,23 @@ defmodule Citadel.Event do
   """
   alias Citadel.EventID
   alias Citadel.EventType
+  alias Citadel.SagaID
 
-  @type t :: %__MODULE__{}
   @type body :: struct
+  @type t :: %__MODULE__{
+          id: EventID.t(),
+          body: body,
+          source_saga_id: SagaID.t() | nil,
+          source_saga_module: module | nil
+        }
 
-  @keys [:id, :body]
-  @enforce_keys @keys
-  defstruct @keys
+  @enforce_keys [:id, :body]
+  defstruct [
+    :id,
+    :body,
+    :source_saga_id,
+    :source_saga_module
+  ]
 
   @spec type(t) :: EventType.t()
   def type(event), do: event.body.__struct__
@@ -20,6 +30,16 @@ defmodule Citadel.Event do
     %__MODULE__{
       id: EventID.new(),
       body: body
+    }
+  end
+
+  @spec new(body, SagaID.t(), module) :: t()
+  def new(body, saga_id, module \\ nil) do
+    %__MODULE__{
+      id: EventID.new(),
+      body: body,
+      source_saga_id: saga_id,
+      source_saga_module: module
     }
   end
 end

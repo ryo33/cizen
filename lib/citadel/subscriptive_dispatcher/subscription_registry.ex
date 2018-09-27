@@ -1,13 +1,13 @@
-defmodule Citadel.FilterSetDispatcher.SubscriptionRegistry do
+defmodule Citadel.SubscriptiveDispatcher.SubscriptionRegistry do
   @moduledoc """
   A registry to store subscriptions.
   """
 
   alias Citadel.Dispatcher
   alias Citadel.Event
-  alias Citadel.FilterSetSubscribe
-  alias Citadel.FilterSetSubscribed
   alias Citadel.SagaRegistry
+  alias Citadel.Subscribe
+  alias Citadel.Subscribed
   alias Citadel.Subscription
 
   @doc """
@@ -28,7 +28,7 @@ defmodule Citadel.FilterSetDispatcher.SubscriptionRegistry do
 
     use GenServer
 
-    alias Citadel.FilterSetDispatcher.SubscriptionRegistry
+    alias Citadel.SubscriptiveDispatcher.SubscriptionRegistry
 
     def start_link do
       GenServer.start_link(__MODULE__, [], name: __MODULE__)
@@ -36,7 +36,7 @@ defmodule Citadel.FilterSetDispatcher.SubscriptionRegistry do
 
     @impl true
     def init(_args) do
-      Dispatcher.listen_event_type(FilterSetSubscribe)
+      Dispatcher.listen_event_type(Subscribe)
       {:ok, :ok}
     end
 
@@ -45,19 +45,15 @@ defmodule Citadel.FilterSetDispatcher.SubscriptionRegistry do
       handle_event(body, :ok)
     end
 
-    def handle_event(%FilterSetSubscribe{saga_id: saga_id, filter_set: filter_set}, :ok) do
-      subscription = Subscription.new(saga_id, filter_set)
-
-      case SagaRegistry.resolve_id(saga_id) do
+    def handle_event(%Subscribe{subscription: subscription}, :ok) do
+      case SagaRegistry.resolve_id(subscription.subscriber_saga_id) do
         {:ok, pid} ->
           Task.start(fn ->
             Registry.register(SubscriptionRegistry, :subscriptions, subscription)
             Process.link(pid)
             Process.flag(:trap_exit, true)
 
-            Dispatcher.dispatch(
-              Event.new(%FilterSetSubscribed{saga_id: saga_id, filter_set: filter_set})
-            )
+            Dispatcher.dispatch(Event.new(%Subscribed{subscription: subscription}))
 
             receive do
               _ -> :ok
