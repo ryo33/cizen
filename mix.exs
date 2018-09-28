@@ -42,7 +42,7 @@ defmodule Citadel.MixProject do
     [
       credo: ["credo --strict"],
       check: [
-        "compile --exception-as-errors",
+        "compile --warnings-as-errors",
         "format --check-formatted --check-equivalent",
         "credo --strict",
         "dialyzer --no-compile --halt-exit-status"
