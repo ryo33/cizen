@@ -41,6 +41,11 @@ defmodule Citadel.Application do
     })
 
     Supervisor.start_child(Citadel.Supervisor, %{
+      id: Citadel.EventFilterDispatcher.EventPusher,
+      start: {Citadel.EventFilterDispatcher.EventPusher, :start_link, []}
+    })
+
+    Supervisor.start_child(Citadel.Supervisor, %{
       id: Citadel.EventFilterDispatcher,
       start: {Citadel.EventFilterDispatcher, :start_link, []}
     })

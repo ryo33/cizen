@@ -9,7 +9,16 @@ defmodule Citadel.EventFilterDispatcher do
   alias Citadel.Event
   alias Citadel.EventFilterDispatcher.SubscriptionRegistry
   alias Citadel.EventFilterSubscription
-  alias Citadel.SagaRegistry
+
+  defmodule PushEvent do
+    @moduledoc """
+    An event to push an event from EventFilterDispatcher
+    """
+
+    @keys [:event, :subscriptions]
+    @enforce_keys @keys
+    defstruct @keys
+  end
 
   def start_link do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
@@ -25,17 +34,22 @@ defmodule Citadel.EventFilterDispatcher do
   def handle_info(%Event{} = event, state) do
     subscriptions = SubscriptionRegistry.subscriptions()
 
-    Enum.each(subscriptions, fn subscription -> dispatch(subscription, event) end)
+    subscriptions
+    |> Enum.filter(fn subscription ->
+      EventFilterSubscription.match?(subscription, event)
+    end)
+    |> Enum.group_by(fn subscription ->
+      subscription.subscriber_saga_id
+    end)
+    |> Enum.each(fn {_, subscriptions} ->
+      Dispatcher.dispatch(
+        Event.new(%PushEvent{
+          event: event,
+          subscriptions: subscriptions
+        })
+      )
+    end)
 
     {:noreply, state}
-  end
-
-  defp dispatch(subscription, event) do
-    if EventFilterSubscription.match?(subscription, event) do
-      case SagaRegistry.resolve_id(subscription.subscriber_saga_id) do
-        {:ok, pid} -> send(pid, event)
-        _ -> :ok
-      end
-    end
   end
 end
