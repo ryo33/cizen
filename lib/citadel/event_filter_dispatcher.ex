@@ -1,4 +1,4 @@
-defmodule Citadel.SubscriptiveDispatcher do
+defmodule Citadel.EventFilterDispatcher do
   @moduledoc """
   A dispatcher based on subscription with filter set.
   """
@@ -7,9 +7,9 @@ defmodule Citadel.SubscriptiveDispatcher do
 
   alias Citadel.Dispatcher
   alias Citadel.Event
+  alias Citadel.EventFilterDispatcher.SubscriptionRegistry
+  alias Citadel.EventFilterSubscription
   alias Citadel.SagaRegistry
-  alias Citadel.Subscription
-  alias Citadel.SubscriptiveDispatcher.SubscriptionRegistry
 
   def start_link do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
@@ -31,7 +31,7 @@ defmodule Citadel.SubscriptiveDispatcher do
   end
 
   defp dispatch(subscription, event) do
-    if Subscription.match?(subscription, event) do
+    if EventFilterSubscription.match?(subscription, event) do
       case SagaRegistry.resolve_id(subscription.subscriber_saga_id) do
         {:ok, pid} -> send(pid, event)
         _ -> :ok

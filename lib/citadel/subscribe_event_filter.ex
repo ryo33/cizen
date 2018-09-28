@@ -1,6 +1,6 @@
-defmodule Citadel.Subscribed do
+defmodule Citadel.SubscribeEventFilter do
   @moduledoc """
-  An event which is fired after subscription is created.
+  An event to subscribe events.
   """
 
   @keys [:subscription]

@@ -1,4 +1,4 @@
-defmodule Citadel.SubscriptiveDispatcher.SubscriptionRegistryTest do
+defmodule Citadel.EventFilterDispatcher.SubscriptionRegistryTest do
   use ExUnit.Case
 
   import Citadel.TestHelper,
@@ -9,35 +9,37 @@ defmodule Citadel.SubscriptiveDispatcher.SubscriptionRegistryTest do
     ]
 
   alias Citadel.Event
-  alias Citadel.Filter
-  alias Citadel.Subscribe
-  alias Citadel.Subscribed
-  alias Citadel.Subscription
-  alias Citadel.SubscriptiveDispatcher.SubscriptionRegistry
+  alias Citadel.EventBodyFilter
+  alias Citadel.EventFilter
+  alias Citadel.EventFilterDispatcher.SubscriptionRegistry
+  alias Citadel.EventFilterSubscribed
+  alias Citadel.EventFilterSubscription
+  alias Citadel.SubscribeEventFilter
   import Citadel.Dispatcher, only: [dispatch: 1, listen_event_type: 1]
 
-  defmodule TestFilterA do
-    @behaviour Filter
+  defmodule TestEventBodyFilterA do
+    @behaviour EventBodyFilter
     @impl true
     def test(_, _), do: false
   end
 
-  defmodule TestFilterB do
-    @behaviour Filter
+  defmodule TestEventBodyFilterB do
+    @behaviour EventBodyFilter
     @impl true
     def test(_, _), do: false
   end
 
-  test "FilterSetSubscribe event" do
-    listen_event_type(Subscribed)
+  test "EventFilterSubscribe event" do
+    listen_event_type(EventFilterSubscribed)
     saga_id = launch_test_saga()
 
-    subscription = %Subscription{
-      subscriber_saga_id: saga_id
+    subscription = %EventFilterSubscription{
+      subscriber_saga_id: saga_id,
+      event_filter: %EventFilter{}
     }
 
     dispatch(
-      Event.new(%Subscribe{
+      Event.new(%SubscribeEventFilter{
         subscription: subscription
       })
     )
@@ -47,18 +49,19 @@ defmodule Citadel.SubscriptiveDispatcher.SubscriptionRegistryTest do
       SubscriptionRegistry.subscriptions() == [subscription]
     )
 
-    assert_receive %Event{body: %Subscribed{subscription: subscription}}
+    assert_receive %Event{body: %EventFilterSubscribed{subscription: subscription}}
   end
 
   test "remove subscription when the saga finishes" do
     saga_id = launch_test_saga()
 
-    subscription = %Subscription{
-      subscriber_saga_id: saga_id
+    subscription = %EventFilterSubscription{
+      subscriber_saga_id: saga_id,
+      event_filter: %EventFilter{}
     }
 
     dispatch(
-      Event.new(%Subscribe{
+      Event.new(%SubscribeEventFilter{
         subscription: subscription
       })
     )
