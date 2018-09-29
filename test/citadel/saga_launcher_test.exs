@@ -1,7 +1,7 @@
 defmodule Citadel.SagaLauncherTest do
   use ExUnit.Case
   doctest Citadel.SagaLauncher
-  import Citadel.TestHelper, only: [launch_test_saga: 0]
+  import Citadel.TestHelper, only: [launch_test_saga: 0, assert_condition: 2]
 
   import Citadel.Dispatcher, only: [dispatch: 1]
   alias Citadel.Event
@@ -36,7 +36,6 @@ defmodule Citadel.SagaLauncherTest do
     id = launch_test_saga()
     assert {:ok, pid} = SagaRegistry.resolve_id(id)
     dispatch(Event.new(%SagaLauncher.UnlaunchSaga{id: id}))
-    :timer.sleep(50)
-    refute Process.alive?(pid)
+    assert_condition(100, Process.alive?(pid))
   end
 end

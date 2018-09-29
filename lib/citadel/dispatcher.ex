@@ -52,8 +52,8 @@ defmodule Citadel.Dispatcher do
   Listen a specific event
   """
   @spec listen_event_body(EventBody.t()) :: :ok
-  def listen_event_body(event) do
-    {:ok, _} = Registry.register(__MODULE__, event, :ok)
+  def listen_event_body(event_body) do
+    {:ok, _} = Registry.register(__MODULE__, event_body, :ok)
     :ok
   end
 end

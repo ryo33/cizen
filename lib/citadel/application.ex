@@ -50,6 +50,11 @@ defmodule Citadel.Application do
       start: {Citadel.EventFilterDispatcher, :start_link, []}
     })
 
+    Supervisor.start_child(Citadel.Supervisor, %{
+      id: Citadel.Transmitter,
+      start: {Citadel.Transmitter, :start_link, []}
+    })
+
     :ok
   end
 end

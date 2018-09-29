@@ -1,43 +1,33 @@
 defmodule Citadel.EventFilterDispatcherTest do
   use ExUnit.Case
 
-  import Citadel.TestHelper, only: [launch_test_saga: 1]
+  import Citadel.TestHelper, only: [launch_test_saga: 0, launch_test_saga: 1]
 
   alias Citadel.Event
   alias Citadel.EventFilter
+  alias Citadel.EventFilterDispatcher
   alias Citadel.EventFilterDispatcher.PushEvent
-  alias Citadel.EventFilterSubscribed
-  alias Citadel.EventFilterSubscription
   alias Citadel.SagaID
-  alias Citadel.SubscribeEventFilter
-  import Citadel.Dispatcher, only: [dispatch: 1, listen_event_type: 1]
+  import Citadel.Dispatcher, only: [dispatch: 1]
 
   defmodule(TestEvent, do: defstruct([:value]))
 
-  test "SubscribeEventFilter event" do
-    listen_event_type(EventFilterSubscribed)
+  test "subscribe/3 sets the meta data" do
+    saga_id = launch_test_saga()
+    subscription = EventFilterDispatcher.subscribe(saga_id, %EventFilter{}, :value)
+    assert subscription.meta == :value
+  end
+
+  test "subscribe/2 event" do
     pid = self()
     saga_id = launch_test_saga(handle_event: fn _id, event, _state -> send(pid, event) end)
     source_saga_id = SagaID.new()
 
-    subscription = %EventFilterSubscription{
-      subscriber_saga_id: saga_id,
-      event_filter: %EventFilter{
-        source_saga_id: source_saga_id
-      }
+    event_filter = %EventFilter{
+      source_saga_id: source_saga_id
     }
 
-    dispatch(
-      Event.new(%SubscribeEventFilter{
-        subscription: subscription
-      })
-    )
-
-    receive do
-      %Event{body: %EventFilterSubscribed{}} -> :ok
-    after
-      1000 -> :ok
-    end
+    EventFilterDispatcher.subscribe(saga_id, event_filter)
 
     dispatch(Event.new(%TestEvent{value: :a}, source_saga_id))
     dispatch(Event.new(%TestEvent{value: :b}, SagaID.new()))
@@ -53,43 +43,18 @@ defmodule Citadel.EventFilterDispatcherTest do
   end
 
   test "dispatches for subscriber" do
-    listen_event_type(EventFilterSubscribed)
     pid = self()
     saga_a = launch_test_saga(handle_event: fn _id, event, _state -> send(pid, {:a, event}) end)
     saga_b = launch_test_saga(handle_event: fn _id, event, _state -> send(pid, {:b, event}) end)
     source_saga_id = SagaID.new()
 
-    subscription = %EventFilterSubscription{
-      subscriber_saga_id: saga_a,
-      event_filter: %EventFilter{
-        source_saga_id: source_saga_id
-      }
-    }
+    EventFilterDispatcher.subscribe(saga_a, %EventFilter{
+      source_saga_id: source_saga_id
+    })
 
-    dispatch(Event.new(%SubscribeEventFilter{subscription: subscription}))
-
-    dispatch(
-      Event.new(%SubscribeEventFilter{
-        subscription: %EventFilterSubscription{
-          subscriber_saga_id: saga_b,
-          event_filter: %EventFilter{
-            source_saga_id: SagaID.new()
-          }
-        }
-      })
-    )
-
-    receive do
-      %Event{body: %EventFilterSubscribed{}} -> :ok
-    after
-      1000 -> :ok
-    end
-
-    receive do
-      %Event{body: %EventFilterSubscribed{}} -> :ok
-    after
-      1000 -> :ok
-    end
+    EventFilterDispatcher.subscribe(saga_b, %EventFilter{
+      source_saga_id: SagaID.new()
+    })
 
     dispatch(Event.new(%TestEvent{value: :a}, source_saga_id))
 
@@ -109,42 +74,27 @@ defmodule Citadel.EventFilterDispatcherTest do
   end
 
   test "dispatches once for multiple subscriptions" do
-    listen_event_type(EventFilterSubscribed)
     pid = self()
     saga_id = launch_test_saga(handle_event: fn _id, event, _state -> send(pid, event) end)
     source_saga_id = SagaID.new()
 
-    subscription_a = %EventFilterSubscription{
-      subscriber_saga_id: saga_id,
-      event_filter: %EventFilter{
-        source_saga_id: source_saga_id
-      },
-      meta: :a
-    }
+    subscription_a =
+      EventFilterDispatcher.subscribe(
+        saga_id,
+        %EventFilter{
+          source_saga_id: source_saga_id
+        },
+        :a
+      )
 
-    subscription_b = %EventFilterSubscription{
-      subscriber_saga_id: saga_id,
-      event_filter: %EventFilter{
-        source_saga_id: source_saga_id
-      },
-      meta: :b
-    }
-
-    dispatch(Event.new(%SubscribeEventFilter{subscription: subscription_a}))
-
-    dispatch(Event.new(%SubscribeEventFilter{subscription: subscription_b}))
-
-    receive do
-      %Event{body: %EventFilterSubscribed{}} -> :ok
-    after
-      1000 -> :ok
-    end
-
-    receive do
-      %Event{body: %EventFilterSubscribed{}} -> :ok
-    after
-      1000 -> :ok
-    end
+    subscription_b =
+      EventFilterDispatcher.subscribe(
+        saga_id,
+        %EventFilter{
+          source_saga_id: source_saga_id
+        },
+        :b
+      )
 
     dispatch(Event.new(%TestEvent{value: :a}, source_saga_id))
 

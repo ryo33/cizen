@@ -49,19 +49,25 @@ defmodule Citadel.EventFilterDispatcher.SubscriptionRegisterer do
 
   defmodule SubscriptionKeeper do
     @moduledoc """
-    A saga to keep the subscription until the saga finished.
+    A saga to keep the subscription until the saga Finish.
     """
 
     @behaviour Saga
 
     @impl true
     def launch(_id, {target_saga_id, target_pid, subscription} = state) do
+      Dispatcher.listen_event_body(%Saga.Finish{id: target_saga_id})
       Dispatcher.listen_event_body(%Saga.Finished{id: target_saga_id})
       Registry.register(SubscriptionRegistry, :subscriptions, subscription)
       Process.link(target_pid)
 
       Dispatcher.dispatch(Event.new(%EventFilterSubscribed{subscription: subscription}))
       state
+    end
+
+    @impl true
+    def handle_event(id, %Event{body: %Saga.Finish{id: target_saga_id}}, {target_saga_id, _, _}) do
+      Dispatcher.dispatch(Event.new(%Saga.Finish{id: id}))
     end
 
     @impl true
