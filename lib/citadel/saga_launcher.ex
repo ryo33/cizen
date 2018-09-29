@@ -7,6 +7,7 @@ defmodule Citadel.SagaLauncher do
   alias Citadel.Dispatcher
   alias Citadel.Event
   alias Citadel.Saga
+  alias Citadel.SagaID
 
   defmodule LaunchSaga do
     @moduledoc """
@@ -30,6 +31,36 @@ defmodule Citadel.SagaLauncher do
 
   def start_link do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
+  end
+
+  @doc """
+  Launch a saga synchronously.
+  """
+  @spec launch_saga(module, state :: term) :: SagaID.t()
+  def launch_saga(module, state) do
+    id = SagaID.new()
+
+    task =
+      Task.async(fn ->
+        Dispatcher.listen_event_body(%Saga.Launched{id: id})
+
+        receive do
+          %Event{body: %Saga.Launched{id: ^id}} -> :ok
+        after
+          1000 -> raise "timeout to launch saga"
+        end
+      end)
+
+    Dispatcher.dispatch(
+      Event.new(%LaunchSaga{
+        id: id,
+        module: module,
+        state: state
+      })
+    )
+
+    Task.await(task)
+    id
   end
 
   @impl true

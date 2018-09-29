@@ -1,6 +1,7 @@
 defmodule Citadel.ConnectionTest do
   use ExUnit.Case
   alias Citadel.TestHelper
+  import Citadel.TestHelper, only: [launch_test_saga: 0]
 
   alias Citadel.Channel
   alias Citadel.Channel.EmitMessage
@@ -26,8 +27,8 @@ defmodule Citadel.ConnectionTest do
 
     message = %Message{
       event: Event.new(%TestEvent{}),
-      subscriber_saga_id: SagaID.new(),
-      subscriber_saga_module: TestSaga
+      destination_saga_id: SagaID.new(),
+      destination_saga_module: TestSaga
     }
 
     # Sender -> A -> C -> Receiver
@@ -35,23 +36,23 @@ defmodule Citadel.ConnectionTest do
     #        -> B
 
     channel_a = %Channel{
-      saga_id: SagaID.new(),
+      saga_id: launch_test_saga(),
       saga_module: ChannelA
     }
 
     channel_b = %Channel{
-      saga_id: SagaID.new(),
+      saga_id: launch_test_saga(),
       saga_module: ChannelB
     }
 
     channel_c = %Channel{
-      saga_id: SagaID.new(),
+      saga_id: launch_test_saga(),
       saga_module: ChannelC,
       previous_channel_module: channel_a.saga_module
     }
 
     channel_d = %Channel{
-      saga_id: SagaID.new(),
+      saga_id: launch_test_saga(),
       saga_module: ChannelD,
       previous_channel_module: channel_a.saga_module
     }
@@ -318,7 +319,7 @@ defmodule Citadel.ConnectionTest do
 
     assert_receive %Event{
       body: %Saga.Finished{
-        id: connection_id
+        id: ^connection_id
       }
     }
 
@@ -376,6 +377,61 @@ defmodule Citadel.ConnectionTest do
     refute_receive %Event{}
   end
 
+  test "finishes when one or more channels finish",
+       %{
+         connection_id: connection_id,
+         channels: channels
+       } = context do
+    flush(context)
+
+    Dispatcher.dispatch(
+      Event.new(%Saga.Finish{
+        id: channels.a.saga_id
+      })
+    )
+
+    assert_receive %Event{
+      body: %Saga.Finished{
+        id: ^connection_id
+      }
+    }
+
+    refute_receive %Event{}
+  end
+
+  test "finishes when one or more channels are already finished", context do
+    flush(context)
+
+    message = %Message{
+      event: Event.new(%TestEvent{}),
+      destination_saga_id: SagaID.new(),
+      destination_saga_module: TestSaga
+    }
+
+    channel_a = %Channel{
+      # Not launched
+      saga_id: SagaID.new(),
+      saga_module: ChannelA
+    }
+
+    saga_id = SagaID.new()
+    Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
+
+    Dispatcher.dispatch(
+      Event.new(%SagaLauncher.LaunchSaga{
+        id: saga_id,
+        module: Connection,
+        state: {message, [channel_a]}
+      })
+    )
+
+    assert_receive %Event{
+      body: %Saga.Finish{
+        id: ^saga_id
+      }
+    }
+  end
+
   defp flush(%{
          connection_id: connection_id,
          message: message,
@@ -383,30 +439,20 @@ defmodule Citadel.ConnectionTest do
        }) do
     %{a: channel_a, b: channel_b} = channels
 
-    receive do
-      %Event{
-        body: %FeedMessage{
-          connection_id: ^connection_id,
-          channel: ^channel_a,
-          message: ^message
-        }
-      } ->
-        :ok
-    after
-      100 -> :ok
-    end
+    assert_receive %Event{
+      body: %FeedMessage{
+        connection_id: ^connection_id,
+        channel: ^channel_a,
+        message: ^message
+      }
+    }
 
-    receive do
-      %Event{
-        body: %FeedMessage{
-          connection_id: ^connection_id,
-          channel: ^channel_b,
-          message: ^message
-        }
-      } ->
-        :ok
-    after
-      100 -> :ok
-    end
+    assert_receive %Event{
+      body: %FeedMessage{
+        connection_id: ^connection_id,
+        channel: ^channel_b,
+        message: ^message
+      }
+    }
   end
 end

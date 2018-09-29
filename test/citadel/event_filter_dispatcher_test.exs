@@ -14,7 +14,7 @@ defmodule Citadel.EventFilterDispatcherTest do
 
   test "subscribe/3 sets the meta data" do
     saga_id = launch_test_saga()
-    subscription = EventFilterDispatcher.subscribe(saga_id, %EventFilter{}, :value)
+    subscription = EventFilterDispatcher.subscribe(saga_id, nil, %EventFilter{}, :value)
     assert subscription.meta == :value
   end
 
@@ -27,7 +27,7 @@ defmodule Citadel.EventFilterDispatcherTest do
       source_saga_id: source_saga_id
     }
 
-    EventFilterDispatcher.subscribe(saga_id, event_filter)
+    EventFilterDispatcher.subscribe(saga_id, nil, event_filter)
 
     dispatch(Event.new(%TestEvent{value: :a}, source_saga_id))
     dispatch(Event.new(%TestEvent{value: :b}, SagaID.new()))
@@ -48,11 +48,11 @@ defmodule Citadel.EventFilterDispatcherTest do
     saga_b = launch_test_saga(handle_event: fn _id, event, _state -> send(pid, {:b, event}) end)
     source_saga_id = SagaID.new()
 
-    EventFilterDispatcher.subscribe(saga_a, %EventFilter{
+    EventFilterDispatcher.subscribe(saga_a, nil, %EventFilter{
       source_saga_id: source_saga_id
     })
 
-    EventFilterDispatcher.subscribe(saga_b, %EventFilter{
+    EventFilterDispatcher.subscribe(saga_b, nil, %EventFilter{
       source_saga_id: SagaID.new()
     })
 
@@ -81,6 +81,7 @@ defmodule Citadel.EventFilterDispatcherTest do
     subscription_a =
       EventFilterDispatcher.subscribe(
         saga_id,
+        nil,
         %EventFilter{
           source_saga_id: source_saga_id
         },
@@ -90,6 +91,7 @@ defmodule Citadel.EventFilterDispatcherTest do
     subscription_b =
       EventFilterDispatcher.subscribe(
         saga_id,
+        nil,
         %EventFilter{
           source_saga_id: source_saga_id
         },
@@ -98,20 +100,64 @@ defmodule Citadel.EventFilterDispatcherTest do
 
     dispatch(Event.new(%TestEvent{value: :a}, source_saga_id))
 
-    receive do
-      %Event{
+    received =
+      assert_receive %Event{
         body: %PushEvent{
-          event: %Event{body: %TestEvent{value: :a}},
-          subscriptions: subscriptions
+          event: %Event{body: %TestEvent{value: :a}}
         }
-      } ->
-        assert MapSet.new(subscriptions) ==
-                 MapSet.new([
-                   subscription_a,
-                   subscription_b
-                 ])
-    after
-      100 -> flunk("timeout")
-    end
+      }
+
+    assert MapSet.new(received.body.subscriptions) ==
+             MapSet.new([
+               subscription_a,
+               subscription_b
+             ])
+  end
+
+  test "uses proxy saga" do
+    pid = self()
+    proxy_saga_id = launch_test_saga(handle_event: fn _id, event, _state -> send(pid, event) end)
+    saga_id = launch_test_saga()
+    source_saga_id = SagaID.new()
+
+    EventFilterDispatcher.subscribe_as_proxy(
+      proxy_saga_id,
+      saga_id,
+      nil,
+      %EventFilter{
+        source_saga_id: source_saga_id
+      }
+    )
+
+    dispatch(Event.new(%TestEvent{value: :a}, source_saga_id))
+
+    assert_receive %Event{
+      body: %PushEvent{
+        event: %Event{body: %TestEvent{value: :a}}
+      }
+    }
+  end
+
+  test "ignores PushEvent event" do
+    pid = self()
+    saga_id = launch_test_saga(handle_event: fn _id, event, _state -> send(pid, event) end)
+    source_saga_id = SagaID.new()
+
+    EventFilterDispatcher.subscribe(saga_id, nil, %EventFilter{
+      source_saga_id: source_saga_id
+    })
+
+    dispatch(
+      Event.new(
+        %PushEvent{
+          saga_id: launch_test_saga(),
+          event: Event.new(%TestEvent{}),
+          subscriptions: []
+        },
+        source_saga_id
+      )
+    )
+
+    refute_receive %Event{}
   end
 end

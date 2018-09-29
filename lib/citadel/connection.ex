@@ -11,6 +11,7 @@ defmodule Citadel.Connection do
   alias Citadel.Event
   alias Citadel.ReceiveMessage
   alias Citadel.Saga
+  alias Citadel.SagaRegistry
 
   alias Citadel.EventBodyFilter
   alias Citadel.EventBodyFilterSet
@@ -22,7 +23,23 @@ defmodule Citadel.Connection do
 
   @impl true
   def launch(id, {message, channels}) do
-    EventFilterDispatcher.subscribe(id, %EventFilter{
+    if Enum.any?(channels, fn %Channel{saga_id: saga_id} ->
+         :error == SagaRegistry.resolve_id(saga_id)
+       end) do
+      Dispatcher.dispatch(
+        Event.new(%Saga.Finish{
+          id: id
+        })
+      )
+    end
+
+    Enum.each(channels, fn %Channel{saga_id: saga_id} ->
+      Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
+      Dispatcher.listen_event_body(%Saga.Finished{id: saga_id})
+      Dispatcher.listen_event_body(%Saga.Crashed{id: saga_id})
+    end)
+
+    EventFilterDispatcher.subscribe(id, __MODULE__, %EventFilter{
       event_type: EmitMessage,
       event_body_filter_set:
         EventBodyFilterSet.new([
@@ -30,7 +47,7 @@ defmodule Citadel.Connection do
         ])
     })
 
-    EventFilterDispatcher.subscribe(id, %EventFilter{
+    EventFilterDispatcher.subscribe(id, __MODULE__, %EventFilter{
       event_type: RejectMessage,
       event_body_filter_set:
         EventBodyFilterSet.new([
@@ -150,5 +167,38 @@ defmodule Citadel.Connection do
     else
       %{state | active_channels: active_channels}
     end
+  end
+
+  @impl true
+  def handle_event(id, %Event{body: %Saga.Finish{}}, state) do
+    Dispatcher.dispatch(
+      Event.new(%Saga.Finish{
+        id: id
+      })
+    )
+
+    %{state | closed: true}
+  end
+
+  @impl true
+  def handle_event(id, %Event{body: %Saga.Finished{}}, state) do
+    Dispatcher.dispatch(
+      Event.new(%Saga.Finish{
+        id: id
+      })
+    )
+
+    %{state | closed: true}
+  end
+
+  @impl true
+  def handle_event(id, %Event{body: %Saga.Crashed{}}, state) do
+    Dispatcher.dispatch(
+      Event.new(%Saga.Finish{
+        id: id
+      })
+    )
+
+    %{state | closed: true}
   end
 end

@@ -8,11 +8,11 @@ defmodule Citadel.Message do
 
   @type t :: %__MODULE__{
           event: Event.t(),
-          subscriber_saga_id: SagaID.t(),
-          subscriber_saga_module: module | nil
+          destination_saga_id: SagaID.t(),
+          destination_saga_module: module | nil
         }
 
-  @keys [:event, :subscriber_saga_id, :subscriber_saga_module]
+  @keys [:event, :destination_saga_id, :destination_saga_module]
   @enforce_keys @keys
   defstruct @keys
 end

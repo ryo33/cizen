@@ -52,13 +52,14 @@ defmodule Citadel.Saga do
 
   def unlaunch(id) do
     :ok = GenServer.stop({:via, Registry, {SagaRegistry, id}}, :shutdown)
+  after
     dispatch(Event.new(%Unlaunched{id: id}))
   end
 
   @impl true
   def init({id, module, state}) do
-    state = module.launch(id, state)
     listen_event_body(%Finish{id: id})
+    state = module.launch(id, state)
     {:ok, {id, module, state}}
   end
 

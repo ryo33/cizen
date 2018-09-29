@@ -19,7 +19,7 @@ defmodule Citadel.EventFilterDispatcher do
     An event to push an event from EventFilterDispatcher
     """
 
-    @keys [:event, :subscriptions]
+    @keys [:saga_id, :event, :subscriptions]
     @enforce_keys @keys
     defstruct @keys
   end
@@ -28,10 +28,30 @@ defmodule Citadel.EventFilterDispatcher do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
   end
 
-  @spec subscribe(SagaID.t(), EventFilter.t(), meta :: term) :: EventFilterSubscription.t()
-  def subscribe(id, event_filter, meta \\ nil) do
+  @doc """
+  Subscribe event filter synchronously.
+  """
+  @spec subscribe(SagaID.t(), module | nil, EventFilter.t(), meta :: term) ::
+          EventFilterSubscription.t()
+  def subscribe(id, module, event_filter, meta \\ nil) do
+    subscribe_as_proxy(nil, id, module, event_filter, meta)
+  end
+
+  @doc """
+  Subscribe event filter synchronously as a proxy.
+  """
+  @spec subscribe_as_proxy(
+          proxy :: SagaID.t() | nil,
+          SagaID.t(),
+          module | nil,
+          EventFilter.t(),
+          meta :: term
+        ) :: EventFilterSubscription.t()
+  def subscribe_as_proxy(proxy_id, id, module, event_filter, meta \\ nil) do
     subscription = %EventFilterSubscription{
+      proxy_saga_id: proxy_id,
       subscriber_saga_id: id,
+      subscriber_saga_module: module,
       event_filter: event_filter,
       meta: meta
     }
@@ -65,6 +85,8 @@ defmodule Citadel.EventFilterDispatcher do
   end
 
   @impl true
+  def handle_info(%Event{body: %PushEvent{}}, state), do: {:noreply, state}
+
   def handle_info(%Event{} = event, state) do
     subscriptions = SubscriptionRegistry.subscriptions()
 
@@ -73,11 +95,12 @@ defmodule Citadel.EventFilterDispatcher do
       EventFilterSubscription.match?(subscription, event)
     end)
     |> Enum.group_by(fn subscription ->
-      subscription.subscriber_saga_id
+      subscription.proxy_saga_id || subscription.subscriber_saga_id
     end)
-    |> Enum.each(fn {_, subscriptions} ->
+    |> Enum.each(fn {saga_id, subscriptions} ->
       Dispatcher.dispatch(
         Event.new(%PushEvent{
+          saga_id: saga_id,
           event: event,
           subscriptions: subscriptions
         })

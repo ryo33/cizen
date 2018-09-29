@@ -20,8 +20,8 @@ defmodule Citadel.TransmitterTest do
 
     message = %Message{
       event: Event.new(%TestEvent{}),
-      subscriber_saga_id: SagaID.new(),
-      subscriber_saga_module: TestSaga
+      destination_saga_id: SagaID.new(),
+      destination_saga_module: TestSaga
     }
 
     channels = [

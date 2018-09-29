@@ -37,9 +37,9 @@ defmodule Citadel.TestHelper do
         module: TestSaga,
         state: %{
           launch: fn id, state ->
+            send(pid, {:ok, id})
             launch = Keyword.get(opts, :launch, fn _id, state -> state end)
             state = launch.(id, state)
-            send(pid, {:ok, id})
             state
           end,
           handle_event: Keyword.get(opts, :handle_event, fn _id, _event, state -> state end)
@@ -50,7 +50,7 @@ defmodule Citadel.TestHelper do
     receive do
       {:ok, ^saga_id} -> :ok
     after
-      50 -> flunk()
+      100 -> flunk()
     end
 
     on_exit(fn ->

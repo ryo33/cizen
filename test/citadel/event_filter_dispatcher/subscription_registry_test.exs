@@ -30,6 +30,8 @@ defmodule Citadel.EventFilterDispatcher.SubscriptionRegistryTest do
   end
 
   test "EventFilterSubscribe event" do
+    assert_condition(100, SubscriptionRegistry.subscriptions() == [])
+
     listen_event_type(EventFilterSubscribed)
     saga_id = launch_test_saga()
 
@@ -53,6 +55,8 @@ defmodule Citadel.EventFilterDispatcher.SubscriptionRegistryTest do
   end
 
   test "remove subscription when the saga finishes" do
+    assert_condition(1000, SubscriptionRegistry.subscriptions() == [])
+
     saga_id = launch_test_saga()
 
     subscription = %EventFilterSubscription{

@@ -8,6 +8,7 @@ defmodule Citadel.EventFilterSubscription do
   alias Citadel.SagaID
 
   @type t :: %__MODULE__{
+          proxy_saga_id: SagaID.t() | nil,
           subscriber_saga_id: SagaID.t(),
           subscriber_saga_module: module | nil,
           event_filter: EventFilter.t(),
@@ -16,6 +17,7 @@ defmodule Citadel.EventFilterSubscription do
 
   @enforce_keys [:subscriber_saga_id, :event_filter]
   defstruct [
+    :proxy_saga_id,
     :subscriber_saga_id,
     :subscriber_saga_module,
     :event_filter,

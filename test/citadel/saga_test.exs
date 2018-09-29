@@ -116,4 +116,19 @@ defmodule Citadel.SagaTest do
     dispatch(Event.new(%TestEvent{value: id}))
     assert_receive %Event{body: %TestEventReply{value: id}}
   end
+
+  test "finishes immediately" do
+    listen_event_type(Saga.Finished)
+
+    id =
+      launch_test_saga(
+        launch: fn id, state ->
+          dispatch(Event.new(%Saga.Finish{id: id}))
+          state
+        end
+      )
+
+    assert_receive %Event{body: %Saga.Finished{id: ^id}}
+    assert_condition(100, :error == SagaRegistry.resolve_id(id))
+  end
 end

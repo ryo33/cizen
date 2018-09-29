@@ -21,10 +21,8 @@ defmodule Citadel.EventFilterDispatcher.EventPusher do
   end
 
   @impl true
-  def handle_info(%Event{body: %PushEvent{}} = event, state) do
-    subscriber_saga_id = hd(event.body.subscriptions).subscriber_saga_id
-
-    case SagaRegistry.resolve_id(subscriber_saga_id) do
+  def handle_info(%Event{body: %PushEvent{saga_id: saga_id}} = event, state) do
+    case SagaRegistry.resolve_id(saga_id) do
       {:ok, pid} -> send(pid, event)
       _ -> :ok
     end
