@@ -3,11 +3,14 @@ defmodule Citadel.Channel do
   A channel interferes messaging.
   """
 
+  alias Citadel.Message
   alias Citadel.SagaID
 
   @type t :: %__MODULE__{
           saga_id: SagaID.t(),
           saga_module: module,
+          subscriber_saga_id: SagaID.t() | nil,
+          subscriber_saga_module: module | nil,
           previous_channel_module: module | nil
         }
 
@@ -15,6 +18,8 @@ defmodule Citadel.Channel do
   defstruct [
     :saga_id,
     :saga_module,
+    :subscriber_saga_id,
+    :subscriber_saga_module,
     :previous_channel_module
   ]
 
@@ -77,4 +82,26 @@ defmodule Citadel.Channel do
     do: true
 
   def adjoin?(_, _), do: false
+
+  @spec match?(__MODULE__.t(), Message.t()) :: boolean
+  def match?(channel, message) do
+    match_subscriber_saga_id?(channel, message) and
+      match_subscriber_saga_module?(channel, message)
+  end
+
+  defp match_subscriber_saga_id?(channel, message) do
+    if is_nil(channel.subscriber_saga_id) do
+      true
+    else
+      channel.subscriber_saga_id == message.subscriber_saga_id
+    end
+  end
+
+  defp match_subscriber_saga_module?(channel, message) do
+    if is_nil(channel.subscriber_saga_module) do
+      true
+    else
+      channel.subscriber_saga_module == message.subscriber_saga_module
+    end
+  end
 end
