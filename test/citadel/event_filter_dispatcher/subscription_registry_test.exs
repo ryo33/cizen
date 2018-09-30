@@ -8,13 +8,13 @@ defmodule Citadel.EventFilterDispatcher.SubscriptionRegistryTest do
       assert_condition: 2
     ]
 
+  alias Citadel.Dispatcher
   alias Citadel.Event
   alias Citadel.EventBodyFilter
   alias Citadel.EventFilter
   alias Citadel.EventFilterDispatcher.SubscriptionRegistry
   alias Citadel.EventFilterSubscription
   alias Citadel.SubscribeEventFilter
-  import Citadel.Dispatcher, only: [dispatch: 1, listen_event_type: 1]
 
   defmodule TestEventBodyFilterA do
     @behaviour EventBodyFilter
@@ -31,7 +31,7 @@ defmodule Citadel.EventFilterDispatcher.SubscriptionRegistryTest do
   test "EventFilterSubscribe event" do
     assert_condition(100, SubscriptionRegistry.subscriptions() == [])
 
-    listen_event_type(SubscribeEventFilter.Subscribed)
+    Dispatcher.listen_event_type(SubscribeEventFilter.Subscribed)
     saga_id = launch_test_saga()
 
     subscription = %EventFilterSubscription{
@@ -39,7 +39,7 @@ defmodule Citadel.EventFilterDispatcher.SubscriptionRegistryTest do
       event_filter: %EventFilter{}
     }
 
-    dispatch(
+    Dispatcher.dispatch(
       Event.new(%SubscribeEventFilter{
         subscription: subscription
       })
@@ -63,7 +63,7 @@ defmodule Citadel.EventFilterDispatcher.SubscriptionRegistryTest do
       event_filter: %EventFilter{}
     }
 
-    dispatch(
+    Dispatcher.dispatch(
       Event.new(%SubscribeEventFilter{
         subscription: subscription
       })

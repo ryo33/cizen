@@ -3,7 +3,7 @@ defmodule Citadel.SagaLauncherTest do
   doctest Citadel.SagaLauncher
   import Citadel.TestHelper, only: [launch_test_saga: 0, assert_condition: 2]
 
-  import Citadel.Dispatcher, only: [dispatch: 1]
+  alias Citadel.Dispatcher
   alias Citadel.Event
   alias Citadel.SagaID
   alias Citadel.SagaLauncher
@@ -15,7 +15,7 @@ defmodule Citadel.SagaLauncherTest do
     pid = self()
     saga_id = SagaID.new()
 
-    dispatch(
+    Dispatcher.dispatch(
       Event.new(%SagaLauncher.LaunchSaga{
         id: saga_id,
         module: TestSaga,
@@ -35,7 +35,7 @@ defmodule Citadel.SagaLauncherTest do
   test "SagaLauncher.UnlaunchSaga event" do
     id = launch_test_saga()
     assert {:ok, pid} = SagaRegistry.resolve_id(id)
-    dispatch(Event.new(%SagaLauncher.UnlaunchSaga{id: id}))
+    Dispatcher.dispatch(Event.new(%SagaLauncher.UnlaunchSaga{id: id}))
     assert_condition(100, Process.alive?(pid))
   end
 end

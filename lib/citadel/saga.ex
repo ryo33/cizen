@@ -5,7 +5,7 @@ defmodule Citadel.Saga do
 
   use GenServer
 
-  import Citadel.Dispatcher, only: [listen_event_body: 1, dispatch: 1]
+  alias Citadel.Dispatcher
   alias Citadel.Event
   alias Citadel.SagaID
   alias Citadel.SagaRegistry
@@ -47,18 +47,18 @@ defmodule Citadel.Saga do
     {:ok, _pid} =
       GenServer.start(__MODULE__, {id, module, state}, name: {:via, Registry, {SagaRegistry, id}})
 
-    dispatch(Event.new(%Launched{id: id}))
+    Dispatcher.dispatch(Event.new(%Launched{id: id}))
   end
 
   def unlaunch(id) do
     :ok = GenServer.stop({:via, Registry, {SagaRegistry, id}}, :shutdown)
   after
-    dispatch(Event.new(%Unlaunched{id: id}))
+    Dispatcher.dispatch(Event.new(%Unlaunched{id: id}))
   end
 
   @impl true
   def init({id, module, state}) do
-    listen_event_body(%Finish{id: id})
+    Dispatcher.listen_event_body(%Finish{id: id})
     state = module.launch(id, state)
     {:ok, {id, module, state}}
   end
@@ -82,12 +82,12 @@ defmodule Citadel.Saga do
   end
 
   def terminate({:shutdown, %Event{}}, {id, _module, _state}) do
-    dispatch(Event.new(%Finished{id: id}))
+    Dispatcher.dispatch(Event.new(%Finished{id: id}))
     :shutdown
   end
 
   def terminate({:shutdown, reason}, {id, _module, _state}) do
-    dispatch(Event.new(%Crashed{id: id, reason: reason}))
+    Dispatcher.dispatch(Event.new(%Crashed{id: id, reason: reason}))
     :shutdown
   end
 end

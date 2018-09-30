@@ -3,12 +3,12 @@ defmodule Citadel.EventFilterDispatcherTest do
 
   import Citadel.TestHelper, only: [launch_test_saga: 0, launch_test_saga: 1]
 
+  alias Citadel.Dispatcher
   alias Citadel.Event
   alias Citadel.EventFilter
   alias Citadel.EventFilterDispatcher
   alias Citadel.EventFilterDispatcher.PushEvent
   alias Citadel.SagaID
-  import Citadel.Dispatcher, only: [dispatch: 1]
 
   defmodule(TestEvent, do: defstruct([:value]))
 
@@ -29,8 +29,8 @@ defmodule Citadel.EventFilterDispatcherTest do
 
     EventFilterDispatcher.subscribe(saga_id, nil, event_filter)
 
-    dispatch(Event.new(%TestEvent{value: :a}, source_saga_id))
-    dispatch(Event.new(%TestEvent{value: :b}, SagaID.new()))
+    Dispatcher.dispatch(Event.new(%TestEvent{value: :a}, source_saga_id))
+    Dispatcher.dispatch(Event.new(%TestEvent{value: :b}, SagaID.new()))
 
     assert_receive %Event{
       body: %PushEvent{
@@ -56,7 +56,7 @@ defmodule Citadel.EventFilterDispatcherTest do
       source_saga_id: SagaID.new()
     })
 
-    dispatch(Event.new(%TestEvent{value: :a}, source_saga_id))
+    Dispatcher.dispatch(Event.new(%TestEvent{value: :a}, source_saga_id))
 
     assert_receive {:a,
                     %Event{
@@ -98,7 +98,7 @@ defmodule Citadel.EventFilterDispatcherTest do
         :b
       )
 
-    dispatch(Event.new(%TestEvent{value: :a}, source_saga_id))
+    Dispatcher.dispatch(Event.new(%TestEvent{value: :a}, source_saga_id))
 
     received =
       assert_receive %Event{
@@ -129,7 +129,7 @@ defmodule Citadel.EventFilterDispatcherTest do
       }
     )
 
-    dispatch(Event.new(%TestEvent{value: :a}, source_saga_id))
+    Dispatcher.dispatch(Event.new(%TestEvent{value: :a}, source_saga_id))
 
     assert_receive %Event{
       body: %PushEvent{
@@ -147,7 +147,7 @@ defmodule Citadel.EventFilterDispatcherTest do
       source_saga_id: source_saga_id
     })
 
-    dispatch(
+    Dispatcher.dispatch(
       Event.new(
         %PushEvent{
           saga_id: launch_test_saga(),

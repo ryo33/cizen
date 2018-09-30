@@ -2,7 +2,8 @@ defmodule Citadel.TestHelper do
   @moduledoc false
   import ExUnit.Assertions, only: [flunk: 0]
   import ExUnit.Callbacks, only: [on_exit: 1]
-  import Citadel.Dispatcher, only: [listen_event_type: 1, dispatch: 1]
+
+  alias Citadel.Dispatcher
   alias Citadel.Event
   alias Citadel.Saga
   alias Citadel.SagaID
@@ -13,8 +14,8 @@ defmodule Citadel.TestHelper do
   def ensure_finished(id) do
     case SagaRegistry.resolve_id(id) do
       {:ok, _pid} ->
-        listen_event_type(Saga.Finished)
-        dispatch(Event.new(%Saga.Finish{id: id}))
+        Dispatcher.listen_event_type(Saga.Finished)
+        Dispatcher.dispatch(Event.new(%Saga.Finish{id: id}))
 
         receive do
           %Event{body: %Saga.Finished{id: ^id}} -> :ok
@@ -31,7 +32,7 @@ defmodule Citadel.TestHelper do
     pid = self()
     saga_id = SagaID.new()
 
-    dispatch(
+    Dispatcher.dispatch(
       Event.new(%SagaLauncher.LaunchSaga{
         id: saga_id,
         module: TestSaga,
