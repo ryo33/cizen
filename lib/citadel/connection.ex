@@ -21,6 +21,47 @@ defmodule Citadel.Connection do
 
   @behaviour Saga
 
+  defp feed_event_to_channels(next_channels, id, state) do
+    %{message: message, active_channels: active_channels} = state
+
+    if Enum.empty?(next_channels) do
+      Dispatcher.dispatch(
+        Event.new(%ReceiveMessage{
+          message: message
+        })
+      )
+
+      Dispatcher.dispatch(
+        Event.new(%Saga.Finish{
+          id: id
+        })
+      )
+
+      %{state | closed: true, active_channels: active_channels}
+    else
+      Enum.each(next_channels, fn channel ->
+        Dispatcher.dispatch(
+          Event.new(%FeedMessage{
+            connection_id: id,
+            channel: channel,
+            message: message
+          })
+        )
+      end)
+
+      active_channels =
+        Enum.reduce(
+          next_channels,
+          active_channels,
+          fn channel, active_channels ->
+            MapSet.put(active_channels, channel)
+          end
+        )
+
+      %{state | active_channels: active_channels}
+    end
+  end
+
   @impl true
   def launch(id, {message, channels}) do
     if Enum.any?(channels, fn %Channel{saga_id: saga_id} ->
@@ -62,27 +103,19 @@ defmodule Citadel.Connection do
         _ -> false
       end)
 
-    Enum.each(active_channels, fn channel ->
-      Dispatcher.dispatch(
-        Event.new(%FeedMessage{
-          connection_id: id,
-          channel: channel,
-          message: message
-        })
-      )
-    end)
-
-    %{
+    state = %{
       message: message,
       channels: channels,
       active_channels: MapSet.new(active_channels),
       closed: false
     }
+
+    feed_event_to_channels(active_channels, id, state)
   end
 
   @impl true
   def handle_event(_id, %Event{body: %PushEvent{}}, %{closed: true} = state) do
-    # Do nothing
+    # Do nothing if closed
     state
   end
 
@@ -95,9 +128,8 @@ defmodule Citadel.Connection do
         },
         %{closed: false} = state
       ) do
-    %{message: message, channels: channels, active_channels: active_channels} = state
-
-    active_channels = MapSet.delete(active_channels, emit.channel)
+    %{channels: channels, active_channels: active_channels} = state
+    state = %{state | active_channels: MapSet.delete(active_channels, emit.channel)}
 
     next_channels =
       channels
@@ -105,42 +137,7 @@ defmodule Citadel.Connection do
         Channel.adjoin?(emit.channel, next)
       end)
 
-    if Enum.empty?(next_channels) do
-      Dispatcher.dispatch(
-        Event.new(%ReceiveMessage{
-          message: message
-        })
-      )
-
-      Dispatcher.dispatch(
-        Event.new(%Saga.Finish{
-          id: id
-        })
-      )
-
-      %{state | closed: true, active_channels: active_channels}
-    else
-      Enum.each(next_channels, fn channel ->
-        Dispatcher.dispatch(
-          Event.new(%FeedMessage{
-            connection_id: id,
-            channel: channel,
-            message: message
-          })
-        )
-      end)
-
-      active_channels =
-        Enum.reduce(
-          next_channels,
-          active_channels,
-          fn channel, active_channels ->
-            MapSet.put(active_channels, channel)
-          end
-        )
-
-      %{state | active_channels: active_channels}
-    end
+    feed_event_to_channels(next_channels, id, state)
   end
 
   @impl true

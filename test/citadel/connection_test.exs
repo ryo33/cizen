@@ -18,7 +18,43 @@ defmodule Citadel.ConnectionTest do
 
   defmodule(TestEvent, do: defstruct([:value]))
 
-  setup do
+  describe "Connection with no channels" do
+    test "dispatches ReceiveMessage and finishes" do
+      saga_id = SagaID.new()
+      Dispatcher.listen_event_type(FeedMessage)
+      Dispatcher.listen_event_type(EmitMessage)
+      Dispatcher.listen_event_type(ReceiveMessage)
+      Dispatcher.listen_event_body(%Saga.Finished{id: saga_id})
+
+      message = %Message{
+        event: Event.new(%TestEvent{}),
+        destination_saga_id: SagaID.new(),
+        destination_saga_module: TestSaga
+      }
+
+      Dispatcher.dispatch(
+        Event.new(%SagaLauncher.LaunchSaga{
+          id: saga_id,
+          module: Connection,
+          state: {message, []}
+        })
+      )
+
+      assert_receive %Event{
+        body: %ReceiveMessage{
+          message: ^message
+        }
+      }
+
+      assert_receive %Event{body: %Saga.Finished{id: connection_id}}
+
+      refute_receive %Event{}
+
+      TestHelper.ensure_finished(saga_id)
+    end
+  end
+
+  defp setup_connection_with_channels(_context) do
     saga_id = SagaID.new()
     Dispatcher.listen_event_type(FeedMessage)
     Dispatcher.listen_event_type(EmitMessage)
@@ -83,325 +119,327 @@ defmodule Citadel.ConnectionTest do
     ]
   end
 
-  test "dispatches FeedMessage on launch", %{
-    connection_id: connection_id,
-    message: message,
-    channels: channels
-  } do
-    # Sender -> A    C    Receiver
-    #                D
-    #        -> B
+  describe "Connection with channels" do
+    setup [:setup_connection_with_channels]
 
-    %{a: channel_a, b: channel_b} = channels
+    test "dispatches FeedMessage on launch", %{
+      connection_id: connection_id,
+      message: message,
+      channels: channels
+    } do
+      # Sender -> A    C    Receiver
+      #                D
+      #        -> B
 
-    assert_receive %Event{
-      body: %FeedMessage{
-        connection_id: ^connection_id,
-        channel: ^channel_a,
-        message: ^message
+      %{a: channel_a, b: channel_b} = channels
+
+      assert_receive %Event{
+        body: %FeedMessage{
+          connection_id: ^connection_id,
+          channel: ^channel_a,
+          message: ^message
+        }
       }
-    }
 
-    assert_receive %Event{
-      body: %FeedMessage{
-        connection_id: ^connection_id,
-        channel: ^channel_b,
-        message: ^message
+      assert_receive %Event{
+        body: %FeedMessage{
+          connection_id: ^connection_id,
+          channel: ^channel_b,
+          message: ^message
+        }
       }
-    }
 
-    refute_receive %Event{}
+      refute_receive %Event{}
+    end
+
+    test "dispatches FeedMessage to next channels",
+         %{
+           connection_id: connection_id,
+           message: message,
+           channels: channels
+         } = context do
+      # Sender    A -> C    Receiver
+      #             -> D
+      #           B
+
+      %{a: channel_a, c: channel_c, d: channel_d} = channels
+
+      flush(context)
+
+      event =
+        Event.new(%EmitMessage{
+          connection_id: connection_id,
+          channel: channel_a,
+          message: message
+        })
+
+      Dispatcher.dispatch(event)
+      assert_receive ^event
+
+      assert_receive %Event{
+        body: %FeedMessage{
+          connection_id: ^connection_id,
+          channel: ^channel_c,
+          message: ^message
+        }
+      }
+
+      assert_receive %Event{
+        body: %FeedMessage{
+          connection_id: ^connection_id,
+          channel: ^channel_d,
+          message: ^message
+        }
+      }
+
+      refute_receive %Event{}
+    end
+
+    test "dispatches ReceiveMessage when a end channel emits the message",
+         %{
+           connection_id: connection_id,
+           message: message,
+           channels: channels
+         } = context do
+      # Sender    A    C -> Receiver
+      #                D
+      #           B
+
+      %{c: channel_c} = channels
+
+      flush(context)
+
+      event =
+        Event.new(%EmitMessage{
+          connection_id: connection_id,
+          channel: channel_c,
+          message: message
+        })
+
+      Dispatcher.dispatch(event)
+      assert_receive ^event
+
+      assert_receive %Event{
+        body: %ReceiveMessage{
+          message: ^message
+        }
+      }
+
+      assert_receive %Event{body: %Saga.Finished{id: connection_id}}
+
+      refute_receive %Event{}
+    end
+
+    test "dispatches ReceiveMessage once even if multiple end channel emit message",
+         %{
+           connection_id: connection_id,
+           message: message,
+           channels: channels
+         } = context do
+      # Sender    A    C -> Receiver
+      #                D ->
+      #           B
+
+      %{c: channel_c, d: channel_d} = channels
+
+      flush(context)
+
+      event =
+        Event.new(%EmitMessage{
+          connection_id: connection_id,
+          channel: channel_c,
+          message: message
+        })
+
+      Dispatcher.dispatch(event)
+      assert_receive ^event
+
+      event =
+        Event.new(%EmitMessage{
+          connection_id: connection_id,
+          channel: channel_d,
+          message: message
+        })
+
+      Dispatcher.dispatch(event)
+      assert_receive ^event
+
+      assert_receive %Event{
+        body: %ReceiveMessage{
+          message: ^message
+        }
+      }
+
+      assert_receive %Event{body: %Saga.Finished{id: connection_id}}
+
+      refute_receive %Event{}
+    end
+
+    test "finishes after dispatching ReceiveMessage",
+         %{
+           connection_id: connection_id,
+           message: message,
+           channels: channels
+         } = context do
+      %{c: channel_c} = channels
+
+      flush(context)
+
+      event =
+        Event.new(%EmitMessage{
+          connection_id: connection_id,
+          channel: channel_c,
+          message: message
+        })
+
+      Dispatcher.dispatch(event)
+      assert_receive ^event
+
+      assert_receive %Event{body: %ReceiveMessage{message: ^message}}
+
+      assert_receive %Event{
+        body: %Saga.Finished{
+          id: connection_id
+        }
+      }
+
+      refute_receive %Event{}
+    end
+
+    test "finishes when all active channel rejects the message",
+         %{
+           connection_id: connection_id,
+           message: message,
+           channels: channels
+         } = context do
+      # Sender    A -> C x  Receiver
+      #                D x
+      #           B x
+
+      %{a: channel_a, b: channel_b, c: channel_c, d: channel_d} = channels
+
+      flush(context)
+
+      event =
+        Event.new(%EmitMessage{
+          connection_id: connection_id,
+          channel: channel_a,
+          message: message
+        })
+
+      Dispatcher.dispatch(event)
+      assert_receive ^event
+      assert_receive %Event{body: %FeedMessage{channel: ^channel_c}}
+      assert_receive %Event{body: %FeedMessage{channel: ^channel_d}}
+
+      Dispatcher.dispatch(
+        Event.new(%RejectMessage{
+          connection_id: connection_id,
+          channel: channel_b,
+          message: message
+        })
+      )
+
+      Dispatcher.dispatch(
+        Event.new(%RejectMessage{
+          connection_id: connection_id,
+          channel: channel_c,
+          message: message
+        })
+      )
+
+      Dispatcher.dispatch(
+        Event.new(%RejectMessage{
+          connection_id: connection_id,
+          channel: channel_d,
+          message: message
+        })
+      )
+
+      assert_receive %Event{
+        body: %Saga.Finished{
+          id: ^connection_id
+        }
+      }
+
+      refute_receive %Event{}
+    end
+
+    test "should not finish when one or more channel is active",
+         %{
+           connection_id: connection_id,
+           message: message,
+           channels: channels
+         } = context do
+      # Sender    A -> C x  Receiver
+      #                D
+      #           B x
+
+      %{a: channel_a, b: channel_b, c: channel_c, d: channel_d} = channels
+
+      flush(context)
+
+      event =
+        Event.new(%EmitMessage{
+          connection_id: connection_id,
+          channel: channel_a,
+          message: message
+        })
+
+      Dispatcher.dispatch(event)
+      assert_receive ^event
+      assert_receive %Event{body: %FeedMessage{channel: ^channel_c}}
+      assert_receive %Event{body: %FeedMessage{channel: ^channel_d}}
+
+      Dispatcher.dispatch(
+        Event.new(%RejectMessage{
+          connection_id: connection_id,
+          channel: channel_b,
+          message: message
+        })
+      )
+
+      Dispatcher.dispatch(
+        Event.new(%RejectMessage{
+          connection_id: connection_id,
+          channel: channel_c,
+          message: message
+        })
+      )
+
+      refute_receive %Event{
+        body: %Saga.Finished{
+          id: ^connection_id
+        }
+      }
+
+      refute_receive %Event{}
+    end
+
+    test "finishes when one or more channels finish",
+         %{
+           connection_id: connection_id,
+           channels: channels
+         } = context do
+      flush(context)
+
+      Dispatcher.dispatch(
+        Event.new(%Saga.Finish{
+          id: channels.a.saga_id
+        })
+      )
+
+      assert_receive %Event{
+        body: %Saga.Finished{
+          id: ^connection_id
+        }
+      }
+
+      refute_receive %Event{}
+    end
   end
 
-  test "dispatches FeedMessage to next channels",
-       %{
-         connection_id: connection_id,
-         message: message,
-         channels: channels
-       } = context do
-    # Sender    A -> C    Receiver
-    #             -> D
-    #           B
-
-    %{a: channel_a, c: channel_c, d: channel_d} = channels
-
-    flush(context)
-
-    event =
-      Event.new(%EmitMessage{
-        connection_id: connection_id,
-        channel: channel_a,
-        message: message
-      })
-
-    Dispatcher.dispatch(event)
-    assert_receive ^event
-
-    assert_receive %Event{
-      body: %FeedMessage{
-        connection_id: ^connection_id,
-        channel: ^channel_c,
-        message: ^message
-      }
-    }
-
-    assert_receive %Event{
-      body: %FeedMessage{
-        connection_id: ^connection_id,
-        channel: ^channel_d,
-        message: ^message
-      }
-    }
-
-    refute_receive %Event{}
-  end
-
-  test "dispatches ReceiveMessage when a end channel emits the message",
-       %{
-         connection_id: connection_id,
-         message: message,
-         channels: channels
-       } = context do
-    # Sender    A    C -> Receiver
-    #                D
-    #           B
-
-    %{c: channel_c} = channels
-
-    flush(context)
-
-    event =
-      Event.new(%EmitMessage{
-        connection_id: connection_id,
-        channel: channel_c,
-        message: message
-      })
-
-    Dispatcher.dispatch(event)
-    assert_receive ^event
-
-    assert_receive %Event{
-      body: %ReceiveMessage{
-        message: ^message
-      }
-    }
-
-    assert_receive %Event{body: %Saga.Finished{id: connection_id}}
-
-    refute_receive %Event{}
-  end
-
-  test "dispatches ReceiveMessage once even if multiple end channel emit message",
-       %{
-         connection_id: connection_id,
-         message: message,
-         channels: channels
-       } = context do
-    # Sender    A    C -> Receiver
-    #                D ->
-    #           B
-
-    %{c: channel_c, d: channel_d} = channels
-
-    flush(context)
-
-    event =
-      Event.new(%EmitMessage{
-        connection_id: connection_id,
-        channel: channel_c,
-        message: message
-      })
-
-    Dispatcher.dispatch(event)
-    assert_receive ^event
-
-    event =
-      Event.new(%EmitMessage{
-        connection_id: connection_id,
-        channel: channel_d,
-        message: message
-      })
-
-    Dispatcher.dispatch(event)
-    assert_receive ^event
-
-    assert_receive %Event{
-      body: %ReceiveMessage{
-        message: ^message
-      }
-    }
-
-    assert_receive %Event{body: %Saga.Finished{id: connection_id}}
-
-    refute_receive %Event{}
-  end
-
-  test "finishes after dispatching ReceiveMessage",
-       %{
-         connection_id: connection_id,
-         message: message,
-         channels: channels
-       } = context do
-    %{c: channel_c} = channels
-
-    flush(context)
-
-    event =
-      Event.new(%EmitMessage{
-        connection_id: connection_id,
-        channel: channel_c,
-        message: message
-      })
-
-    Dispatcher.dispatch(event)
-    assert_receive ^event
-
-    assert_receive %Event{body: %ReceiveMessage{message: ^message}}
-
-    assert_receive %Event{
-      body: %Saga.Finished{
-        id: connection_id
-      }
-    }
-
-    refute_receive %Event{}
-  end
-
-  test "finishes when all active channel rejects the message",
-       %{
-         connection_id: connection_id,
-         message: message,
-         channels: channels
-       } = context do
-    # Sender    A -> C x  Receiver
-    #                D x
-    #           B x
-
-    %{a: channel_a, b: channel_b, c: channel_c, d: channel_d} = channels
-
-    flush(context)
-
-    event =
-      Event.new(%EmitMessage{
-        connection_id: connection_id,
-        channel: channel_a,
-        message: message
-      })
-
-    Dispatcher.dispatch(event)
-    assert_receive ^event
-    assert_receive %Event{body: %FeedMessage{channel: ^channel_c}}
-    assert_receive %Event{body: %FeedMessage{channel: ^channel_d}}
-
-    Dispatcher.dispatch(
-      Event.new(%RejectMessage{
-        connection_id: connection_id,
-        channel: channel_b,
-        message: message
-      })
-    )
-
-    Dispatcher.dispatch(
-      Event.new(%RejectMessage{
-        connection_id: connection_id,
-        channel: channel_c,
-        message: message
-      })
-    )
-
-    Dispatcher.dispatch(
-      Event.new(%RejectMessage{
-        connection_id: connection_id,
-        channel: channel_d,
-        message: message
-      })
-    )
-
-    assert_receive %Event{
-      body: %Saga.Finished{
-        id: ^connection_id
-      }
-    }
-
-    refute_receive %Event{}
-  end
-
-  test "should not finish when one or more channel is active",
-       %{
-         connection_id: connection_id,
-         message: message,
-         channels: channels
-       } = context do
-    # Sender    A -> C x  Receiver
-    #                D
-    #           B x
-
-    %{a: channel_a, b: channel_b, c: channel_c, d: channel_d} = channels
-
-    flush(context)
-
-    event =
-      Event.new(%EmitMessage{
-        connection_id: connection_id,
-        channel: channel_a,
-        message: message
-      })
-
-    Dispatcher.dispatch(event)
-    assert_receive ^event
-    assert_receive %Event{body: %FeedMessage{channel: ^channel_c}}
-    assert_receive %Event{body: %FeedMessage{channel: ^channel_d}}
-
-    Dispatcher.dispatch(
-      Event.new(%RejectMessage{
-        connection_id: connection_id,
-        channel: channel_b,
-        message: message
-      })
-    )
-
-    Dispatcher.dispatch(
-      Event.new(%RejectMessage{
-        connection_id: connection_id,
-        channel: channel_c,
-        message: message
-      })
-    )
-
-    refute_receive %Event{
-      body: %Saga.Finished{
-        id: ^connection_id
-      }
-    }
-
-    refute_receive %Event{}
-  end
-
-  test "finishes when one or more channels finish",
-       %{
-         connection_id: connection_id,
-         channels: channels
-       } = context do
-    flush(context)
-
-    Dispatcher.dispatch(
-      Event.new(%Saga.Finish{
-        id: channels.a.saga_id
-      })
-    )
-
-    assert_receive %Event{
-      body: %Saga.Finished{
-        id: ^connection_id
-      }
-    }
-
-    refute_receive %Event{}
-  end
-
-  test "finishes when one or more channels are already finished", context do
-    flush(context)
-
+  test "finishes when one or more channels are already finished" do
     message = %Message{
       event: Event.new(%TestEvent{}),
       destination_saga_id: SagaID.new(),
@@ -430,6 +468,8 @@ defmodule Citadel.ConnectionTest do
         id: ^saga_id
       }
     }
+
+    TestHelper.ensure_finished(saga_id)
   end
 
   defp flush(%{
