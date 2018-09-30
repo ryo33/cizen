@@ -10,6 +10,8 @@ defmodule Citadel.TransmitterTest do
   alias Citadel.Saga
   alias Citadel.SagaID
   alias Citadel.SagaLauncher
+
+  alias Citadel.ReceiveMessage
   alias Citadel.SendMessage
 
   defmodule(TestEvent, do: defstruct([:value]))
@@ -51,5 +53,27 @@ defmodule Citadel.TransmitterTest do
     after
       100 -> flunk("timeout")
     end
+  end
+
+  test "send the message to destination saga on SendMessage event" do
+    pid = self()
+
+    saga_id =
+      TestHelper.launch_test_saga(handle_event: fn _id, event, _state -> send(pid, event) end)
+
+    message = %Message{
+      event: Event.new(%TestEvent{}),
+      destination_saga_id: saga_id,
+      destination_saga_module: TestSaga
+    }
+
+    event =
+      Event.new(%ReceiveMessage{
+        message: message
+      })
+
+    Dispatcher.dispatch(event)
+
+    assert_receive ^event
   end
 end

@@ -10,6 +10,9 @@ defmodule Citadel.Transmitter do
   alias Citadel.Event
   alias Citadel.SagaID
   alias Citadel.SagaLauncher
+  alias Citadel.SagaRegistry
+
+  alias Citadel.ReceiveMessage
   alias Citadel.SendMessage
 
   def start_link do
@@ -19,6 +22,7 @@ defmodule Citadel.Transmitter do
   @impl true
   def init(_args) do
     Dispatcher.listen_event_type(SendMessage)
+    Dispatcher.listen_event_type(ReceiveMessage)
     {:ok, :ok}
   end
 
@@ -31,6 +35,19 @@ defmodule Citadel.Transmitter do
         state: {body.message, body.channels}
       })
     )
+
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info(%Event{body: %ReceiveMessage{message: message}} = event, state) do
+    case SagaRegistry.resolve_id(message.destination_saga_id) do
+      {:ok, pid} ->
+        send(pid, event)
+
+      _ ->
+        :ok
+    end
 
     {:noreply, state}
   end
