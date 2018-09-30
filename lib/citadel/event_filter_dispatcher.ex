@@ -9,7 +9,6 @@ defmodule Citadel.EventFilterDispatcher do
   alias Citadel.Event
   alias Citadel.EventFilter
   alias Citadel.EventFilterDispatcher.SubscriptionRegistry
-  alias Citadel.EventFilterSubscribed
   alias Citadel.EventFilterSubscription
   alias Citadel.SagaID
   alias Citadel.SubscribeEventFilter
@@ -58,7 +57,7 @@ defmodule Citadel.EventFilterDispatcher do
 
     task =
       Task.async(fn ->
-        Dispatcher.listen_event_body(%EventFilterSubscribed{
+        Dispatcher.listen_event_body(%SubscribeEventFilter.Subscribed{
           subscription: subscription
         })
 
@@ -69,7 +68,7 @@ defmodule Citadel.EventFilterDispatcher do
         )
 
         receive do
-          %Event{body: %EventFilterSubscribed{}} -> :ok
+          %Event{body: %SubscribeEventFilter.Subscribed{}} -> :ok
         end
       end)
 

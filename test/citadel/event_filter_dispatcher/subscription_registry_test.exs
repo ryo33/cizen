@@ -12,7 +12,6 @@ defmodule Citadel.EventFilterDispatcher.SubscriptionRegistryTest do
   alias Citadel.EventBodyFilter
   alias Citadel.EventFilter
   alias Citadel.EventFilterDispatcher.SubscriptionRegistry
-  alias Citadel.EventFilterSubscribed
   alias Citadel.EventFilterSubscription
   alias Citadel.SubscribeEventFilter
   import Citadel.Dispatcher, only: [dispatch: 1, listen_event_type: 1]
@@ -32,7 +31,7 @@ defmodule Citadel.EventFilterDispatcher.SubscriptionRegistryTest do
   test "EventFilterSubscribe event" do
     assert_condition(100, SubscriptionRegistry.subscriptions() == [])
 
-    listen_event_type(EventFilterSubscribed)
+    listen_event_type(SubscribeEventFilter.Subscribed)
     saga_id = launch_test_saga()
 
     subscription = %EventFilterSubscription{
@@ -51,7 +50,7 @@ defmodule Citadel.EventFilterDispatcher.SubscriptionRegistryTest do
       SubscriptionRegistry.subscriptions() == [subscription]
     )
 
-    assert_receive %Event{body: %EventFilterSubscribed{subscription: subscription}}
+    assert_receive %Event{body: %SubscribeEventFilter.Subscribed{subscription: subscription}}
   end
 
   test "remove subscription when the saga finishes" do

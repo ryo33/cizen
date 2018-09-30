@@ -6,7 +6,6 @@ defmodule Citadel.EventFilterDispatcher.SubscriptionRegisterer do
   alias Citadel.Dispatcher
   alias Citadel.Event
   alias Citadel.EventFilterDispatcher.SubscriptionRegistry
-  alias Citadel.EventFilterSubscribed
   alias Citadel.SagaRegistry
   alias Citadel.SubscribeEventFilter
 
@@ -32,7 +31,10 @@ defmodule Citadel.EventFilterDispatcher.SubscriptionRegisterer do
           Process.link(pid)
           Process.flag(:trap_exit, true)
           Registry.register(SubscriptionRegistry, :subscriptions, subscription)
-          Dispatcher.dispatch(Event.new(%EventFilterSubscribed{subscription: subscription}))
+
+          Dispatcher.dispatch(
+            Event.new(%SubscribeEventFilter.Subscribed{subscription: subscription})
+          )
 
           receive do
             _ -> :ok
