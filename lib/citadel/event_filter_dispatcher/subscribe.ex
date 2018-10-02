@@ -1,4 +1,4 @@
-defmodule Citadel.SubscribeEventFilter do
+defmodule Citadel.EventFilterDispatcher.Subscribe do
   @moduledoc """
   An event to subscribe events.
   """

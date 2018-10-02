@@ -8,10 +8,8 @@ defmodule Citadel.EventFilterDispatcher do
   alias Citadel.Dispatcher
   alias Citadel.Event
   alias Citadel.EventFilter
-  alias Citadel.EventFilterSubscription
   alias Citadel.SagaID
   alias Citadel.SagaRegistry
-  alias Citadel.SubscribeEventFilter
 
   defmodule PushEvent do
     @moduledoc """
@@ -31,7 +29,7 @@ defmodule Citadel.EventFilterDispatcher do
   Subscribe event filter synchronously.
   """
   @spec subscribe(SagaID.t(), module | nil, EventFilter.t(), meta :: term) ::
-          EventFilterSubscription.t()
+          __MODULE__.Subscription.t()
   def subscribe(id, module, event_filter, meta \\ nil) do
     subscribe_as_proxy(nil, id, module, event_filter, meta)
   end
@@ -45,9 +43,9 @@ defmodule Citadel.EventFilterDispatcher do
           module | nil,
           EventFilter.t(),
           meta :: term
-        ) :: EventFilterSubscription.t()
+        ) :: __MODULE__.Subscription.t()
   def subscribe_as_proxy(proxy_id, id, module, event_filter, meta \\ nil) do
-    subscription = %EventFilterSubscription{
+    subscription = %__MODULE__.Subscription{
       proxy_saga_id: proxy_id,
       subscriber_saga_id: id,
       subscriber_saga_module: module,
@@ -57,18 +55,18 @@ defmodule Citadel.EventFilterDispatcher do
 
     task =
       Task.async(fn ->
-        Dispatcher.listen_event_body(%SubscribeEventFilter.Subscribed{
+        Dispatcher.listen_event_body(%__MODULE__.Subscribe.Subscribed{
           subscription: subscription
         })
 
         Dispatcher.dispatch(
-          Event.new(%SubscribeEventFilter{
+          Event.new(%__MODULE__.Subscribe{
             subscription: subscription
           })
         )
 
         receive do
-          %Event{body: %SubscribeEventFilter.Subscribed{}} -> :ok
+          %Event{body: %__MODULE__.Subscribe.Subscribed{}} -> :ok
         end
       end)
 
@@ -92,7 +90,7 @@ defmodule Citadel.EventFilterDispatcher do
   @impl true
   def handle_info(%Event{body: %PushEvent{}}, state), do: {:noreply, state}
 
-  def handle_info(%Event{body: %SubscribeEventFilter{subscription: subscription}}, state) do
+  def handle_info(%Event{body: %__MODULE__.Subscribe{subscription: subscription}}, state) do
     state =
       case SagaRegistry.resolve_id(subscription.subscriber_saga_id) do
         {:ok, pid} ->
@@ -101,7 +99,7 @@ defmodule Citadel.EventFilterDispatcher do
           subscriptions = MapSet.put(state.subscriptions, subscription)
 
           Dispatcher.dispatch(
-            Event.new(%SubscribeEventFilter.Subscribed{subscription: subscription})
+            Event.new(%__MODULE__.Subscribe.Subscribed{subscription: subscription})
           )
 
           %{state | refs: refs, subscriptions: subscriptions}
@@ -123,7 +121,7 @@ defmodule Citadel.EventFilterDispatcher do
   def handle_info(%Event{} = event, state) do
     state.subscriptions
     |> Enum.filter(fn subscription ->
-      EventFilterSubscription.match?(subscription, event)
+      __MODULE__.Subscription.match?(subscription, event)
     end)
     |> Enum.group_by(fn subscription ->
       subscription.proxy_saga_id || subscription.subscriber_saga_id

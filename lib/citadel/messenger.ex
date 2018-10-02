@@ -9,7 +9,6 @@ defmodule Citadel.Messenger do
   alias Citadel.EventFilter
   alias Citadel.EventFilterDispatcher
   alias Citadel.EventFilterDispatcher.PushEvent
-  alias Citadel.EventFilterSubscription
   alias Citadel.Message
   alias Citadel.RegisterChannel
   alias Citadel.Saga
@@ -130,11 +129,12 @@ defmodule Citadel.Messenger do
       ) do
     %{channels: channels, others: subscriptions} =
       Enum.group_by(subscriptions, fn
-        %EventFilterSubscription{meta: %Channel{}} -> :channels
+        %EventFilterDispatcher.Subscription{meta: %Channel{}} -> :channels
         _ -> :others
       end)
 
-    channels = Enum.map(channels, fn %EventFilterSubscription{meta: channel} -> channel end)
+    channels =
+      Enum.map(channels, fn %EventFilterDispatcher.Subscription{meta: channel} -> channel end)
 
     subscriptions
     |> Enum.each(fn subscription ->

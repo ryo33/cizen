@@ -1,17 +1,17 @@
-defmodule Citadel.EventFilterSubscriptionTest do
+defmodule Citadel.EventFilterDispatcher.SubscriptionTest do
   use ExUnit.Case
 
   alias Citadel.Event
   alias Citadel.EventFilter
-  alias Citadel.EventFilterSubscription
+  alias Citadel.EventFilterDispatcher.Subscription
   alias Citadel.SagaID
 
   defmodule(TestEvent, do: defstruct([:value]))
 
   describe "match?/2" do
     test "matches without conditions" do
-      assert EventFilterSubscription.match?(
-               %EventFilterSubscription{
+      assert Subscription.match?(
+               %Subscription{
                  subscriber_saga_id: SagaID.new(),
                  event_filter: %EventFilter{}
                },
@@ -20,8 +20,8 @@ defmodule Citadel.EventFilterSubscriptionTest do
     end
 
     test "checks event_filter" do
-      assert EventFilterSubscription.match?(
-               %EventFilterSubscription{
+      assert Subscription.match?(
+               %Subscription{
                  subscriber_saga_id: SagaID.new(),
                  event_filter: %EventFilter{
                    event_type: TestEvent
@@ -30,8 +30,8 @@ defmodule Citadel.EventFilterSubscriptionTest do
                Event.new(%TestEvent{value: true})
              )
 
-      refute EventFilterSubscription.match?(
-               %EventFilterSubscription{
+      refute Subscription.match?(
+               %Subscription{
                  subscriber_saga_id: SagaID.new(),
                  event_filter: %EventFilter{
                    event_type: UnknownEvent

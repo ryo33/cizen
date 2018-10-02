@@ -6,19 +6,18 @@ defmodule Citadel.MenssengerTest do
   alias Citadel.Dispatcher
   alias Citadel.Event
   alias Citadel.EventFilter
-  alias Citadel.EventFilterSubscription
+  alias Citadel.EventFilterDispatcher
   alias Citadel.Message
   alias Citadel.Messenger
   alias Citadel.RegisterChannel
   alias Citadel.SagaID
   alias Citadel.SendMessage
-  alias Citadel.SubscribeEventFilter
   alias Citadel.SubscribeMessage
 
   defmodule(TestEvent, do: defstruct([:value]))
 
   test "create event filter subscription on SubscribeMessage event" do
-    Dispatcher.listen_event_type(SubscribeEventFilter)
+    Dispatcher.listen_event_type(EventFilterDispatcher.Subscribe)
 
     subscriber_saga_id = launch_test_saga()
 
@@ -35,8 +34,8 @@ defmodule Citadel.MenssengerTest do
     )
 
     assert_receive %Event{
-      body: %SubscribeEventFilter{
-        subscription: %EventFilterSubscription{
+      body: %EventFilterDispatcher.Subscribe{
+        subscription: %EventFilterDispatcher.Subscription{
           subscriber_saga_id: ^subscriber_saga_id,
           subscriber_saga_module: TestSaga,
           event_filter: ^event_filter,
@@ -47,7 +46,7 @@ defmodule Citadel.MenssengerTest do
   end
 
   test "create event filter subscription on RegisterChannel event" do
-    Dispatcher.listen_event_type(SubscribeEventFilter)
+    Dispatcher.listen_event_type(EventFilterDispatcher.Subscribe)
 
     subscriber_saga_id = launch_test_saga()
 
@@ -68,8 +67,8 @@ defmodule Citadel.MenssengerTest do
     )
 
     assert_receive %Event{
-      body: %SubscribeEventFilter{
-        subscription: %EventFilterSubscription{
+      body: %EventFilterDispatcher.Subscribe{
+        subscription: %EventFilterDispatcher.Subscription{
           subscriber_saga_id: ^subscriber_saga_id,
           subscriber_saga_module: TestSaga,
           event_filter: ^event_filter,

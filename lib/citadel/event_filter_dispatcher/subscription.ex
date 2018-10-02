@@ -1,4 +1,4 @@
-defmodule Citadel.EventFilterSubscription do
+defmodule Citadel.EventFilterDispatcher.Subscription do
   @moduledoc """
   A struct to represent event subscription.
   """

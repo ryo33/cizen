@@ -10,7 +10,6 @@ defmodule Citadel.EventFilterDispatcherTest do
   alias Citadel.EventFilterDispatcher
   alias Citadel.EventFilterDispatcher.PushEvent
   alias Citadel.SagaID
-  alias Citadel.SubscribeEventFilter
 
   defmodule(TestEvent, do: defstruct([:value]))
 
@@ -44,11 +43,14 @@ defmodule Citadel.EventFilterDispatcherTest do
     refute_receive %Event{body: %TestEvent{value: :b}}
   end
 
-  test "dispatches SubscribeEventFilter.Subscribed event" do
+  test "dispatches EventFilterDispatcher.Subscribe.Subscribed event" do
     saga_id = launch_test_saga()
-    Dispatcher.listen_event_type(SubscribeEventFilter.Subscribed)
+    Dispatcher.listen_event_type(EventFilterDispatcher.Subscribe.Subscribed)
     subscription = EventFilterDispatcher.subscribe(saga_id, nil, %EventFilter{}, :value)
-    assert_receive %Event{body: %SubscribeEventFilter.Subscribed{subscription: ^subscription}}
+
+    assert_receive %Event{
+      body: %EventFilterDispatcher.Subscribe.Subscribed{subscription: ^subscription}
+    }
   end
 
   test "dispatches for subscriber" do
