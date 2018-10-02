@@ -63,7 +63,7 @@ defmodule Citadel.Connection do
   end
 
   @impl true
-  def launch(id, {message, channels}) do
+  def init(id, {message, channels}) do
     if Enum.any?(channels, fn %Channel{saga_id: saga_id} ->
          :error == SagaRegistry.resolve_id(saga_id)
        end) do

@@ -72,7 +72,7 @@ defmodule Citadel.Messenger do
   end
 
   @impl true
-  def launch(_id, state) do
+  def init(_id, state) do
     Dispatcher.listen_event_type(SubscribeMessage)
     Dispatcher.listen_event_type(RegisterChannel)
     state

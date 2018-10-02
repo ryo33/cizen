@@ -13,7 +13,7 @@ defmodule Citadel.Saga do
   @type state :: any
 
   @doc false
-  @callback launch(SagaID.t(), state) :: state
+  @callback init(SagaID.t(), state) :: state
 
   @doc false
   @callback handle_event(SagaID.t(), Event.t(), state) :: state
@@ -59,7 +59,7 @@ defmodule Citadel.Saga do
   @impl true
   def init({id, module, state}) do
     Dispatcher.listen_event_body(%Finish{id: id})
-    state = module.launch(id, state)
+    state = module.init(id, state)
     {:ok, {id, module, state}}
   end
 

@@ -3,7 +3,7 @@ defmodule Citadel.TestSaga do
   @behaviour Citadel.Saga
 
   @impl true
-  def launch(id, state) do
+  def init(id, state) do
     launch = Map.get(state, :launch, fn _, state -> state end)
     internal_state = Map.get(state, :state, nil)
     internal_state = launch.(id, internal_state)
