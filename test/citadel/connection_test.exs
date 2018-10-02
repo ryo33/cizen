@@ -35,8 +35,10 @@ defmodule Citadel.ConnectionTest do
       Dispatcher.dispatch(
         Event.new(%SagaLauncher.LaunchSaga{
           id: saga_id,
-          module: Connection,
-          state: {message, []}
+          saga: %Connection{
+            message: message,
+            channels: []
+          }
         })
       )
 
@@ -98,8 +100,10 @@ defmodule Citadel.ConnectionTest do
     Dispatcher.dispatch(
       Event.new(%SagaLauncher.LaunchSaga{
         id: saga_id,
-        module: Connection,
-        state: {message, channels}
+        saga: %Connection{
+          message: message,
+          channels: channels
+        }
       })
     )
 
@@ -458,8 +462,10 @@ defmodule Citadel.ConnectionTest do
     Dispatcher.dispatch(
       Event.new(%SagaLauncher.LaunchSaga{
         id: saga_id,
-        module: Connection,
-        state: {message, [channel_a]}
+        saga: %Connection{
+          message: message,
+          channels: [channel_a]
+        }
       })
     )
 

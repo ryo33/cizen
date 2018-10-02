@@ -18,8 +18,7 @@ defmodule Citadel.SagaLauncherTest do
     Dispatcher.dispatch(
       Event.new(%SagaLauncher.LaunchSaga{
         id: saga_id,
-        module: TestSaga,
-        state: %{
+        saga: %TestSaga{
           launch: fn id, _state ->
             send(pid, {:ok, id})
           end

@@ -43,8 +43,10 @@ defmodule Citadel.TransmitterTest do
 
         assert %Event{
                  body: %SagaLauncher.LaunchSaga{
-                   module: Connection,
-                   state: {^message, ^channels}
+                   saga: %Connection{
+                     message: ^message,
+                     channels: ^channels
+                   }
                  }
                } = event
 

@@ -3,17 +3,20 @@ defmodule Citadel.Saga do
   The saga behaviour
   """
 
+  @type t :: struct
+
   use GenServer
 
   alias Citadel.Dispatcher
   alias Citadel.Event
+  alias Citadel.Saga
   alias Citadel.SagaID
   alias Citadel.SagaRegistry
 
   @type state :: any
 
   @doc false
-  @callback init(SagaID.t(), state) :: state
+  @callback init(SagaID.t(), Saga.t()) :: state
 
   @doc false
   @callback handle_event(SagaID.t(), Event.t(), state) :: state
@@ -43,9 +46,9 @@ defmodule Citadel.Saga do
     defstruct([:id, :reason])
   end
 
-  def launch(id, module, state) do
+  def launch(id, saga) do
     {:ok, _pid} =
-      GenServer.start(__MODULE__, {id, module, state}, name: {:via, Registry, {SagaRegistry, id}})
+      GenServer.start(__MODULE__, {id, saga}, name: {:via, Registry, {SagaRegistry, id}})
 
     Dispatcher.dispatch(Event.new(%Launched{id: id}))
   end
@@ -57,9 +60,10 @@ defmodule Citadel.Saga do
   end
 
   @impl true
-  def init({id, module, state}) do
+  def init({id, saga}) do
     Dispatcher.listen_event_body(%Finish{id: id})
-    state = module.init(id, state)
+    module = saga.__struct__
+    state = module.init(id, saga)
     {:ok, {id, module, state}}
   end
 

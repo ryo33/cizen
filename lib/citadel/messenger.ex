@@ -17,6 +17,8 @@ defmodule Citadel.Messenger do
   alias Citadel.SendMessage
   alias Citadel.SubscribeMessage
 
+  defstruct []
+
   @behaviour Saga
 
   @doc "Subscribe message synchronously"
@@ -71,10 +73,10 @@ defmodule Citadel.Messenger do
   end
 
   @impl true
-  def init(_id, state) do
+  def init(_id, saga) do
     Dispatcher.listen_event_type(SubscribeMessage)
     Dispatcher.listen_event_type(RegisterChannel)
-    state
+    saga
   end
 
   @impl true

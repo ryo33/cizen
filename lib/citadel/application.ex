@@ -51,7 +51,7 @@ defmodule Citadel.Application do
 
   def start_phase(:start_daemons, _start_type, _args) do
     alias Citadel.SagaLauncher
-    SagaLauncher.launch_saga(Citadel.Messenger, :ok)
+    SagaLauncher.launch_saga(%Citadel.Messenger{})
     :ok
   end
 end

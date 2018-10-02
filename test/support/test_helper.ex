@@ -35,8 +35,7 @@ defmodule Citadel.TestHelper do
     Dispatcher.dispatch(
       Event.new(%SagaLauncher.LaunchSaga{
         id: saga_id,
-        module: TestSaga,
-        state: %{
+        saga: %TestSaga{
           launch: fn id, state ->
             send(pid, {:ok, id})
             launch = Keyword.get(opts, :launch, fn _id, state -> state end)

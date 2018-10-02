@@ -31,8 +31,10 @@ defmodule Citadel.Transmitter do
     Dispatcher.dispatch(
       Event.new(%SagaLauncher.LaunchSaga{
         id: SagaID.new(),
-        module: Connection,
-        state: {body.message, body.channels}
+        saga: %Connection{
+          message: body.message,
+          channels: body.channels
+        }
       })
     )
 

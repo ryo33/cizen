@@ -19,6 +19,10 @@ defmodule Citadel.Connection do
   alias Citadel.EventFilterDispatcher
   alias Citadel.EventFilterDispatcher.PushEvent
 
+  @keys [:message, :channels]
+  @enforce_keys @keys
+  defstruct @keys
+
   @behaviour Saga
 
   defp feed_event_to_channels(next_channels, id, state) do
@@ -63,7 +67,7 @@ defmodule Citadel.Connection do
   end
 
   @impl true
-  def init(id, {message, channels}) do
+  def init(id, %__MODULE__{message: message, channels: channels}) do
     if Enum.any?(channels, fn %Channel{saga_id: saga_id} ->
          :error == SagaRegistry.resolve_id(saga_id)
        end) do

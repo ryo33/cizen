@@ -14,7 +14,7 @@ defmodule Citadel.SagaLauncher do
     The event to launch an saga.
     """
 
-    @keys [:id, :module, :state]
+    @keys [:id, :saga]
     @enforce_keys @keys
     defstruct @keys
   end
@@ -36,8 +36,8 @@ defmodule Citadel.SagaLauncher do
   @doc """
   Launch a saga synchronously.
   """
-  @spec launch_saga(module, state :: term) :: SagaID.t()
-  def launch_saga(module, state) do
+  @spec launch_saga(Saga.t()) :: SagaID.t()
+  def launch_saga(saga) do
     id = SagaID.new()
 
     task =
@@ -54,8 +54,7 @@ defmodule Citadel.SagaLauncher do
     Dispatcher.dispatch(
       Event.new(%LaunchSaga{
         id: id,
-        module: module,
-        state: state
+        saga: saga
       })
     )
 
@@ -75,9 +74,9 @@ defmodule Citadel.SagaLauncher do
     handle_event(body, :ok)
   end
 
-  def handle_event(%LaunchSaga{id: id, module: module, state: state}, :ok) do
+  def handle_event(%LaunchSaga{id: id, saga: saga}, :ok) do
     Task.start_link(fn ->
-      Saga.launch(id, module, state)
+      Saga.launch(id, saga)
     end)
 
     {:noreply, :ok}

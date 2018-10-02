@@ -15,7 +15,7 @@ defmodule Citadel.SagaMonitor do
   @behaviour Saga
 
   @impl true
-  def init(id, target_id) do
+  def init(id, %__MODULE__{target_saga_id: target_id}) do
     case SagaRegistry.resolve_id(target_id) do
       {:ok, pid} ->
         Task.start_link(fn ->

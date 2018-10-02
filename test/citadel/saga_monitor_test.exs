@@ -13,7 +13,7 @@ defmodule Citadel.SagaMonitorTest do
     test "does not finishes until the target saga finishes" do
       target_id = TestHelper.launch_test_saga()
 
-      monitor_id = SagaLauncher.launch_saga(SagaMonitor, target_id)
+      monitor_id = SagaLauncher.launch_saga(%SagaMonitor{target_saga_id: target_id})
 
       Dispatcher.listen_event_body(%Saga.Finished{id: monitor_id})
 
@@ -23,7 +23,7 @@ defmodule Citadel.SagaMonitorTest do
     test "finishes when the target saga finishes" do
       target_id = TestHelper.launch_test_saga()
 
-      monitor_id = SagaLauncher.launch_saga(SagaMonitor, target_id)
+      monitor_id = SagaLauncher.launch_saga(%SagaMonitor{target_saga_id: target_id})
 
       Dispatcher.listen_event_body(%Saga.Finished{id: monitor_id})
 
@@ -37,7 +37,7 @@ defmodule Citadel.SagaMonitorTest do
 
       Dispatcher.listen_event_type(Saga.Finished)
 
-      monitor_id = SagaLauncher.launch_saga(SagaMonitor, target_id)
+      monitor_id = SagaLauncher.launch_saga(%SagaMonitor{target_saga_id: target_id})
 
       assert_receive %Event{body: %Saga.Finished{id: ^monitor_id}}
     end
