@@ -15,10 +15,6 @@ defmodule Citadel.Application do
       %{
         id: Citadel.SagaRegistry,
         start: {Citadel.SagaRegistry, :start_link, []}
-      },
-      %{
-        id: Citadel.EventFilterDispatcher.SubscriptionRegistry,
-        start: {Citadel.EventFilterDispatcher.SubscriptionRegistry, :start_link, []}
       }
     ]
 
@@ -33,11 +29,6 @@ defmodule Citadel.Application do
     Supervisor.start_child(Citadel.Supervisor, %{
       id: Citadel.SagaLauncher,
       start: {Citadel.SagaLauncher, :start_link, []}
-    })
-
-    Supervisor.start_child(Citadel.Supervisor, %{
-      id: Citadel.EventFilterDispatcher.SubscriptionRegisterer,
-      start: {Citadel.EventFilterDispatcher.SubscriptionRegisterer, :start_link, []}
     })
 
     Supervisor.start_child(Citadel.Supervisor, %{

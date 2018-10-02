@@ -8,9 +8,9 @@ defmodule Citadel.EventFilterDispatcher do
   alias Citadel.Dispatcher
   alias Citadel.Event
   alias Citadel.EventFilter
-  alias Citadel.EventFilterDispatcher.SubscriptionRegistry
   alias Citadel.EventFilterSubscription
   alias Citadel.SagaID
+  alias Citadel.SagaRegistry
   alias Citadel.SubscribeEventFilter
 
   defmodule PushEvent do
@@ -80,16 +80,48 @@ defmodule Citadel.EventFilterDispatcher do
   @impl true
   def init(_args) do
     Dispatcher.listen_all()
-    {:ok, :ok}
+
+    {:ok,
+     %{
+       # ref => subscription
+       refs: %{},
+       subscriptions: MapSet.new([])
+     }}
   end
 
   @impl true
   def handle_info(%Event{body: %PushEvent{}}, state), do: {:noreply, state}
 
-  def handle_info(%Event{} = event, state) do
-    subscriptions = SubscriptionRegistry.subscriptions()
+  def handle_info(%Event{body: %SubscribeEventFilter{subscription: subscription}}, state) do
+    state =
+      case SagaRegistry.resolve_id(subscription.subscriber_saga_id) do
+        {:ok, pid} ->
+          ref = Process.monitor(pid)
+          refs = Map.put(state.refs, ref, subscription)
+          subscriptions = MapSet.put(state.subscriptions, subscription)
 
-    subscriptions
+          Dispatcher.dispatch(
+            Event.new(%SubscribeEventFilter.Subscribed{subscription: subscription})
+          )
+
+          %{state | refs: refs, subscriptions: subscriptions}
+
+        :error ->
+          state
+      end
+
+    {:noreply, state}
+  end
+
+  def handle_info({:DOWN, ref, :process, _, _}, state) do
+    {subscription, refs} = Map.pop(state.refs, ref)
+    subscriptions = MapSet.delete(state.subscriptions, subscription)
+    state = %{state | refs: refs, subscriptions: subscriptions}
+    {:noreply, state}
+  end
+
+  def handle_info(%Event{} = event, state) do
+    state.subscriptions
     |> Enum.filter(fn subscription ->
       EventFilterSubscription.match?(subscription, event)
     end)

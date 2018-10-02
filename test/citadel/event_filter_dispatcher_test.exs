@@ -1,7 +1,8 @@
 defmodule Citadel.EventFilterDispatcherTest do
   use ExUnit.Case
 
-  import Citadel.TestHelper, only: [launch_test_saga: 0, launch_test_saga: 1]
+  alias Citadel.TestHelper
+  import Citadel.TestHelper, only: [launch_test_saga: 0, launch_test_saga: 1, assert_condition: 2]
 
   alias Citadel.Dispatcher
   alias Citadel.Event
@@ -9,6 +10,7 @@ defmodule Citadel.EventFilterDispatcherTest do
   alias Citadel.EventFilterDispatcher
   alias Citadel.EventFilterDispatcher.PushEvent
   alias Citadel.SagaID
+  alias Citadel.SubscribeEventFilter
 
   defmodule(TestEvent, do: defstruct([:value]))
 
@@ -40,6 +42,13 @@ defmodule Citadel.EventFilterDispatcherTest do
     }
 
     refute_receive %Event{body: %TestEvent{value: :b}}
+  end
+
+  test "dispatches SubscribeEventFilter.Subscribed event" do
+    saga_id = launch_test_saga()
+    Dispatcher.listen_event_type(SubscribeEventFilter.Subscribed)
+    subscription = EventFilterDispatcher.subscribe(saga_id, nil, %EventFilter{}, :value)
+    assert_receive %Event{body: %SubscribeEventFilter.Subscribed{subscription: ^subscription}}
   end
 
   test "dispatches for subscriber" do
@@ -159,5 +168,31 @@ defmodule Citadel.EventFilterDispatcherTest do
     )
 
     refute_receive %Event{}
+  end
+
+  test "remove the subscription when the saga finishes" do
+    pid = self()
+    saga_id = launch_test_saga(handle_event: fn _id, event, _state -> send(pid, event) end)
+    source_saga_id = SagaID.new()
+
+    Dispatcher.listen_event_type(PushEvent)
+
+    EventFilterDispatcher.subscribe(saga_id, nil, %EventFilter{
+      source_saga_id: source_saga_id
+    })
+
+    TestHelper.ensure_finished(saga_id)
+
+    assert_condition(
+      100,
+      :sys.get_state(EventFilterDispatcher) == %{
+        refs: %{},
+        subscriptions: MapSet.new([])
+      }
+    )
+
+    Dispatcher.dispatch(Event.new(%TestEvent{value: :a}, source_saga_id))
+
+    refute_receive %Event{body: %PushEvent{}}
   end
 end
