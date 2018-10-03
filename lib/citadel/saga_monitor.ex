@@ -20,29 +20,37 @@ defmodule Citadel.SagaMonitor do
   @impl true
   def init(_args) do
     Dispatcher.listen_event_type(MonitorSaga)
-    {:ok, %{}}
+    {:ok, %{refs: %{}, sagas: MapSet.new([])}}
   end
 
   @impl true
-  def handle_info(%Event{body: %MonitorSaga{saga_id: saga_id}}, refs) do
-    refs =
-      case SagaRegistry.resolve_id(saga_id) do
-        {:ok, pid} ->
-          ref = Process.monitor(pid)
-          Map.put(refs, ref, saga_id)
+  def handle_info(%Event{body: %MonitorSaga{saga_id: saga_id}}, state) do
+    if MapSet.member?(state.sagas, saga_id) do
+      {:noreply, state}
+    else
+      state =
+        case SagaRegistry.resolve_id(saga_id) do
+          {:ok, pid} ->
+            ref = Process.monitor(pid)
+            refs = Map.put(state.refs, ref, saga_id)
+            sagas = MapSet.put(state.sagas, saga_id)
+            %{state | refs: refs, sagas: sagas}
 
-        :error ->
-          down(saga_id)
-          refs
-      end
+          :error ->
+            down(saga_id)
+            state
+        end
 
-    {:noreply, refs}
+      {:noreply, state}
+    end
   end
 
-  def handle_info({:DOWN, ref, :process, _, _}, refs) do
-    {saga_id, refs} = Map.pop(refs, ref)
+  def handle_info({:DOWN, ref, :process, _, _}, state) do
+    {saga_id, refs} = Map.pop(state.refs, ref)
+    sagas = MapSet.delete(state.sagas, saga_id)
     down(saga_id)
-    {:noreply, refs}
+    state = %{state | refs: refs, sagas: sagas}
+    {:noreply, state}
   end
 
   defp down(id) do
