@@ -20,24 +20,28 @@ defmodule Citadel.SagaMonitor do
   @impl true
   def init(_args) do
     Dispatcher.listen_event_type(MonitorSaga)
-    {:ok, %{refs: %{}, sagas: MapSet.new([])}}
+    Dispatcher.listen_event_type(MonitorSaga.Down)
+    {:ok, %{refs: %{}, target_monitors: %{}}}
   end
 
   @impl true
-  def handle_info(%Event{body: %MonitorSaga{saga_id: saga_id}}, state) do
-    if MapSet.member?(state.sagas, saga_id) do
+  def handle_info(%Event{body: %MonitorSaga{} = body}, state) do
+    %MonitorSaga{monitor_saga_id: monitor, target_saga_id: target} = body
+
+    if Map.has_key?(state.target_monitors, target) do
+      state = update_in(state.target_monitors[target], &MapSet.put(&1, monitor))
       {:noreply, state}
     else
       state =
-        case SagaRegistry.resolve_id(saga_id) do
+        case SagaRegistry.resolve_id(target) do
           {:ok, pid} ->
             ref = Process.monitor(pid)
-            refs = Map.put(state.refs, ref, saga_id)
-            sagas = MapSet.put(state.sagas, saga_id)
-            %{state | refs: refs, sagas: sagas}
+            refs = Map.put(state.refs, ref, target)
+            target_monitors = Map.put(state.target_monitors, target, MapSet.new([monitor]))
+            %{state | refs: refs, target_monitors: target_monitors}
 
           :error ->
-            down(saga_id)
+            down(monitor, target)
             state
         end
 
@@ -46,14 +50,31 @@ defmodule Citadel.SagaMonitor do
   end
 
   def handle_info({:DOWN, ref, :process, _, _}, state) do
-    {saga_id, refs} = Map.pop(state.refs, ref)
-    sagas = MapSet.delete(state.sagas, saga_id)
-    down(saga_id)
-    state = %{state | refs: refs, sagas: sagas}
+    {target, refs} = Map.pop(state.refs, ref)
+    {monitors, target_monitors} = Map.pop(state.target_monitors, target)
+    Enum.each(monitors, &down(&1, target))
+    state = %{state | refs: refs, target_monitors: target_monitors}
     {:noreply, state}
   end
 
-  defp down(id) do
-    Dispatcher.dispatch(Event.new(%MonitorSaga.Down{saga_id: id}))
+  def handle_info(%Event{body: %MonitorSaga.Down{monitor_saga_id: monitor}} = event, state) do
+    case SagaRegistry.resolve_id(monitor) do
+      {:ok, pid} ->
+        send(pid, event)
+
+      _ ->
+        :ok
+    end
+
+    {:noreply, state}
+  end
+
+  defp down(monitor, target) do
+    Dispatcher.dispatch(
+      Event.new(%MonitorSaga.Down{
+        monitor_saga_id: monitor,
+        target_saga_id: target
+      })
+    )
   end
 end

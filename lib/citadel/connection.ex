@@ -69,8 +69,7 @@ defmodule Citadel.Connection do
   @impl true
   def init(id, %__MODULE__{message: message, channels: channels}) do
     Enum.each(channels, fn %Channel{saga_id: saga_id} ->
-      Dispatcher.listen_event_body(%MonitorSaga.Down{saga_id: saga_id})
-      Dispatcher.dispatch(Event.new(%MonitorSaga{saga_id: saga_id}))
+      Dispatcher.dispatch(Event.new(%MonitorSaga{monitor_saga_id: id, target_saga_id: saga_id}))
     end)
 
     EventFilterDispatcher.subscribe(id, __MODULE__, %EventFilter{

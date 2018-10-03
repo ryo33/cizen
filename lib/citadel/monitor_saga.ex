@@ -3,7 +3,7 @@ defmodule Citadel.MonitorSaga do
   An event to start monitering a saga.
   """
 
-  @keys [:saga_id]
+  @keys [:monitor_saga_id, :target_saga_id]
   @enforce_keys @keys
   defstruct @keys
 
@@ -12,7 +12,7 @@ defmodule Citadel.MonitorSaga do
     An event to tell the saga is down.
     """
 
-    @keys [:saga_id]
+    @keys [:monitor_saga_id, :target_saga_id]
     @enforce_keys @keys
     defstruct @keys
   end

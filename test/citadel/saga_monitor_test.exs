@@ -12,69 +12,177 @@ defmodule Citadel.SagaMonitorTest do
   alias Citadel.MonitorSaga
 
   describe "SagaMonitor" do
-    test "does not finishes until the target saga finishes" do
+    test "does not dispatches Down until the target saga finishes" do
+      pid = self()
+
+      monitor_id =
+        TestHelper.launch_test_saga(
+          handle_event: fn _id, event, _state ->
+            send(pid, event)
+          end
+        )
+
       target_id = TestHelper.launch_test_saga()
 
-      Dispatcher.dispatch(Event.new(%MonitorSaga{saga_id: target_id}))
+      Dispatcher.dispatch(
+        Event.new(%MonitorSaga{monitor_saga_id: monitor_id, target_saga_id: target_id})
+      )
 
-      Dispatcher.listen_event_body(%MonitorSaga.Down{saga_id: target_id})
-
-      refute_receive %Event{body: %MonitorSaga.Down{saga_id: ^target_id}}
+      refute_receive %Event{
+        body: %MonitorSaga.Down{monitor_saga_id: ^monitor_id, target_saga_id: ^target_id}
+      }
     end
 
-    test "finishes when the target saga finishes" do
+    test "dispatches Down when the target saga finishes" do
+      pid = self()
+
+      monitor_id =
+        TestHelper.launch_test_saga(
+          handle_event: fn _id, event, _state ->
+            send(pid, event)
+          end
+        )
+
       target_id = TestHelper.launch_test_saga()
 
-      Dispatcher.dispatch(Event.new(%MonitorSaga{saga_id: target_id}))
-
-      Dispatcher.listen_event_body(%MonitorSaga.Down{saga_id: target_id})
+      Dispatcher.dispatch(
+        Event.new(%MonitorSaga{monitor_saga_id: monitor_id, target_saga_id: target_id})
+      )
 
       Dispatcher.dispatch(Event.new(%Saga.Finish{id: target_id}))
 
-      assert_receive %Event{body: %MonitorSaga.Down{saga_id: ^target_id}}
+      assert_receive %Event{
+        body: %MonitorSaga.Down{monitor_saga_id: ^monitor_id, target_saga_id: ^target_id}
+      }
     end
 
-    test "finishes when the target saga doesn't exists" do
+    test "dispatches Down for multiple monitors" do
+      pid = self()
+
+      monitor_a =
+        TestHelper.launch_test_saga(
+          handle_event: fn _id, event, _state ->
+            send(pid, {:a, event})
+          end
+        )
+
+      monitor_b =
+        TestHelper.launch_test_saga(
+          handle_event: fn _id, event, _state ->
+            send(pid, {:b, event})
+          end
+        )
+
+      target_id = TestHelper.launch_test_saga()
+
+      Dispatcher.dispatch(
+        Event.new(%MonitorSaga{monitor_saga_id: monitor_a, target_saga_id: target_id})
+      )
+
+      Dispatcher.dispatch(
+        Event.new(%MonitorSaga{monitor_saga_id: monitor_b, target_saga_id: target_id})
+      )
+
+      Dispatcher.dispatch(Event.new(%Saga.Finish{id: target_id}))
+
+      assert_receive {:a,
+                      %Event{
+                        body: %MonitorSaga.Down{
+                          monitor_saga_id: ^monitor_a,
+                          target_saga_id: ^target_id
+                        }
+                      }}
+
+      assert_receive {:b,
+                      %Event{
+                        body: %MonitorSaga.Down{
+                          monitor_saga_id: ^monitor_b,
+                          target_saga_id: ^target_id
+                        }
+                      }}
+    end
+
+    test "dispatches Down when the target saga doesn't exists" do
+      pid = self()
+
+      monitor_id =
+        TestHelper.launch_test_saga(
+          handle_event: fn _id, event, _state ->
+            send(pid, event)
+          end
+        )
+
       target_id = SagaID.new()
 
-      Dispatcher.listen_event_body(%MonitorSaga.Down{saga_id: target_id})
+      Dispatcher.dispatch(
+        Event.new(%MonitorSaga{monitor_saga_id: monitor_id, target_saga_id: target_id})
+      )
 
-      Dispatcher.dispatch(Event.new(%MonitorSaga{saga_id: target_id}))
-
-      assert_receive %Event{body: %MonitorSaga.Down{saga_id: ^target_id}}
+      assert_receive %Event{
+        body: %MonitorSaga.Down{monitor_saga_id: ^monitor_id, target_saga_id: ^target_id}
+      }
     end
 
     test "monitors once for multiple MonitorEvent" do
+      pid = self()
+
+      monitor_id =
+        TestHelper.launch_test_saga(
+          handle_event: fn _id, event, _state ->
+            send(pid, event)
+          end
+        )
+
       target_id = TestHelper.launch_test_saga()
 
-      Dispatcher.dispatch(Event.new(%MonitorSaga{saga_id: target_id}))
-      Dispatcher.dispatch(Event.new(%MonitorSaga{saga_id: target_id}))
-      Dispatcher.dispatch(Event.new(%MonitorSaga{saga_id: target_id}))
+      Dispatcher.dispatch(
+        Event.new(%MonitorSaga{monitor_saga_id: monitor_id, target_saga_id: target_id})
+      )
 
-      Dispatcher.listen_event_body(%MonitorSaga.Down{saga_id: target_id})
+      Dispatcher.dispatch(
+        Event.new(%MonitorSaga{monitor_saga_id: monitor_id, target_saga_id: target_id})
+      )
+
+      Dispatcher.dispatch(
+        Event.new(%MonitorSaga{monitor_saga_id: monitor_id, target_saga_id: target_id})
+      )
 
       Dispatcher.dispatch(Event.new(%Saga.Finish{id: target_id}))
 
-      assert_receive %Event{body: %MonitorSaga.Down{saga_id: ^target_id}}
+      assert_receive %Event{
+        body: %MonitorSaga.Down{monitor_saga_id: ^monitor_id, target_saga_id: ^target_id}
+      }
+
       refute_receive %Event{body: %MonitorSaga.Down{}}
     end
 
     test "removes the monitors after down" do
+      pid = self()
+
+      monitor_id =
+        TestHelper.launch_test_saga(
+          handle_event: fn _id, event, _state ->
+            send(pid, event)
+          end
+        )
+
       target_id = TestHelper.launch_test_saga()
 
-      Dispatcher.dispatch(Event.new(%MonitorSaga{saga_id: target_id}))
-
-      Dispatcher.listen_event_body(%MonitorSaga.Down{saga_id: target_id})
+      Dispatcher.dispatch(
+        Event.new(%MonitorSaga{monitor_saga_id: monitor_id, target_saga_id: target_id})
+      )
 
       Dispatcher.dispatch(Event.new(%Saga.Finish{id: target_id}))
 
-      assert_receive %Event{body: %MonitorSaga.Down{saga_id: ^target_id}}
+      assert_receive %Event{
+        body: %MonitorSaga.Down{monitor_saga_id: ^monitor_id, target_saga_id: ^target_id}
+      }
 
       assert_condition(
         100,
         :sys.get_state(SagaMonitor) == %{
           refs: %{},
-          sagas: MapSet.new([])
+          target_monitors: %{}
         }
       )
     end
