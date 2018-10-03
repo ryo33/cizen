@@ -9,9 +9,9 @@ defmodule Citadel.Connection do
   alias Citadel.Channel.RejectMessage
   alias Citadel.Dispatcher
   alias Citadel.Event
+  alias Citadel.MonitorSaga
   alias Citadel.ReceiveMessage
   alias Citadel.Saga
-  alias Citadel.SagaRegistry
 
   alias Citadel.EventBodyFilter
   alias Citadel.EventBodyFilterSet
@@ -68,20 +68,9 @@ defmodule Citadel.Connection do
 
   @impl true
   def init(id, %__MODULE__{message: message, channels: channels}) do
-    if Enum.any?(channels, fn %Channel{saga_id: saga_id} ->
-         :error == SagaRegistry.resolve_id(saga_id)
-       end) do
-      Dispatcher.dispatch(
-        Event.new(%Saga.Finish{
-          id: id
-        })
-      )
-    end
-
     Enum.each(channels, fn %Channel{saga_id: saga_id} ->
-      Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
-      Dispatcher.listen_event_body(%Saga.Finished{id: saga_id})
-      Dispatcher.listen_event_body(%Saga.Crashed{id: saga_id})
+      Dispatcher.listen_event_body(%MonitorSaga.Down{saga_id: saga_id})
+      Dispatcher.dispatch(Event.new(%MonitorSaga{saga_id: saga_id}))
     end)
 
     EventFilterDispatcher.subscribe(id, __MODULE__, %EventFilter{
@@ -171,29 +160,7 @@ defmodule Citadel.Connection do
   end
 
   @impl true
-  def handle_event(id, %Event{body: %Saga.Finish{}}, state) do
-    Dispatcher.dispatch(
-      Event.new(%Saga.Finish{
-        id: id
-      })
-    )
-
-    %{state | closed: true}
-  end
-
-  @impl true
-  def handle_event(id, %Event{body: %Saga.Finished{}}, state) do
-    Dispatcher.dispatch(
-      Event.new(%Saga.Finish{
-        id: id
-      })
-    )
-
-    %{state | closed: true}
-  end
-
-  @impl true
-  def handle_event(id, %Event{body: %Saga.Crashed{}}, state) do
+  def handle_event(id, %Event{body: %MonitorSaga.Down{}}, state) do
     Dispatcher.dispatch(
       Event.new(%Saga.Finish{
         id: id
