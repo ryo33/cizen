@@ -46,6 +46,11 @@ defmodule Citadel.Application do
       start: {Citadel.Transmitter, :start_link, []}
     })
 
+    Supervisor.start_child(Citadel.Supervisor, %{
+      id: Citadel.SagaMonitor,
+      start: {Citadel.SagaMonitor, :start_link, []}
+    })
+
     :ok
   end
 
