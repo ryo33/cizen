@@ -46,6 +46,11 @@ defmodule Citadel.Saga do
     defstruct([:id, :reason])
   end
 
+  @spec module(t) :: module
+  def module(saga) do
+    saga.__struct__
+  end
+
   def launch(id, saga) do
     {:ok, _pid} =
       GenServer.start(__MODULE__, {id, saga}, name: {:via, Registry, {SagaRegistry, id}})
@@ -62,7 +67,7 @@ defmodule Citadel.Saga do
   @impl true
   def init({id, saga}) do
     Dispatcher.listen_event_body(%Finish{id: id})
-    module = saga.__struct__
+    module = Saga.module(saga)
     state = module.init(id, saga)
     {:ok, {id, module, state}}
   end
