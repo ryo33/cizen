@@ -130,10 +130,13 @@ defmodule Citadel.Messenger do
         state
       ) do
     %{channels: channels, others: subscriptions} =
-      Enum.group_by(subscriptions, fn
-        %EventFilterDispatcher.Subscription{meta: %Channel{}} -> :channels
-        _ -> :others
-      end)
+      Map.merge(
+        %{channels: [], others: []},
+        Enum.group_by(subscriptions, fn
+          %EventFilterDispatcher.Subscription{meta: %Channel{}} -> :channels
+          _ -> :others
+        end)
+      )
 
     channels =
       Enum.map(channels, fn %EventFilterDispatcher.Subscription{meta: channel} -> channel end)

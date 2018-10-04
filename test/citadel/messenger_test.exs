@@ -10,6 +10,7 @@ defmodule Citadel.MenssengerTest do
   alias Citadel.Message
   alias Citadel.Messenger
   alias Citadel.RegisterChannel
+  alias Citadel.Saga
   alias Citadel.SagaID
   alias Citadel.SendMessage
   alias Citadel.SubscribeMessage
@@ -131,6 +132,45 @@ defmodule Citadel.MenssengerTest do
     assert MapSet.new([channel_a, channel_b]) == MapSet.new(received_b.body.channels)
   end
 
+  test "dispatches SendMessage event without channels" do
+    Dispatcher.listen_event_type(SendMessage)
+
+    source_saga_id = SagaID.new()
+
+    event_filter = %EventFilter{source_saga_id: source_saga_id}
+
+    subscriber_saga_a = launch_test_saga()
+    subscriber_saga_b = launch_test_saga()
+
+    Messenger.subscribe_message(subscriber_saga_a, TestSagaA, event_filter)
+    Messenger.subscribe_message(subscriber_saga_b, TestSagaB, event_filter)
+
+    event = Event.new(%TestEvent{}, source_saga_id)
+    Dispatcher.dispatch(event)
+
+    assert_receive %Event{
+      body: %SendMessage{
+        message: %Message{
+          event: ^event,
+          destination_saga_id: ^subscriber_saga_a,
+          destination_saga_module: TestSagaA
+        },
+        channels: []
+      }
+    }
+
+    assert_receive %Event{
+      body: %SendMessage{
+        message: %Message{
+          event: ^event,
+          destination_saga_id: ^subscriber_saga_b,
+          destination_saga_module: TestSagaB
+        },
+        channels: []
+      }
+    }
+  end
+
   test "filters channels with using Channel.match?/2" do
     Dispatcher.listen_event_type(SendMessage)
 
@@ -171,5 +211,24 @@ defmodule Citadel.MenssengerTest do
       }
 
     assert MapSet.new([channel_a]) == MapSet.new(received.body.channels)
+  end
+
+  test "doesn't crash if there is no subscribers" do
+    Dispatcher.listen_event_type(Saga.Crashed)
+
+    source_saga_id = SagaID.new()
+
+    event_filter = %EventFilter{source_saga_id: source_saga_id}
+
+    channel_a = %Channel{saga_id: launch_test_saga(), saga_module: ChannelA}
+    channel_b = %Channel{saga_id: launch_test_saga(), saga_module: ChannelB}
+
+    Messenger.register_channel(channel_a, event_filter)
+    Messenger.register_channel(channel_b, event_filter)
+
+    event = Event.new(%TestEvent{}, source_saga_id)
+    Dispatcher.dispatch(event)
+
+    refute_receive %Event{body: %Saga.Crashed{}}
   end
 end
