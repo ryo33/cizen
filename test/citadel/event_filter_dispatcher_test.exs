@@ -177,6 +177,8 @@ defmodule Citadel.EventFilterDispatcherTest do
     saga_id = launch_test_saga(handle_event: fn _id, event, _state -> send(pid, event) end)
     source_saga_id = SagaID.new()
 
+    old_state = :sys.get_state(EventFilterDispatcher)
+
     Dispatcher.listen_event_type(PushEvent)
 
     EventFilterDispatcher.subscribe(saga_id, nil, %EventFilter{
@@ -185,13 +187,7 @@ defmodule Citadel.EventFilterDispatcherTest do
 
     TestHelper.ensure_finished(saga_id)
 
-    assert_condition(
-      100,
-      :sys.get_state(EventFilterDispatcher) == %{
-        refs: %{},
-        subscriptions: MapSet.new([])
-      }
-    )
+    assert_condition(100, :sys.get_state(EventFilterDispatcher) == old_state)
 
     Dispatcher.dispatch(Event.new(%TestEvent{value: :a}, source_saga_id))
 
