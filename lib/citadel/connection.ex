@@ -71,21 +71,30 @@ defmodule Citadel.Connection do
       Dispatcher.dispatch(Event.new(%MonitorSaga{monitor_saga_id: id, target_saga_id: saga_id}))
     end)
 
-    EventFilterDispatcher.subscribe(id, __MODULE__, %EventFilter{
-      event_type: EmitMessage,
-      event_body_filter_set:
-        EventBodyFilterSet.new([
-          %EmitMessage.ConnectionIDFilter{value: id}
-        ])
-    })
+    subscribe_emit_message_task =
+      Task.async(fn ->
+        EventFilterDispatcher.subscribe(id, __MODULE__, %EventFilter{
+          event_type: EmitMessage,
+          event_body_filter_set:
+            EventBodyFilterSet.new([
+              %EmitMessage.ConnectionIDFilter{value: id}
+            ])
+        })
+      end)
 
-    EventFilterDispatcher.subscribe(id, __MODULE__, %EventFilter{
-      event_type: RejectMessage,
-      event_body_filter_set:
-        EventBodyFilterSet.new([
-          %RejectMessage.ConnectionIDFilter{value: id}
-        ])
-    })
+    subscribe_reject_message_task =
+      Task.async(fn ->
+        EventFilterDispatcher.subscribe(id, __MODULE__, %EventFilter{
+          event_type: RejectMessage,
+          event_body_filter_set:
+            EventBodyFilterSet.new([
+              %RejectMessage.ConnectionIDFilter{value: id}
+            ])
+        })
+      end)
+
+    Task.await(subscribe_emit_message_task)
+    Task.await(subscribe_reject_message_task)
 
     active_channels =
       channels
