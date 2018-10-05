@@ -11,14 +11,18 @@ defmodule Citadel.EventFilterTest do
 
   defmodule TestEventBodyFilterA do
     @behaviour EventBodyFilter
+    defstruct [:value]
     @impl true
-    def test(%TestEvent{value_a: value}, opts), do: value == opts
+    def test(%__MODULE__{value: value}, %TestEvent{value_a: value}), do: true
+    def test(_, _), do: false
   end
 
   defmodule TestEventBodyFilterB do
     @behaviour EventBodyFilter
+    defstruct [:value]
     @impl true
-    def test(%TestEvent{value_b: value}, opts), do: value == opts
+    def test(%__MODULE__{value: value}, %TestEvent{value_b: value}), do: true
+    def test(_, _), do: false
   end
 
   describe "test/2" do
@@ -33,8 +37,8 @@ defmodule Citadel.EventFilterTest do
                  source_saga_module: saga_module,
                  event_body_filter_set:
                    EventBodyFilterSet.new([
-                     EventBodyFilter.new(TestEventBodyFilterA, :a),
-                     EventBodyFilter.new(TestEventBodyFilterB, :b)
+                     %TestEventBodyFilterA{value: :a},
+                     %TestEventBodyFilterB{value: :b}
                    ])
                },
                Event.new(%TestEvent{value_a: :a, value_b: :b}, saga_id, saga_module)
@@ -92,8 +96,8 @@ defmodule Citadel.EventFilterTest do
                  event_type: TestEvent,
                  event_body_filter_set:
                    EventBodyFilterSet.new([
-                     EventBodyFilter.new(TestEventBodyFilterA, :a),
-                     EventBodyFilter.new(TestEventBodyFilterB, :b)
+                     %TestEventBodyFilterA{value: :a},
+                     %TestEventBodyFilterB{value: :b}
                    ])
                },
                Event.new(%TestEvent{value_a: :a, value_b: :b})
@@ -104,8 +108,8 @@ defmodule Citadel.EventFilterTest do
                  event_type: TestEvent,
                  event_body_filter_set:
                    EventBodyFilterSet.new([
-                     EventBodyFilter.new(TestEventBodyFilterA, :a),
-                     EventBodyFilter.new(TestEventBodyFilterB, :b)
+                     %TestEventBodyFilterA{value: :a},
+                     %TestEventBodyFilterB{value: :b}
                    ])
                },
                Event.new(%TestEvent{value_a: :c, value_b: :c})

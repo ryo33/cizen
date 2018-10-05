@@ -47,9 +47,11 @@ defmodule Citadel.Channel do
       An event body filter to filter EmitMesssage by connection id
       """
       alias Citadel.EventBodyFilter
+      @enforce_keys [:value]
+      defstruct [:value]
       @behaviour EventBodyFilter
       @impl true
-      def test(event_body, connection_id) do
+      def test(%__MODULE__{value: connection_id}, event_body) do
         event_body.connection_id == connection_id
       end
     end
@@ -68,10 +70,12 @@ defmodule Citadel.Channel do
       @moduledoc """
       An event body filter to filter RejectMesssage by connection id
       """
+      @enforce_keys [:value]
+      defstruct [:value]
       alias Citadel.EventBodyFilter
       @behaviour EventBodyFilter
       @impl true
-      def test(event_body, connection_id) do
+      def test(%__MODULE__{value: connection_id}, event_body) do
         event_body.connection_id == connection_id
       end
     end

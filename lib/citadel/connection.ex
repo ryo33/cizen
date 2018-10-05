@@ -13,7 +13,6 @@ defmodule Citadel.Connection do
   alias Citadel.ReceiveMessage
   alias Citadel.Saga
 
-  alias Citadel.EventBodyFilter
   alias Citadel.EventBodyFilterSet
   alias Citadel.EventFilter
   alias Citadel.EventFilterDispatcher
@@ -76,7 +75,7 @@ defmodule Citadel.Connection do
       event_type: EmitMessage,
       event_body_filter_set:
         EventBodyFilterSet.new([
-          EventBodyFilter.new(EmitMessage.ConnectionIDFilter, id)
+          %EmitMessage.ConnectionIDFilter{value: id}
         ])
     })
 
@@ -84,7 +83,7 @@ defmodule Citadel.Connection do
       event_type: RejectMessage,
       event_body_filter_set:
         EventBodyFilterSet.new([
-          EventBodyFilter.new(RejectMessage.ConnectionIDFilter, id)
+          %RejectMessage.ConnectionIDFilter{value: id}
         ])
     })
 
