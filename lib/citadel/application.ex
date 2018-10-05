@@ -58,6 +58,7 @@ defmodule Citadel.Application do
     alias Citadel.SagaLauncher
     SagaLauncher.launch_saga(%Citadel.Messenger{})
     SagaLauncher.launch_saga(%Citadel.SagaStarter{})
+    SagaLauncher.launch_saga(%Citadel.RequestResponseMediator{})
     :ok
   end
 end
