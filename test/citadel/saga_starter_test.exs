@@ -23,8 +23,6 @@ defmodule Citadel.SagaStarterTest do
         })
       )
 
-      :timer.sleep(100)
-
       assert_receive %Event{
         body: %LaunchSaga{
           id: ^saga_id,
