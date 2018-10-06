@@ -14,7 +14,7 @@ defmodule Citadel.Automaton.Effect do
   @callback init(handler, t) :: resolve | term
   @callback handle_event(handler, Message.t(), t, state :: term) :: resolve | consume | term
 
-  @spec init(handler, t) :: resolve | consume
+  @spec init(handler, t) :: resolve | term
   def init(handler, effect) do
     module = effect.__struct__
     module.init(handler, effect)
