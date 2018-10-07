@@ -3,18 +3,20 @@ defmodule Citadel.Automaton.Effects.RequestTest do
   alias Citadel.TestHelper
 
   alias Citadel.Automaton
+  alias Citadel.Automaton.Effect
   alias Citadel.Automaton.Effects
   alias Citadel.Dispatcher
   alias Citadel.Event
   alias Citadel.EventFilter
+  alias Citadel.EventID
   alias Citadel.Saga
   alias Citadel.SagaID
 
+  alias Citadel.Request
   alias Citadel.StartSaga
 
   defmodule TestRequest do
     alias Citadel.EventFilter
-    alias Citadel.Request
 
     defstruct [:value]
 
@@ -33,6 +35,26 @@ defmodule Citadel.Automaton.Effects.RequestTest do
   end
 
   describe "Request" do
+    test "does not resolves on a response for another request" do
+      saga_id = SagaID.new()
+
+      {effect, state} =
+        Effect.init(saga_id, %Effects.Request{
+          body: %TestRequest{value: 1}
+        })
+
+      response = %TestRequest.TestResponse{value: 2}
+
+      event =
+        Event.new(%Request.Response{
+          requestor_saga_id: saga_id,
+          request_event_id: EventID.new(),
+          event: response
+        })
+
+      refute match?({:resolve, _}, Effect.handle_event(saga_id, event, effect, state))
+    end
+
     defmodule TestAutomaton do
       use Automaton
 

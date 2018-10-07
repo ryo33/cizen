@@ -237,7 +237,7 @@ defmodule Citadel.Automaton.Effects.JoinTest do
           perform(id, %Join{
             effects: [
               %TestEffect{value: :a, resolve_immediately: true},
-              %TestEffect{value: :b},
+              fn :a -> %TestEffect{value: :b} end,
               %TestEffect{value: :c}
             ]
           })

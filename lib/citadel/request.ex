@@ -22,5 +22,19 @@ defmodule Citadel.Request do
     @keys [:requestor_saga_id, :request_event_id, :event]
     @enforce_keys @keys
     defstruct @keys
+
+    defmodule RequestEventIDFilter do
+      @moduledoc """
+      An event body filter to filter Response by the request event id
+      """
+      alias Citadel.EventBodyFilter
+      @enforce_keys [:value]
+      defstruct [:value]
+      @behaviour EventBodyFilter
+      @impl true
+      def test(%__MODULE__{value: request_event_id}, event_body) do
+        event_body.request_event_id == request_event_id
+      end
+    end
   end
 end
