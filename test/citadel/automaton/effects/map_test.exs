@@ -1,0 +1,153 @@
+defmodule Citadel.Automaton.Effects.MapTest do
+  use ExUnit.Case
+  alias Citadel.EffectTestHelper.{TestEffect, TestEvent}
+  alias Citadel.TestHelper
+
+  alias Citadel.Automaton
+  alias Citadel.Automaton.Effect
+  alias Citadel.Automaton.Effects.Map
+  alias Citadel.Dispatcher
+  alias Citadel.Event
+  alias Citadel.EventFilter
+  alias Citadel.Messenger
+  alias Citadel.Saga
+  alias Citadel.SagaID
+
+  alias Citadel.StartSaga
+
+  describe "Map" do
+    test "transform the result when the effect immediately resolves" do
+      id = SagaID.new()
+
+      effect = %Map{
+        effect: %TestEffect{value: :a, resolve_immediately: true},
+        transform: fn :a -> :transformed_a end
+      }
+
+      assert {:resolve, :transformed_a} == Effect.init(id, effect)
+    end
+
+    test "returns the state of the effect on init" do
+      id = SagaID.new()
+
+      effect = %Map{
+        effect: %TestEffect{value: :a},
+        transform: fn :a -> :transformed_a end
+      }
+
+      assert :a == Effect.init(id, effect)
+    end
+
+    test "transforms the result when the effect resolves" do
+      id = SagaID.new()
+
+      effect = %Map{
+        effect: %TestEffect{value: :a},
+        transform: fn :a -> :transformed_a end
+      }
+
+      state = Effect.init(id, effect)
+      event = Event.new(%TestEvent{value: :a})
+      assert {:resolve, :transformed_a} == Effect.handle_event(id, event, effect, state)
+    end
+
+    test "consumes an event" do
+      id = SagaID.new()
+
+      effect = %Map{
+        effect: %TestEffect{value: :a},
+        transform: fn :a -> :transformed_a end
+      }
+
+      state = Effect.init(id, effect)
+      event = Event.new(%TestEvent{value: :b})
+      assert {:consume, :a} == Effect.handle_event(id, event, effect, state)
+    end
+
+    test "ignores an event" do
+      id = SagaID.new()
+
+      effect = %Map{
+        effect: %TestEffect{value: :a},
+        transform: fn :a -> :transformed_a end
+      }
+
+      state = Effect.init(id, effect)
+      event = Event.new(%TestEvent{value: :ignored})
+      assert :a == Effect.handle_event(id, event, effect, state)
+    end
+
+    defmodule TestAutomaton do
+      use Automaton
+
+      defstruct [:pid]
+
+      @impl true
+      def yield(id, %__MODULE__{pid: pid}) do
+        Messenger.subscribe_message(id, __MODULE__, %EventFilter{
+          event_type: TestEvent
+        })
+
+        send(pid, :launched)
+
+        send(
+          pid,
+          perform(id, %Map{
+            effect: %TestEffect{value: :a, resolve_immediately: true},
+            transform: fn :a -> :transformed_a end
+          })
+        )
+
+        send(
+          pid,
+          perform(id, %Map{
+            effect: %TestEffect{value: :b},
+            transform: fn :b -> :transformed_b end
+          })
+        )
+
+        Automaton.finish()
+      end
+    end
+
+    test "transforms the result" do
+      saga_id = SagaID.new()
+      Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
+
+      Dispatcher.dispatch(
+        Event.new(%StartSaga{
+          id: saga_id,
+          saga: %TestAutomaton{pid: self()}
+        })
+      )
+
+      assert_receive :launched
+
+      assert_receive :transformed_a
+
+      Dispatcher.dispatch(
+        Event.new(%TestEvent{
+          value: :c
+        })
+      )
+
+      Dispatcher.dispatch(
+        Event.new(%TestEvent{
+          value: :ignored
+        })
+      )
+
+      Dispatcher.dispatch(
+        Event.new(%TestEvent{
+          value: :b
+        })
+      )
+
+      assert_receive :transformed_b
+
+      assert_receive %Event{body: %Saga.Finish{id: ^saga_id}}
+
+      TestHelper.ensure_finished(saga_id)
+    end
+  end
+end
