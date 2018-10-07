@@ -3,7 +3,7 @@ defmodule Citadel.Automaton.Effect do
   The effect behaviour.
   """
 
-  alias Citadel.Message
+  alias Citadel.Event
   alias Citadel.SagaID
 
   @type t :: struct
@@ -12,7 +12,7 @@ defmodule Citadel.Automaton.Effect do
   @type consume :: {:consume, term}
 
   @callback init(handler, t) :: resolve | term
-  @callback handle_event(handler, Message.t(), t, state :: term) :: resolve | consume | term
+  @callback handle_event(handler, Event.t(), t, state :: term) :: resolve | consume | term
 
   @spec init(handler, t) :: resolve | term
   def init(handler, effect) do
@@ -20,7 +20,7 @@ defmodule Citadel.Automaton.Effect do
     module.init(handler, effect)
   end
 
-  @spec handle_event(handler, Message.t(), t, state :: term) :: resolve | consume | term
+  @spec handle_event(handler, Event.t(), t, state :: term) :: resolve | consume | term
   def handle_event(handler, event, effect, state) do
     module = effect.__struct__
     module.handle_event(handler, event, effect, state)
