@@ -195,6 +195,30 @@ defmodule Citadel.Automaton.Effects.JoinTest do
       assert {:resolve, [:a, :b, :c]} == Effect.handle_event(id, event, effect, state)
     end
 
+    test "pass the results to the functions" do
+      id = SagaID.new()
+
+      effect = %Join{
+        effects: [
+          fn ->
+            %TestEffect{value: :a}
+          end,
+          %TestEffect{value: :b, resolve_immediately: true},
+          fn a, b ->
+            assert a == :a
+            assert b == :b
+            %TestEffect{value: :c}
+          end
+        ]
+      }
+
+      {_, state} = Effect.init(id, effect)
+      event = Event.new(%TestEvent{value: :a})
+      {:consume, state} = Effect.handle_event(id, event, effect, state)
+      event = Event.new(%TestEvent{value: :c})
+      assert {:resolve, [:a, :b, :c]} == Effect.handle_event(id, event, effect, state)
+    end
+
     defmodule TestAutomaton do
       use Automaton
 

@@ -46,10 +46,17 @@ defmodule Citadel.Automaton.Effects.Join do
     end
   end
 
-  defp do_init(_id, _effects, values \\ [])
+  defp do_init(id, effects, values \\ [])
   defp do_init(_id, [], values), do: {values, [], nil}
 
   defp do_init(id, [effect | tail], values) do
+    effect =
+      if is_function(effect) do
+        apply(effect, Enum.reverse(values))
+      else
+        effect
+      end
+
     case Effect.init(id, effect) do
       {:resolve, value} ->
         do_init(id, tail, [value | values])
