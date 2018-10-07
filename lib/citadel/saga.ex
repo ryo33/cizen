@@ -46,6 +46,10 @@ defmodule Citadel.Saga do
     defstruct([:id, :reason])
   end
 
+  @lazy_launch {__MODULE__, :lazy_launch}
+
+  def lazy_launch, do: @lazy_launch
+
   @spec module(t) :: module
   def module(saga) do
     saga.__struct__
@@ -54,8 +58,6 @@ defmodule Citadel.Saga do
   def launch(id, saga) do
     {:ok, _pid} =
       GenServer.start(__MODULE__, {id, saga}, name: {:via, Registry, {SagaRegistry, id}})
-
-    Dispatcher.dispatch(Event.new(%Launched{id: id}))
   end
 
   def unlaunch(id) do
@@ -68,7 +70,17 @@ defmodule Citadel.Saga do
   def init({id, saga}) do
     Dispatcher.listen_event_body(%Finish{id: id})
     module = Saga.module(saga)
-    state = module.init(id, saga)
+
+    state =
+      case module.init(id, saga) do
+        {@lazy_launch, state} ->
+          state
+
+        state ->
+          Dispatcher.dispatch(Event.new(%Launched{id: id}))
+          state
+      end
+
     {:ok, {id, module, state}}
   end
 

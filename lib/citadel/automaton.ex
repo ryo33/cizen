@@ -15,11 +15,15 @@ defmodule Citadel.Automaton do
   alias Citadel.Automaton.PerformEffect
   alias Citadel.ReceiveMessage
 
-  @callback yield(SagaID.t(), state :: term) :: state :: term
-
   @finish {__MODULE__, :finish}
 
   def finish, do: @finish
+
+  @type finish :: {__MODULE__, :finish}
+  @type state :: term
+
+  @callback spawn(SagaID.t(), state) :: finish | state
+  @callback yield(SagaID.t(), state) :: finish | state
 
   defmacro __using__(_opts) do
     quote do
@@ -28,6 +32,13 @@ defmodule Citadel.Automaton do
 
       @behaviour Saga
       @behaviour Automaton
+
+      @impl Automaton
+      def spawn(id, struct) do
+        struct
+      end
+
+      defoverridable spawn: 2
 
       @impl Saga
       def init(id, struct) do
@@ -56,13 +67,14 @@ defmodule Citadel.Automaton do
     end
   end
 
-  defp yield(module, id, state) do
-    case module.yield(id, state) do
+  defp do_yield(module, id, state) do
+    case state do
       @finish ->
         Dispatcher.dispatch(Event.new(%Saga.Finish{id: id}))
 
       state ->
-        yield(module, id, state)
+        state = module.yield(id, state)
+        do_yield(module, id, state)
     end
   end
 
@@ -76,10 +88,12 @@ defmodule Citadel.Automaton do
 
     pid =
       spawn_link(fn ->
-        yield(module, id, saga)
+        state = module.spawn(id, saga)
+        Dispatcher.dispatch(Event.new(%Saga.Launched{id: id}))
+        do_yield(module, id, state)
       end)
 
-    %{pid: pid, effect: nil, effect_state: nil, event_buffer: []}
+    {Saga.lazy_launch(), %{pid: pid, effect: nil, effect_state: nil, event_buffer: []}}
   end
 
   def handle_event(

@@ -14,6 +14,7 @@ defmodule Citadel.SagaTest do
   alias Citadel.Dispatcher
   alias Citadel.Event
   alias Citadel.Saga
+  alias Citadel.SagaID
   alias Citadel.SagaLauncher
   alias Citadel.SagaRegistry
 
@@ -133,6 +134,33 @@ defmodule Citadel.SagaTest do
 
       assert_receive %Event{body: %Saga.Finished{id: ^id}}
       assert_condition(100, :error == SagaRegistry.resolve_id(id))
+    end
+
+    defmodule LazyLaunchSaga do
+      @behaviour Citadel.Saga
+
+      defstruct []
+
+      @impl true
+      def init(_, _) do
+        Dispatcher.listen_event_type(TestEvent)
+        {Saga.lazy_launch(), :ok}
+      end
+
+      @impl true
+      def handle_event(id, %Event{body: %TestEvent{}}, :ok) do
+        Dispatcher.dispatch(Event.new(%Saga.Launched{id: id}))
+        :ok
+      end
+    end
+
+    test "does not dispatch Launched event on lazy launch" do
+      Dispatcher.listen_event_type(Saga.Launched)
+      id = SagaID.new()
+      Saga.launch(id, %LazyLaunchSaga{})
+      refute_receive %Event{body: %Saga.Launched{id: ^id}}
+      Dispatcher.dispatch(Event.new(%TestEvent{}))
+      assert_receive %Event{body: %Saga.Launched{id: ^id}}
     end
   end
 
