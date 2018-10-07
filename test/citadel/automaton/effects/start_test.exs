@@ -1,19 +1,20 @@
-defmodule Citadel.Automaton.Effects.SubscribeTest do
+defmodule Citadel.Automaton.Effects.StartTest do
   use ExUnit.Case
   alias Citadel.TestHelper
+  alias Citadel.TestSaga
 
   alias Citadel.Automaton
-  alias Citadel.Automaton.Effects.{Receive, Subscribe}
+  alias Citadel.Automaton.Effects.Start
   alias Citadel.Dispatcher
   alias Citadel.Event
-  alias Citadel.EventFilter
+  alias Citadel.Saga
   alias Citadel.SagaID
 
   alias Citadel.StartSaga
 
   defmodule(TestEvent, do: defstruct([:value]))
 
-  describe "Subscribe" do
+  describe "Start" do
     defmodule TestAutomaton do
       use Automaton
 
@@ -23,18 +24,9 @@ defmodule Citadel.Automaton.Effects.SubscribeTest do
       def yield(id, %__MODULE__{pid: pid}) do
         send(
           pid,
-          perform(id, %Subscribe{
-            event_filter: %EventFilter{
-              event_type: TestEvent
-            }
-          })
-        )
-
-        send(
-          pid,
-          perform(id, %Receive{
-            event_filter: %EventFilter{
-              event_type: TestEvent
+          perform(id, %Start{
+            saga: %TestSaga{
+              launch: fn id, _ -> send(pid, {:saga_id, id}) end
             }
           })
         )
@@ -45,6 +37,7 @@ defmodule Citadel.Automaton.Effects.SubscribeTest do
 
     test "transforms the result" do
       saga_id = SagaID.new()
+      Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
 
       Dispatcher.dispatch(
         Event.new(%StartSaga{
@@ -53,12 +46,13 @@ defmodule Citadel.Automaton.Effects.SubscribeTest do
         })
       )
 
-      assert_receive :ok
-      event = Event.new(%TestEvent{value: :a})
-      Dispatcher.dispatch(event)
-      assert_receive ^event
+      {_, sub_saga_id} = assert_receive {:saga_id, id}
+      assert_receive ^sub_saga_id
+
+      assert_receive %Event{body: %Saga.Finish{id: ^saga_id}}
 
       TestHelper.ensure_finished(saga_id)
+      TestHelper.ensure_finished(sub_saga_id)
     end
   end
 end

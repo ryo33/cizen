@@ -9,6 +9,7 @@ defmodule Citadel.Saga do
 
   alias Citadel.Dispatcher
   alias Citadel.Event
+  alias Citadel.EventBodyFilter
   alias Citadel.Saga
   alias Citadel.SagaID
   alias Citadel.SagaRegistry
@@ -29,6 +30,19 @@ defmodule Citadel.Saga do
   defmodule Launched do
     @moduledoc "A event fired on launch"
     defstruct([:id])
+
+    defmodule SagaIDFilter do
+      @moduledoc """
+      An event body filter to filter Saga.Launced by saga id
+      """
+      @enforce_keys [:value]
+      defstruct [:value]
+      @behaviour EventBodyFilter
+      @impl true
+      def test(%__MODULE__{value: saga_id}, event_body) do
+        event_body.id == saga_id
+      end
+    end
   end
 
   defmodule Unlaunched do
