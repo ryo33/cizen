@@ -19,19 +19,23 @@ defmodule Citadel.AutomatonTest do
   defmodule(TestEvent, do: defstruct([:value, :count]))
 
   defmodule TestEffect do
-    defstruct [:value, :resolve_immediately, :reset]
+    defstruct [:value, :resolve_immediately, :reset, :alias_of]
 
     alias Citadel.Automaton.Effect
     @behaviour Effect
 
     @impl true
     def init(_handler, effect) do
-      count = 0
+      if is_nil(effect.alias_of) do
+        count = 0
 
-      if effect.resolve_immediately do
-        {:resolve, {effect.value, count}}
+        if effect.resolve_immediately do
+          {:resolve, {effect.value, count}}
+        else
+          count
+        end
       else
-        count
+        {:alias_of, effect.alias_of}
       end
     end
 
@@ -214,6 +218,34 @@ defmodule Citadel.AutomatonTest do
         |> feed(%TestEvent{value: :b, count: 1})
 
       assert state.effect_state == 0
+    end
+
+    test "resolves immediately with using alias", state do
+      state =
+        state
+        |> do_perform(%TestEffect{
+          value: :b,
+          alias_of: %TestEffect{resolve_immediately: true, value: :a}
+        })
+
+      assert_receive {:a, 0}
+      assert state.effect == nil
+      assert state.event_buffer == []
+    end
+
+    test "resolves with using alias", state do
+      state =
+        state
+        |> feed(%TestEvent{value: :b, count: 2})
+        |> do_perform(%TestEffect{
+          value: :a,
+          alias_of: %TestEffect{value: :b}
+        })
+        |> feed(%TestEvent{value: :b, count: 2})
+
+      assert_receive {:b, 2}
+      assert state.effect == nil
+      assert state.event_buffer == []
     end
   end
 

@@ -35,7 +35,7 @@ defmodule Citadel.Automaton.Effects.MapTest do
         transform: fn :a -> :transformed_a end
       }
 
-      assert :a == Effect.init(id, effect)
+      assert {effect, {effect.effect, :a}} == Effect.init(id, effect)
     end
 
     test "transforms the result when the effect resolves" do
@@ -46,7 +46,7 @@ defmodule Citadel.Automaton.Effects.MapTest do
         transform: fn :a -> :transformed_a end
       }
 
-      state = Effect.init(id, effect)
+      {effect, state} = Effect.init(id, effect)
       event = Event.new(%TestEvent{value: :a})
       assert {:resolve, :transformed_a} == Effect.handle_event(id, event, effect, state)
     end
@@ -59,9 +59,9 @@ defmodule Citadel.Automaton.Effects.MapTest do
         transform: fn :a -> :transformed_a end
       }
 
-      state = Effect.init(id, effect)
+      {effect, state} = Effect.init(id, effect)
       event = Event.new(%TestEvent{value: :b})
-      assert {:consume, :a} == Effect.handle_event(id, event, effect, state)
+      assert {:consume, {effect.effect, :a}} == Effect.handle_event(id, event, effect, state)
     end
 
     test "ignores an event" do
@@ -72,9 +72,26 @@ defmodule Citadel.Automaton.Effects.MapTest do
         transform: fn :a -> :transformed_a end
       }
 
-      state = Effect.init(id, effect)
+      {effect, state} = Effect.init(id, effect)
       event = Event.new(%TestEvent{value: :ignored})
-      assert :a == Effect.handle_event(id, event, effect, state)
+      assert {effect.effect, :a} == Effect.handle_event(id, event, effect, state)
+    end
+
+    test "works with alias" do
+      id = SagaID.new()
+
+      effect = %Map{
+        effect: %TestEffect{value: :a, alias_of: %TestEffect{value: :b}},
+        transform: fn
+          :a -> :transformed_a
+          :b -> :transformed_b
+        end
+      }
+
+      {effect, state} = Effect.init(id, effect)
+      assert {effect.effect.alias_of, :b} == state
+      event = Event.new(%TestEvent{value: :b})
+      assert {:resolve, :transformed_b} == Effect.handle_event(id, event, effect, state)
     end
 
     defmodule TestAutomaton do

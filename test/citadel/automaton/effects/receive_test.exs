@@ -37,14 +37,14 @@ defmodule Citadel.Automaton.Effects.ReceiveTest do
     end
 
     test "resolves if matched", %{handler: id, effect: effect} do
-      state = Effect.init(id, effect)
+      {_, state} = Effect.init(id, effect)
 
       event = Event.new(%TestEvent1{})
       assert {:resolve, ^event} = Effect.handle_event(id, event, effect, state)
     end
 
     test "does not resolve or consume if not matched", %{handler: id, effect: effect} do
-      state = Effect.init(id, effect)
+      {_, state} = Effect.init(id, effect)
 
       next = Effect.handle_event(id, Event.new(%TestEvent2{}), effect, state)
 

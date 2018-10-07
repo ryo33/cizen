@@ -8,16 +8,22 @@ defmodule Citadel.Automaton.Effect do
 
   @type t :: struct
   @type handler :: SagaID.t()
+  @type alias_of :: {:alias_of, t}
   @type resolve :: {:resolve, term}
   @type consume :: {:consume, term}
 
-  @callback init(handler, t) :: resolve | term
+  @callback init(handler, t) :: resolve | alias_of | term
   @callback handle_event(handler, Event.t(), t, state :: term) :: resolve | consume | term
 
-  @spec init(handler, t) :: resolve | term
+  @spec init(handler, t) :: resolve | {t, term}
   def init(handler, effect) do
     module = effect.__struct__
-    module.init(handler, effect)
+
+    case module.init(handler, effect) do
+      {:resolve, result} -> {:resolve, result}
+      {:alias_of, effect} -> init(handler, effect)
+      other -> {effect, other}
+    end
   end
 
   @spec handle_event(handler, Event.t(), t, state :: term) :: resolve | consume | term

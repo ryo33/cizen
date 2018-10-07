@@ -8,17 +8,21 @@ defmodule Citadel.EffectTestHelper do
 
   defmodule TestEffect do
     @moduledoc false
-    defstruct [:value, :resolve_immediately]
+    defstruct [:value, :resolve_immediately, :alias_of]
 
     alias Citadel.Automaton.Effect
     @behaviour Effect
 
     @impl true
     def init(_handler, effect) do
-      if effect.resolve_immediately do
-        {:resolve, effect.value}
+      if is_nil(effect.alias_of) do
+        if effect.resolve_immediately do
+          {:resolve, effect.value}
+        else
+          effect.value
+        end
       else
-        effect.value
+        {:alias_of, effect.alias_of}
       end
     end
 

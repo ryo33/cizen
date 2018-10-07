@@ -17,22 +17,22 @@ defmodule Citadel.Automaton.Effects.Map do
       {:resolve, result} ->
         {:resolve, transform.(result)}
 
-      other ->
-        other
+      {effect, other} ->
+        {effect, other}
     end
   end
 
   @impl true
-  def handle_event(id, event, %__MODULE__{effect: effect, transform: transform}, state) do
+  def handle_event(id, event, %__MODULE__{transform: transform}, {effect, state}) do
     case Effect.handle_event(id, event, effect, state) do
       {:resolve, result} ->
         {:resolve, transform.(result)}
 
       {:consume, state} ->
-        {:consume, state}
+        {:consume, {effect, state}}
 
       other ->
-        other
+        {effect, other}
     end
   end
 end

@@ -62,7 +62,7 @@ defmodule Citadel.Automaton.Effects.JoinTest do
         ]
       }
 
-      state = Effect.init(id, effect)
+      {_, state} = Effect.init(id, effect)
       event = Event.new(%TestEvent{value: :b})
       assert {:resolve, [:a, :b]} == Effect.handle_event(id, event, effect, state)
     end
@@ -76,7 +76,7 @@ defmodule Citadel.Automaton.Effects.JoinTest do
         ]
       }
 
-      state = Effect.init(id, effect)
+      {_, state} = Effect.init(id, effect)
       event = Event.new(%TestEvent{value: :b})
       assert match?({:consume, _}, Effect.handle_event(id, event, effect, state))
     end
@@ -90,7 +90,7 @@ defmodule Citadel.Automaton.Effects.JoinTest do
         ]
       }
 
-      state = Effect.init(id, effect)
+      {_, state} = Effect.init(id, effect)
       event = Event.new(%TestEvent{value: :ignored})
       state = Effect.handle_event(id, event, effect, state)
       refute match?({:resolve, _}, state)
@@ -107,7 +107,7 @@ defmodule Citadel.Automaton.Effects.JoinTest do
         ]
       }
 
-      state = Effect.init(id, effect)
+      {_, state} = Effect.init(id, effect)
       event = Event.new(%TestEvent{value: :c})
       {:consume, state} = Effect.handle_event(id, event, effect, state)
       event = Event.new(%TestEvent{value: :b})
@@ -124,7 +124,7 @@ defmodule Citadel.Automaton.Effects.JoinTest do
         ]
       }
 
-      state = Effect.init(id, effect)
+      {_, state} = Effect.init(id, effect)
       event = Event.new(%TestEvent{value: :ignored})
       state = Effect.handle_event(id, event, effect, state)
       event = Event.new(%TestEvent{value: :b})
@@ -141,7 +141,7 @@ defmodule Citadel.Automaton.Effects.JoinTest do
         ]
       }
 
-      state = Effect.init(id, effect)
+      {_, state} = Effect.init(id, effect)
       event = Event.new(%TestEvent{value: :a})
       assert {:consume, _} = Effect.handle_event(id, event, effect, state)
     end
@@ -157,7 +157,7 @@ defmodule Citadel.Automaton.Effects.JoinTest do
         ]
       }
 
-      state = Effect.init(id, effect)
+      {_, state} = Effect.init(id, effect)
       event = Event.new(%TestEvent{value: :a})
       {:consume, state} = Effect.handle_event(id, event, effect, state)
 
@@ -170,13 +170,27 @@ defmodule Citadel.Automaton.Effects.JoinTest do
 
       effect = %Join{
         effects: [
+          %TestEffect{value: :a, alias_of: %TestEffect{value: :b}}
+        ]
+      }
+
+      {_, state} = Effect.init(id, effect)
+      event = Event.new(%TestEvent{value: :b})
+      assert {:resolve, [:b]} == Effect.handle_event(id, event, effect, state)
+    end
+
+    test "works with aliases" do
+      id = SagaID.new()
+
+      effect = %Join{
+        effects: [
           %TestEffect{value: :a},
           %TestEffect{value: :b, resolve_immediately: true},
           %TestEffect{value: :c, resolve_immediately: true}
         ]
       }
 
-      state = Effect.init(id, effect)
+      {_, state} = Effect.init(id, effect)
       event = Event.new(%TestEvent{value: :a})
       assert {:resolve, [:a, :b, :c]} == Effect.handle_event(id, event, effect, state)
     end

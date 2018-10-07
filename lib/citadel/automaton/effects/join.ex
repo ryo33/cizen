@@ -49,13 +49,13 @@ defmodule Citadel.Automaton.Effects.Join do
   defp do_init(_id, _effects, values \\ [])
   defp do_init(_id, [], values), do: {values, [], nil}
 
-  defp do_init(id, [effect | tail] = effects, values) do
+  defp do_init(id, [effect | tail], values) do
     case Effect.init(id, effect) do
       {:resolve, value} ->
         do_init(id, tail, [value | values])
 
-      state ->
-        {values, effects, state}
+      {effect, state} ->
+        {values, [effect | tail], state}
     end
   end
 end

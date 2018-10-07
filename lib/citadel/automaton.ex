@@ -100,7 +100,7 @@ defmodule Citadel.Automaton do
         send(state.pid, value)
         state
 
-      effect_state ->
+      {effect, effect_state} ->
         state = %{state | effect: effect, effect_state: effect_state}
         {state, buffer} = feed_events(id, state, state.event_buffer)
         %{state | event_buffer: buffer}
