@@ -264,8 +264,7 @@ defmodule Citadel.Automaton.Effects.JoinTest do
         })
       )
 
-      # performance issue
-      assert_receive [:a, :b, :c], 1000
+      assert_receive [:a, :b, :c]
 
       assert_receive %Event{body: %Saga.Finish{id: ^saga_id}}
 

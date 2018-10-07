@@ -28,15 +28,23 @@ defmodule Citadel.Transmitter do
 
   @impl true
   def handle_info(%Event{body: %SendMessage{} = body}, state) do
-    Dispatcher.dispatch(
-      Event.new(%SagaLauncher.LaunchSaga{
-        id: SagaID.new(),
-        saga: %Connection{
-          message: body.message,
-          channels: body.channels
-        }
-      })
-    )
+    if body.channels == [] do
+      Dispatcher.dispatch(
+        Event.new(%ReceiveMessage{
+          message: body.message
+        })
+      )
+    else
+      Dispatcher.dispatch(
+        Event.new(%SagaLauncher.LaunchSaga{
+          id: SagaID.new(),
+          saga: %Connection{
+            message: body.message,
+            channels: body.channels
+          }
+        })
+      )
+    end
 
     {:noreply, state}
   end

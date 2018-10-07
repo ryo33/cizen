@@ -57,7 +57,42 @@ defmodule Citadel.TransmitterTest do
     end
   end
 
-  test "send the message to destination saga on SendMessage event" do
+  test "dispatch ReceiveMessage immediately if there is no channels" do
+    Dispatcher.listen_event_type(SagaLauncher.LaunchSaga)
+    Dispatcher.listen_event_type(ReceiveMessage)
+
+    message = %Message{
+      event: Event.new(%TestEvent{}),
+      destination_saga_id: SagaID.new(),
+      destination_saga_module: TestSaga
+    }
+
+    channels = []
+
+    Dispatcher.dispatch(
+      Event.new(%SendMessage{
+        message: message,
+        channels: channels
+      })
+    )
+
+    refute_receive %Event{
+      body: %SagaLauncher.LaunchSaga{
+        saga: %Connection{
+          message: ^message,
+          channels: ^channels
+        }
+      }
+    }
+
+    assert_receive %Event{
+      body: %ReceiveMessage{
+        message: ^message
+      }
+    }
+  end
+
+  test "send the message to destination saga on ReceiveMessage event" do
     pid = self()
 
     saga_id =
