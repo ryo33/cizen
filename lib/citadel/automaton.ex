@@ -118,6 +118,14 @@ defmodule Citadel.Automaton do
         },
         state
       ) do
+    feed_event(id, event, state)
+  end
+
+  def handle_event(id, event, state) do
+    feed_event(id, event, state)
+  end
+
+  defp feed_event(id, event, state) do
     case state do
       %{effect: nil} ->
         append_to_buffer(state, event)
