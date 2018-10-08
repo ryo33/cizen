@@ -3,8 +3,8 @@ defmodule Citadel.Automaton do
   A saga framework to create an automaton.
   """
 
-  alias Citadel.Automaton.Effect
   alias Citadel.Dispatcher
+  alias Citadel.EffectHandler
   alias Citadel.Event
   alias Citadel.EventFilter
   alias Citadel.EventFilterDispatcher
@@ -94,11 +94,13 @@ defmodule Citadel.Automaton do
         do_yield(module, id, state)
       end)
 
-    {Saga.lazy_launch(), %{pid: pid, effect: nil, effect_state: nil, event_buffer: []}}
+    handler_state = EffectHandler.init(id)
+
+    {Saga.lazy_launch(), {pid, handler_state}}
   end
 
   def handle_event(
-        id,
+        _id,
         %Event{
           body: %EventFilterDispatcher.PushEvent{
             event: %Event{
@@ -108,22 +110,13 @@ defmodule Citadel.Automaton do
             }
           }
         },
-        state
+        {pid, handler}
       ) do
-    case Effect.init(id, effect) do
-      {:resolve, value} ->
-        send(state.pid, value)
-        state
-
-      {effect, effect_state} ->
-        state = %{state | effect: effect, effect_state: effect_state}
-        {state, buffer} = feed_events(id, state, state.event_buffer)
-        %{state | event_buffer: buffer}
-    end
+    handle_result(pid, EffectHandler.perform_effect(handler, effect))
   end
 
   def handle_event(
-        id,
+        _id,
         %Event{
           body: %ReceiveMessage{
             message: %Message{
@@ -133,51 +126,23 @@ defmodule Citadel.Automaton do
         },
         state
       ) do
-    feed_event(id, event, state)
+    feed_event(state, event)
   end
 
-  def handle_event(id, event, state) do
-    feed_event(id, event, state)
+  def handle_event(_id, event, state) do
+    feed_event(state, event)
   end
 
-  defp feed_event(id, event, state) do
-    case state do
-      %{effect: nil} ->
-        append_to_buffer(state, event)
-
-      state ->
-        case feed_events(id, state, [event]) do
-          {state, [event]} ->
-            append_to_buffer(state, event)
-
-          {state, []} ->
-            state
-        end
-    end
+  defp feed_event({pid, handler}, event) do
+    handle_result(pid, EffectHandler.feed_event(handler, event))
   end
 
-  defp append_to_buffer(state, event) do
-    event_buffer = state.event_buffer ++ [event]
-    %{state | event_buffer: event_buffer}
+  defp handle_result(pid, {:resolve, value, state}) do
+    send(pid, value)
+    {pid, state}
   end
 
-  defp feed_events(__id, state, []), do: {state, []}
-
-  defp feed_events(id, state, [event | tail]) do
-    case Effect.handle_event(id, event, state.effect, state.effect_state) do
-      {:resolve, value} ->
-        send(state.pid, value)
-        state = %{state | effect: nil}
-        {state, tail}
-
-      {:consume, effect_state} ->
-        state = %{state | effect_state: effect_state}
-        feed_events(id, state, tail)
-
-      effect_state ->
-        state = %{state | effect_state: effect_state}
-        {state, tail} = feed_events(id, state, tail)
-        {state, [event | tail]}
-    end
+  defp handle_result(pid, state) do
+    {pid, state}
   end
 end
