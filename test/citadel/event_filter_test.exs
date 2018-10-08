@@ -164,6 +164,20 @@ defmodule Citadel.EventFilterTest do
       assert actual == expected
     end
 
+    test "works with no arguments" do
+      require EventFilter
+      actual = EventFilter.new()
+
+      expected = %EventFilter{
+        event_type: nil,
+        source_saga_id: nil,
+        source_saga_module: nil,
+        event_body_filter_set: EventBodyFilterSet.new([])
+      }
+
+      assert actual == expected
+    end
+
     test "compile error for unknown params" do
       assert_raise ArgumentError, fn ->
         Code.compile_quoted(

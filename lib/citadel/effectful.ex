@@ -13,6 +13,7 @@ defmodule Citadel.Effectful do
     quote do
       import Citadel.Effectful, only: [handle: 1]
       import Citadel.Automaton, only: [perform: 2]
+      require Citadel.EventFilter
     end
   end
 

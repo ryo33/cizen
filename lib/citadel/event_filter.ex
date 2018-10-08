@@ -63,7 +63,7 @@ defmodule Citadel.EventFilter do
     end
   end
 
-  defmacro new(params) do
+  defmacro new(params \\ []) do
     {event_type, params} = Keyword.pop(params, :event_type)
     {source_saga_id, params} = Keyword.pop(params, :source_saga_id)
     {source_saga_module, params} = Keyword.pop(params, :source_saga_module)
