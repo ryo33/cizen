@@ -5,6 +5,7 @@ defmodule Citadel.Channel do
 
   alias Citadel.Message
   alias Citadel.SagaID
+  import Citadel.EventBodyFilter, only: [defeventbodyfilter: 3]
 
   @type t :: %__MODULE__{
           saga_id: SagaID.t(),
@@ -42,18 +43,10 @@ defmodule Citadel.Channel do
     @enforce_keys @keys
     defstruct @keys
 
-    defmodule ConnectionIDFilter do
+    defeventbodyfilter ConnectionIDFilter, :connection_id do
       @moduledoc """
       An event body filter to filter EmitMesssage by connection id
       """
-      alias Citadel.EventBodyFilter
-      @enforce_keys [:value]
-      defstruct [:value]
-      @behaviour EventBodyFilter
-      @impl true
-      def test(%__MODULE__{value: connection_id}, event_body) do
-        event_body.connection_id == connection_id
-      end
     end
   end
 
@@ -66,18 +59,10 @@ defmodule Citadel.Channel do
     @enforce_keys @keys
     defstruct @keys
 
-    defmodule ConnectionIDFilter do
+    defeventbodyfilter ConnectionIDFilter, :connection_id do
       @moduledoc """
       An event body filter to filter RejectMesssage by connection id
       """
-      @enforce_keys [:value]
-      defstruct [:value]
-      alias Citadel.EventBodyFilter
-      @behaviour EventBodyFilter
-      @impl true
-      def test(%__MODULE__{value: connection_id}, event_body) do
-        event_body.connection_id == connection_id
-      end
     end
   end
 

@@ -60,24 +60,18 @@ defmodule Citadel.Request do
 
     quote do
       alias Citadel.Event
-      alias Citadel.EventBodyFilter
       alias Citadel.EventBodyFilterSet
       alias Citadel.EventFilter
 
       defmodule unquote(module) do
         unquote(block)
 
-        defmodule unquote(filter_name) do
+        import Citadel.EventBodyFilter
+
+        defeventbodyfilter unquote(filter_name), unquote(key) do
           @moduledoc """
           An event body filter to filter #{__MODULE__}.#{unquote(module)} by event id
           """
-          @enforce_keys [:value]
-          defstruct [:value]
-          @behaviour EventBodyFilter
-          @impl true
-          def test(%__MODULE__{value: value}, event_body) do
-            Map.get(event_body, unquote(key)) == value
-          end
         end
       end
 
