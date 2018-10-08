@@ -10,7 +10,7 @@ defmodule Citadel.EffectHandlerTestHelper do
     @moduledoc false
     defstruct [:value, :resolve_immediately, :reset, :alias_of]
 
-    alias Citadel.Automaton.Effect
+    alias Citadel.Effect
     @behaviour Effect
 
     @impl true

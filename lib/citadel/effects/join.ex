@@ -1,4 +1,4 @@
-defmodule Citadel.Automaton.Effects.Join do
+defmodule Citadel.Effects.Join do
   @moduledoc """
   An effect to join multiple effects.
 
@@ -7,7 +7,7 @@ defmodule Citadel.Automaton.Effects.Join do
 
   defstruct [:effects]
 
-  alias Citadel.Automaton.Effect
+  alias Citadel.Effect
 
   @behaviour Effect
 

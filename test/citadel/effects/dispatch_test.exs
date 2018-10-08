@@ -1,11 +1,11 @@
-defmodule Citadel.Automaton.Effects.DispatchTest do
+defmodule Citadel.Effects.DispatchTest do
   use ExUnit.Case
   alias Citadel.TestHelper
 
   alias Citadel.Automaton
-  alias Citadel.Automaton.Effect
-  alias Citadel.Automaton.Effects.Dispatch
   alias Citadel.Dispatcher
+  alias Citadel.Effect
+  alias Citadel.Effects.Dispatch
   alias Citadel.Event
   alias Citadel.Saga
   alias Citadel.SagaID

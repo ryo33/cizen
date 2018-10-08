@@ -1,4 +1,4 @@
-defmodule Citadel.Automaton.Effects.Request do
+defmodule Citadel.Effects.Request do
   @moduledoc """
   An effect to request.
 
@@ -7,8 +7,8 @@ defmodule Citadel.Automaton.Effects.Request do
 
   defstruct [:body]
 
-  alias Citadel.Automaton.Effect
-  alias Citadel.Automaton.Effects.{Dispatch, Join, Map, Receive}
+  alias Citadel.Effect
+  alias Citadel.Effects.{Dispatch, Join, Map, Receive}
   alias Citadel.Event
   alias Citadel.EventFilter
   alias Citadel.Request

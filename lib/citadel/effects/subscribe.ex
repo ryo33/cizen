@@ -1,4 +1,4 @@
-defmodule Citadel.Automaton.Effects.Subscribe do
+defmodule Citadel.Effects.Subscribe do
   @moduledoc """
   An effect to request.
 
@@ -7,8 +7,8 @@ defmodule Citadel.Automaton.Effects.Subscribe do
 
   defstruct [:event_filter]
 
-  alias Citadel.Automaton.Effect
-  alias Citadel.Automaton.Effects.{Map, Request}
+  alias Citadel.Effect
+  alias Citadel.Effects.{Map, Request}
 
   alias Citadel.SubscribeMessage
 

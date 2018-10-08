@@ -1,4 +1,4 @@
-defmodule Citadel.Automaton.Effect do
+defmodule Citadel.Effect do
   @moduledoc """
   The effect behaviour.
   """

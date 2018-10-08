@@ -1,12 +1,12 @@
-defmodule Citadel.Automaton.Effects.JoinTest do
+defmodule Citadel.Effects.JoinTest do
   use ExUnit.Case
   alias Citadel.EffectTestHelper.{TestEffect, TestEvent}
   alias Citadel.TestHelper
 
   alias Citadel.Automaton
-  alias Citadel.Automaton.Effect
-  alias Citadel.Automaton.Effects.Join
   alias Citadel.Dispatcher
+  alias Citadel.Effect
+  alias Citadel.Effects.Join
   alias Citadel.Event
   alias Citadel.EventFilter
   alias Citadel.Messenger

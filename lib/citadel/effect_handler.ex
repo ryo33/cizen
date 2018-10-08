@@ -3,7 +3,7 @@ defmodule Citadel.EffectHandler do
   Handles effects.
   """
 
-  alias Citadel.Automaton.Effect
+  alias Citadel.Effect
   alias Citadel.Event
   alias Citadel.SagaID
 

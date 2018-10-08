@@ -1,11 +1,11 @@
-defmodule Citadel.Automaton.Effects.ReceiveTest do
+defmodule Citadel.Effects.ReceiveTest do
   use ExUnit.Case
   alias Citadel.TestHelper
 
   alias Citadel.Automaton
-  alias Citadel.Automaton.Effect
-  alias Citadel.Automaton.Effects.Receive
   alias Citadel.Dispatcher
+  alias Citadel.Effect
+  alias Citadel.Effects.Receive
   alias Citadel.Event
   alias Citadel.EventFilter
   alias Citadel.Messenger

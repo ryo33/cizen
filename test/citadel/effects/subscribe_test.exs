@@ -1,10 +1,10 @@
-defmodule Citadel.Automaton.Effects.SubscribeTest do
+defmodule Citadel.Effects.SubscribeTest do
   use ExUnit.Case
   alias Citadel.TestHelper
 
   alias Citadel.Automaton
-  alias Citadel.Automaton.Effects.{Receive, Subscribe}
   alias Citadel.Dispatcher
+  alias Citadel.Effects.{Receive, Subscribe}
   alias Citadel.Event
   alias Citadel.EventFilter
   alias Citadel.SagaID

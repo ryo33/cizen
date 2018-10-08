@@ -1,4 +1,4 @@
-defmodule Citadel.Automaton.Effects.Dispatch do
+defmodule Citadel.Effects.Dispatch do
   @moduledoc """
   An effect to dispatch an event.
 
@@ -7,8 +7,8 @@ defmodule Citadel.Automaton.Effects.Dispatch do
 
   defstruct [:body]
 
-  alias Citadel.Automaton.Effect
   alias Citadel.Dispatcher
+  alias Citadel.Effect
   alias Citadel.Event
 
   @behaviour Effect

@@ -1,15 +1,15 @@
-defmodule Citadel.Automaton.EffectTest do
+defmodule Citadel.EffectTest do
   use ExUnit.Case
   alias Citadel.EffectTestHelper.TestEvent
 
-  alias Citadel.Automaton.Effect
+  alias Citadel.Effect
   alias Citadel.Event
   alias Citadel.SagaID
 
   defmodule TestEffect do
     defstruct [:init_value, :handle_event_value, :alias_of]
 
-    alias Citadel.Automaton.Effect
+    alias Citadel.Effect
     @behaviour Effect
 
     @impl true

@@ -1,4 +1,4 @@
-defmodule Citadel.Automaton.Effects.Map do
+defmodule Citadel.Effects.Map do
   @moduledoc """
   An effect to transform the result of effect.
 
@@ -7,7 +7,7 @@ defmodule Citadel.Automaton.Effects.Map do
 
   defstruct [:effect, :transform]
 
-  alias Citadel.Automaton.Effect
+  alias Citadel.Effect
 
   @behaviour Effect
 

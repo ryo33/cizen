@@ -1,4 +1,4 @@
-defmodule Citadel.Automaton.Effects.Start do
+defmodule Citadel.Effects.Start do
   @moduledoc """
   An effect to request.
 
@@ -7,8 +7,8 @@ defmodule Citadel.Automaton.Effects.Start do
 
   defstruct [:saga]
 
-  alias Citadel.Automaton.Effect
-  alias Citadel.Automaton.Effects.{Map, Request}
+  alias Citadel.Effect
+  alias Citadel.Effects.{Map, Request}
   alias Citadel.SagaID
 
   alias Citadel.StartSaga

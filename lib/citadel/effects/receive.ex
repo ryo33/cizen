@@ -1,4 +1,4 @@
-defmodule Citadel.Automaton.Effects.Receive do
+defmodule Citadel.Effects.Receive do
   @moduledoc """
   An effect to receive an event.
 
@@ -7,7 +7,7 @@ defmodule Citadel.Automaton.Effects.Receive do
 
   defstruct [:event_filter]
 
-  alias Citadel.Automaton.Effect
+  alias Citadel.Effect
   alias Citadel.EventFilter
 
   @behaviour Effect
