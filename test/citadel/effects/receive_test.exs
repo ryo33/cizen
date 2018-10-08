@@ -58,6 +58,10 @@ defmodule Citadel.Effects.ReceiveTest do
              )
     end
 
+    test "uses the default event filter" do
+      assert %Receive{} == %Receive{event_filter: %EventFilter{}}
+    end
+
     defmodule TestAutomaton do
       use Automaton
 

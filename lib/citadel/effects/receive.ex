@@ -5,10 +5,10 @@ defmodule Citadel.Effects.Receive do
   Returns the received event.
   """
 
-  defstruct [:event_filter]
-
   alias Citadel.Effect
   alias Citadel.EventFilter
+
+  defstruct event_filter: %EventFilter{}
 
   @behaviour Effect
 
