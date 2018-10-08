@@ -8,21 +8,21 @@ defmodule Citadel.StartSaga do
   defstruct @keys
 
   alias Citadel.Event
-  alias Citadel.EventBodyFilterSet
   alias Citadel.EventFilter
   alias Citadel.Saga
 
   @behaviour Citadel.Request
   @impl true
   def response_event_filters(%Event{body: %__MODULE__{id: id}}) do
+    require EventFilter
+
     [
-      %EventFilter{
+      EventFilter.new(
         event_type: Saga.Launched,
-        event_body_filter_set:
-          EventBodyFilterSet.new([
-            %Saga.Launched.SagaIDFilter{value: id}
-          ])
-      }
+        event_body_filters: [
+          %Saga.Launched.SagaIDFilter{value: id}
+        ]
+      )
     ]
   end
 end

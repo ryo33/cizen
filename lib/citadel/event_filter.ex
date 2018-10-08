@@ -62,4 +62,29 @@ defmodule Citadel.EventFilter do
       EventBodyFilterSet.test(event_filter.event_body_filter_set, event.body)
     end
   end
+
+  defmacro new(params) do
+    {event_type, params} = Keyword.pop(params, :event_type)
+    {source_saga_id, params} = Keyword.pop(params, :source_saga_id)
+    {source_saga_module, params} = Keyword.pop(params, :source_saga_module)
+    {event_body_filters, params} = Keyword.pop(params, :event_body_filters, [])
+
+    unless params == [] do
+      raise ArgumentError, "invalid keys: #{inspect(params)}"
+    end
+
+    quote bind_quoted: [
+            event_type: event_type,
+            source_saga_id: source_saga_id,
+            source_saga_module: source_saga_module,
+            event_body_filters: event_body_filters
+          ] do
+      %Citadel.EventFilter{
+        event_type: event_type,
+        source_saga_id: source_saga_id,
+        source_saga_module: source_saga_module,
+        event_body_filter_set: EventBodyFilterSet.new(event_body_filters)
+      }
+    end
+  end
 end

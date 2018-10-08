@@ -116,4 +116,67 @@ defmodule Citadel.EventFilterTest do
              )
     end
   end
+
+  describe "new/1" do
+    test "works with all parameters" do
+      event_type = TestEvent
+      saga_id = SagaID.new()
+      saga_module = TestSaga
+      require EventFilter
+
+      actual =
+        EventFilter.new(
+          event_type: event_type,
+          source_saga_id: saga_id,
+          source_saga_module: saga_module,
+          event_body_filters: [
+            %TestEventBodyFilterA{value: :a},
+            %TestEventBodyFilterB{value: :b}
+          ]
+        )
+
+      expected = %EventFilter{
+        event_type: event_type,
+        source_saga_id: saga_id,
+        source_saga_module: saga_module,
+        event_body_filter_set:
+          EventBodyFilterSet.new([
+            %TestEventBodyFilterA{value: :a},
+            %TestEventBodyFilterB{value: :b}
+          ])
+      }
+
+      assert actual == expected
+    end
+
+    test "works with some lacks of parameters" do
+      event_type = TestEvent
+      require EventFilter
+      actual = EventFilter.new(event_type: event_type)
+
+      expected = %EventFilter{
+        event_type: event_type,
+        source_saga_id: nil,
+        source_saga_module: nil,
+        event_body_filter_set: EventBodyFilterSet.new([])
+      }
+
+      assert actual == expected
+    end
+
+    test "compile error for unknown params" do
+      assert_raise ArgumentError, fn ->
+        Code.compile_quoted(
+          quote do
+            require EventFilter
+
+            EventFilter.new(
+              event_type: TestEvent,
+              unknown_key: :unknown
+            )
+          end
+        )
+      end
+    end
+  end
 end

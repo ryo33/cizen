@@ -29,6 +29,7 @@ defmodule Citadel.Automaton do
     quote do
       alias Citadel.Automaton
       import Citadel.Automaton, only: [perform: 2]
+      require Citadel.EventFilter
 
       @behaviour Saga
       @behaviour Automaton

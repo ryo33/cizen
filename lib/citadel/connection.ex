@@ -9,13 +9,12 @@ defmodule Citadel.Connection do
   alias Citadel.Channel.RejectMessage
   alias Citadel.Dispatcher
   alias Citadel.Event
+  alias Citadel.EventFilter
+  alias Citadel.EventFilterDispatcher
   alias Citadel.MonitorSaga
   alias Citadel.ReceiveMessage
   alias Citadel.Saga
 
-  alias Citadel.EventBodyFilterSet
-  alias Citadel.EventFilter
-  alias Citadel.EventFilterDispatcher
   alias Citadel.EventFilterDispatcher.PushEvent
 
   @keys [:message, :channels]
@@ -67,30 +66,38 @@ defmodule Citadel.Connection do
 
   @impl true
   def init(id, %__MODULE__{message: message, channels: channels}) do
+    require EventFilter
+
     Enum.each(channels, fn %Channel{saga_id: saga_id} ->
       Dispatcher.dispatch(Event.new(%MonitorSaga{monitor_saga_id: id, target_saga_id: saga_id}))
     end)
 
     subscribe_emit_message_task =
       Task.async(fn ->
-        EventFilterDispatcher.subscribe(id, __MODULE__, %EventFilter{
-          event_type: EmitMessage,
-          event_body_filter_set:
-            EventBodyFilterSet.new([
+        EventFilterDispatcher.subscribe(
+          id,
+          __MODULE__,
+          EventFilter.new(
+            event_type: EmitMessage,
+            event_body_filters: [
               %EmitMessage.ConnectionIDFilter{value: id}
-            ])
-        })
+            ]
+          )
+        )
       end)
 
     subscribe_reject_message_task =
       Task.async(fn ->
-        EventFilterDispatcher.subscribe(id, __MODULE__, %EventFilter{
-          event_type: RejectMessage,
-          event_body_filter_set:
-            EventBodyFilterSet.new([
+        EventFilterDispatcher.subscribe(
+          id,
+          __MODULE__,
+          EventFilter.new(
+            event_type: RejectMessage,
+            event_body_filters: [
               %RejectMessage.ConnectionIDFilter{value: id}
-            ])
-        })
+            ]
+          )
+        )
       end)
 
     Task.await(subscribe_emit_message_task)

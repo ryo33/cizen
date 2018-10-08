@@ -24,18 +24,14 @@ defmodule Citadel.Automaton.Effects.SubscribeTest do
         send(
           pid,
           perform(id, %Subscribe{
-            event_filter: %EventFilter{
-              event_type: TestEvent
-            }
+            event_filter: EventFilter.new(event_type: TestEvent)
           })
         )
 
         send(
           pid,
           perform(id, %Receive{
-            event_filter: %EventFilter{
-              event_type: TestEvent
-            }
+            event_filter: EventFilter.new(event_type: TestEvent)
           })
         )
 
