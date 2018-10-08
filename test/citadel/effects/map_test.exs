@@ -1,7 +1,6 @@
 defmodule Citadel.Effects.MapTest do
-  use ExUnit.Case
+  use Citadel.SagaCase
   alias Citadel.EffectTestHelper.{TestEffect, TestEvent}
-  alias Citadel.TestHelper
 
   alias Citadel.Automaton
   alias Citadel.Dispatcher
@@ -163,8 +162,6 @@ defmodule Citadel.Effects.MapTest do
       assert_receive :transformed_b
 
       assert_receive %Event{body: %Saga.Finish{id: ^saga_id}}
-
-      TestHelper.ensure_finished(saga_id)
     end
   end
 end

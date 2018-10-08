@@ -1,7 +1,6 @@
 defmodule Citadel.TestHelper do
   @moduledoc false
   import ExUnit.Assertions, only: [flunk: 0]
-  import ExUnit.Callbacks, only: [on_exit: 1]
 
   alias Citadel.Dispatcher
   alias Citadel.Event
@@ -14,16 +13,9 @@ defmodule Citadel.TestHelper do
   def ensure_finished(id) do
     case SagaRegistry.resolve_id(id) do
       {:ok, _pid} ->
-        Dispatcher.listen_event_type(Saga.Finished)
-        Dispatcher.dispatch(Event.new(%Saga.Finish{id: id}))
+        Saga.unlaunch(id)
 
-        receive do
-          %Event{body: %Saga.Finished{id: ^id}} -> :ok
-        after
-          50 -> :ok
-        end
-
-      :error ->
+      _ ->
         :ok
     end
   end
@@ -50,12 +42,8 @@ defmodule Citadel.TestHelper do
     receive do
       {:ok, ^saga_id} -> :ok
     after
-      100 -> flunk()
+      1000 -> flunk()
     end
-
-    on_exit(fn ->
-      ensure_finished(saga_id)
-    end)
 
     saga_id
   end

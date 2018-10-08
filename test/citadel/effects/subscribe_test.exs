@@ -1,6 +1,5 @@
 defmodule Citadel.Effects.SubscribeTest do
-  use ExUnit.Case
-  alias Citadel.TestHelper
+  use Citadel.SagaCase
 
   alias Citadel.Automaton
   alias Citadel.Dispatcher
@@ -53,8 +52,6 @@ defmodule Citadel.Effects.SubscribeTest do
       event = Event.new(%TestEvent{value: :a})
       Dispatcher.dispatch(event)
       assert_receive ^event
-
-      TestHelper.ensure_finished(saga_id)
     end
   end
 end

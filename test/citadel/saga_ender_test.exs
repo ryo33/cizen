@@ -1,5 +1,5 @@
 defmodule Citadel.SagaEnderTest do
-  use ExUnit.Case
+  use Citadel.SagaCase
   alias Citadel.TestHelper
 
   alias Citadel.Dispatcher

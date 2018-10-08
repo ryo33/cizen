@@ -1,7 +1,6 @@
 defmodule Citadel.Effects.JoinTest do
-  use ExUnit.Case
+  use Citadel.SagaCase
   alias Citadel.EffectTestHelper.{TestEffect, TestEvent}
-  alias Citadel.TestHelper
 
   alias Citadel.Automaton
   alias Citadel.Dispatcher
@@ -275,8 +274,6 @@ defmodule Citadel.Effects.JoinTest do
       assert_receive [:a, :b, :c]
 
       assert_receive %Event{body: %Saga.Finish{id: ^saga_id}}
-
-      TestHelper.ensure_finished(saga_id)
     end
   end
 end

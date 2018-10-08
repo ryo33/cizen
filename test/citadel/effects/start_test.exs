@@ -1,6 +1,5 @@
 defmodule Citadel.Effects.StartTest do
-  use ExUnit.Case
-  alias Citadel.TestHelper
+  use Citadel.SagaCase
   alias Citadel.TestSaga
 
   alias Citadel.Automaton
@@ -50,9 +49,6 @@ defmodule Citadel.Effects.StartTest do
       assert_receive ^sub_saga_id
 
       assert_receive %Event{body: %Saga.Finish{id: ^saga_id}}
-
-      TestHelper.ensure_finished(saga_id)
-      TestHelper.ensure_finished(sub_saga_id)
     end
   end
 end

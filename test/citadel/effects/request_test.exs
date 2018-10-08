@@ -1,6 +1,5 @@
 defmodule Citadel.Effects.RequestTest do
-  use ExUnit.Case
-  alias Citadel.TestHelper
+  use Citadel.SagaCase
 
   alias Citadel.Automaton
   alias Citadel.Dispatcher
@@ -94,8 +93,6 @@ defmodule Citadel.Effects.RequestTest do
       )
 
       assert_receive %Event{body: %TestRequest.TestResponse{value: 2}}
-
-      TestHelper.ensure_finished(saga_id)
     end
   end
 end

@@ -1,5 +1,5 @@
 defmodule Citadel.SagaMonitorTest do
-  use ExUnit.Case
+  use Citadel.SagaCase
   alias Citadel.TestHelper
   import Citadel.TestHelper, only: [assert_condition: 2]
 

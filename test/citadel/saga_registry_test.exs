@@ -1,5 +1,5 @@
 defmodule Citadel.SagaRegistryTest do
-  use ExUnit.Case
+  use Citadel.SagaCase
   doctest Citadel.SagaRegistry
   import Citadel.TestHelper, only: [launch_test_saga: 0, assert_condition: 2]
 

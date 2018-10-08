@@ -1,7 +1,6 @@
 defmodule Citadel.AutomatonTest do
-  use ExUnit.Case
+  use Citadel.SagaCase
   alias Citadel.EffectHandlerTestHelper.{TestEffect, TestEvent}
-  alias Citadel.TestHelper
 
   alias Citadel.Automaton
   alias Citadel.Dispatcher
@@ -70,8 +69,6 @@ defmodule Citadel.AutomatonTest do
       )
 
       refute_receive %Event{body: %Saga.Finish{id: ^saga_id}}
-
-      TestHelper.ensure_finished(saga_id)
     end
 
     defmodule TestAutomatonFinishOnYield do
@@ -101,8 +98,6 @@ defmodule Citadel.AutomatonTest do
       )
 
       assert_receive %Event{body: %Saga.Finish{id: ^saga_id}}
-
-      TestHelper.ensure_finished(saga_id)
     end
 
     defmodule TestAutomatonFinishOnSpawn do
@@ -131,8 +126,6 @@ defmodule Citadel.AutomatonTest do
       )
 
       assert_receive %Event{body: %Saga.Finish{id: ^saga_id}}
-
-      TestHelper.ensure_finished(saga_id)
     end
 
     defmodule TestAutomaton do
@@ -218,8 +211,6 @@ defmodule Citadel.AutomatonTest do
       assert_receive {:c, 3}
 
       assert_receive %Event{body: %Saga.Finish{id: ^saga_id}}
-
-      TestHelper.ensure_finished(saga_id)
     end
 
     test "dispatches Saga.Launched event after spawn/2" do
@@ -250,8 +241,6 @@ defmodule Citadel.AutomatonTest do
       assert_receive %Event{
         body: %Saga.Launched{id: ^saga_id}
       }
-
-      TestHelper.ensure_finished(saga_id)
     end
   end
 end

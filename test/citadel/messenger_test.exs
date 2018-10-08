@@ -1,5 +1,5 @@
 defmodule Citadel.MenssengerTest do
-  use ExUnit.Case
+  use Citadel.SagaCase
   import Citadel.TestHelper, only: [launch_test_saga: 0]
 
   alias Citadel.Channel

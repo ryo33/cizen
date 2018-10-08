@@ -1,5 +1,5 @@
 defmodule Citadel.ChannelTest do
-  use ExUnit.Case
+  use Citadel.SagaCase
 
   alias Citadel.Channel
   alias Citadel.Event

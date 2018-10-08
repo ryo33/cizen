@@ -1,6 +1,5 @@
 defmodule Citadel.ConnectionTest do
-  use ExUnit.Case
-  alias Citadel.TestHelper
+  use Citadel.SagaCase
   import Citadel.TestHelper, only: [launch_test_saga: 0]
 
   alias Citadel.Channel
@@ -51,8 +50,6 @@ defmodule Citadel.ConnectionTest do
       assert_receive %Event{body: %Saga.Finished{id: connection_id}}
 
       refute_receive %Event{}
-
-      TestHelper.ensure_finished(saga_id)
     end
   end
 
@@ -106,10 +103,6 @@ defmodule Citadel.ConnectionTest do
         }
       })
     )
-
-    on_exit(fn ->
-      TestHelper.ensure_finished(saga_id)
-    end)
 
     [
       connection_id: saga_id,
@@ -474,8 +467,6 @@ defmodule Citadel.ConnectionTest do
         id: ^saga_id
       }
     }
-
-    TestHelper.ensure_finished(saga_id)
   end
 
   defp flush(%{

@@ -1,5 +1,5 @@
 defmodule Citadel.SagaTest do
-  use ExUnit.Case
+  use Citadel.SagaCase
   doctest Citadel.Saga
 
   alias Citadel.TestSaga

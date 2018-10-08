@@ -69,7 +69,9 @@ defmodule Citadel.Saga do
   end
 
   def unlaunch(id) do
-    :ok = GenServer.stop({:via, Registry, {SagaRegistry, id}}, :shutdown)
+    GenServer.stop({:via, Registry, {SagaRegistry, id}}, :shutdown)
+  catch
+    :exit, _ -> :ok
   after
     Dispatcher.dispatch(Event.new(%Unlaunched{id: id}))
   end

@@ -1,6 +1,5 @@
 defmodule Citadel.Effects.DispatchTest do
-  use ExUnit.Case
-  alias Citadel.TestHelper
+  use Citadel.SagaCase
 
   alias Citadel.Automaton
   alias Citadel.Dispatcher
@@ -66,8 +65,6 @@ defmodule Citadel.Effects.DispatchTest do
       assert_receive ^event_b
 
       assert_receive %Event{body: %Saga.Finish{id: ^saga_id}}
-
-      TestHelper.ensure_finished(saga_id)
     end
   end
 end

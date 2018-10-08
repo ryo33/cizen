@@ -1,6 +1,5 @@
 defmodule Citadel.SagaStarterTest do
-  use ExUnit.Case
-  alias Citadel.TestHelper
+  use Citadel.SagaCase
   alias Citadel.TestSaga
 
   alias Citadel.Dispatcher
@@ -29,8 +28,6 @@ defmodule Citadel.SagaStarterTest do
           saga: %TestSaga{}
         }
       }
-
-      TestHelper.ensure_finished(saga_id)
     end
   end
 end

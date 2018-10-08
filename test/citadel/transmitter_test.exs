@@ -1,5 +1,5 @@
 defmodule Citadel.TransmitterTest do
-  use ExUnit.Case
+  use Citadel.SagaCase
   alias Citadel.TestHelper
 
   alias Citadel.Channel
@@ -37,24 +37,18 @@ defmodule Citadel.TransmitterTest do
       })
     )
 
-    receive do
-      event ->
-        saga_id = event.body.id
+    event =
+      assert_receive %Event{
+        body: %SagaLauncher.LaunchSaga{
+          saga: %Connection{
+            message: ^message,
+            channels: ^channels
+          }
+        }
+      }
 
-        assert %Event{
-                 body: %SagaLauncher.LaunchSaga{
-                   saga: %Connection{
-                     message: ^message,
-                     channels: ^channels
-                   }
-                 }
-               } = event
-
-        assert_receive %Event{body: %Saga.Launched{id: ^saga_id}}
-        TestHelper.ensure_finished(saga_id)
-    after
-      100 -> flunk("timeout")
-    end
+    saga_id = event.body.id
+    assert_receive %Event{body: %Saga.Launched{id: ^saga_id}}
   end
 
   test "dispatch ReceiveMessage immediately if there is no channels" do

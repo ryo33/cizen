@@ -1,5 +1,5 @@
 defmodule Citadel.SagaLauncherTest do
-  use ExUnit.Case
+  use Citadel.SagaCase
   doctest Citadel.SagaLauncher
   import Citadel.TestHelper, only: [launch_test_saga: 0, assert_condition: 2]
 
@@ -8,7 +8,6 @@ defmodule Citadel.SagaLauncherTest do
   alias Citadel.SagaID
   alias Citadel.SagaLauncher
   alias Citadel.SagaRegistry
-  alias Citadel.TestHelper
   alias Citadel.TestSaga
 
   test "SagaLauncher.LaunchSaga event" do
@@ -27,8 +26,6 @@ defmodule Citadel.SagaLauncherTest do
     )
 
     assert_receive {:ok, saga_id}
-
-    TestHelper.ensure_finished(saga_id)
   end
 
   test "SagaLauncher.UnlaunchSaga event" do
