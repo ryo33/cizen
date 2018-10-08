@@ -7,22 +7,26 @@ defmodule Citadel.RequestTest do
 
   defmodule Request do
     defstruct [:value]
-    import Citadel.Request
+    use Citadel.Request
 
-    defresponse Response, :request_id do
+    defresponse ResponseA, :request_id do
+      defstruct [:request_id, :value]
+    end
+
+    defresponse ResponseB, :request_id do
       defstruct [:request_id, :value]
     end
   end
 
-  describe "Request.defresponse/3" do
+  describe "use Request" do
     test "works" do
       # Defines response_event_filters/1
       event = Event.new(%Request{value: :somevalue})
-      [event_filter] = Request.response_event_filters(event)
+      [event_filter_b, event_filter_a] = Request.response_event_filters(event)
       # Matches
       assert EventFilter.test(
-               event_filter,
-               Event.new(%Request.Response{
+               event_filter_a,
+               Event.new(%Request.ResponseA{
                  request_id: event.id,
                  value: :somevalue
                })
@@ -31,10 +35,29 @@ defmodule Citadel.RequestTest do
       true
       # Does not matches
       refute EventFilter.test(
-               event_filter,
-               Event.new(%Request.Response{
+               event_filter_a,
+               Event.new(%Request.ResponseA{
                  request_id: EventID.new(),
-                 value: :something
+                 value: :somevalue
+               })
+             )
+
+      # Matches
+      assert EventFilter.test(
+               event_filter_b,
+               Event.new(%Request.ResponseB{
+                 request_id: event.id,
+                 value: :somevalue
+               })
+             )
+
+      true
+      # Does not matches
+      refute EventFilter.test(
+               event_filter_b,
+               Event.new(%Request.ResponseB{
+                 request_id: EventID.new(),
+                 value: :somevalue
                })
              )
     end

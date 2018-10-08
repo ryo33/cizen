@@ -10,7 +10,7 @@ defmodule Citadel.SubscribeMessage do
     :event_filter
   ]
 
-  import Citadel.Request, only: [defresponse: 3]
+  use Citadel.Request
 
   defresponse Subscribed, :event_id do
     @moduledoc """
