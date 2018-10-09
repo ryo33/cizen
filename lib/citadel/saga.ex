@@ -76,6 +76,10 @@ defmodule Citadel.Saga do
     Dispatcher.dispatch(Event.new(%Unlaunched{id: id}))
   end
 
+  def exit(id, reason) do
+    GenServer.stop({:via, Registry, {SagaRegistry, id}}, {:shutdown, reason})
+  end
+
   @impl true
   def init({id, saga}) do
     Dispatcher.listen_event_body(%Finish{id: id})

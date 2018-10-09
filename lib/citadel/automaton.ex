@@ -94,9 +94,13 @@ defmodule Citadel.Automaton do
 
     pid =
       spawn_link(fn ->
-        state = module.spawn(id, saga)
-        Dispatcher.dispatch(Event.new(%Saga.Launched{id: id}))
-        do_yield(module, id, state)
+        try do
+          state = module.spawn(id, saga)
+          Dispatcher.dispatch(Event.new(%Saga.Launched{id: id}))
+          do_yield(module, id, state)
+        rescue
+          reason -> Saga.exit(id, reason)
+        end
       end)
 
     handler_state = EffectHandler.init(id)

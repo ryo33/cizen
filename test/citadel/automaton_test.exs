@@ -319,5 +319,32 @@ defmodule Citadel.AutomatonTest do
         body: %Saga.Launched{id: ^saga_id}
       }
     end
+
+    defmodule TestAutomatonCrash do
+      use Automaton
+
+      defstruct []
+
+      @impl true
+
+      def spawn(_id, %__MODULE__{}) do
+        raise "Crash!!!"
+        Automaton.finish()
+      end
+    end
+
+    test "dispatches Crashed event on crash" do
+      saga_id = SagaID.new()
+      Dispatcher.listen_event_type(Saga.Crashed)
+
+      Dispatcher.dispatch(
+        Event.new(%StartSaga{
+          id: saga_id,
+          saga: %TestAutomatonCrash{}
+        })
+      )
+
+      assert_receive %Event{body: %Saga.Crashed{id: ^saga_id, reason: %RuntimeError{}}}
+    end
   end
 end
