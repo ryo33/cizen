@@ -28,18 +28,23 @@ defmodule Citadel.Automaton do
   defmacro __using__(_opts) do
     quote do
       alias Citadel.Automaton
-      import Citadel.Automaton, only: [perform: 2]
+      import Citadel.Automaton, only: [perform: 2, finish: 0]
       require Citadel.EventFilter
 
       @behaviour Saga
       @behaviour Automaton
 
       @impl Automaton
-      def spawn(id, struct) do
+      def spawn(_id, struct) do
         struct
       end
 
-      defoverridable spawn: 2
+      @impl Automaton
+      def yield(_id, _state) do
+        finish()
+      end
+
+      defoverridable spawn: 2, yield: 2
 
       @impl Saga
       def init(id, struct) do

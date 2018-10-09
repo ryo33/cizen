@@ -51,6 +51,11 @@ defmodule Citadel.AutomatonTest do
       defstruct []
 
       @impl true
+      def spawn(_id, state) do
+        state
+      end
+
+      @impl true
       def yield(_id, state) do
         :timer.sleep(100)
         state
@@ -237,6 +242,78 @@ defmodule Citadel.AutomatonTest do
           count: 1
         })
       )
+
+      assert_receive %Event{
+        body: %Saga.Launched{id: ^saga_id}
+      }
+    end
+
+    defmodule TestAutomatonNoSpawn do
+      use Automaton
+
+      defstruct [:pid]
+
+      @impl true
+
+      def yield(_id, %__MODULE__{pid: pid}) do
+        send(pid, :called)
+        Automaton.finish()
+      end
+    end
+
+    test "works with no spawn/2" do
+      saga_id = SagaID.new()
+      Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
+      Dispatcher.listen_event_body(%Saga.Launched{id: saga_id})
+
+      Dispatcher.dispatch(
+        Event.new(%StartSaga{
+          id: saga_id,
+          saga: %TestAutomatonNoSpawn{pid: self()}
+        })
+      )
+
+      assert_receive %Event{
+        body: %Saga.Finish{id: ^saga_id}
+      }
+
+      assert_receive :called
+
+      assert_receive %Event{
+        body: %Saga.Launched{id: ^saga_id}
+      }
+    end
+
+    defmodule TestAutomatonNoYield do
+      use Automaton
+
+      defstruct [:pid]
+
+      @impl true
+
+      def spawn(_id, %__MODULE__{pid: pid}) do
+        send(pid, :called)
+        Automaton.finish()
+      end
+    end
+
+    test "works with no yield/2" do
+      saga_id = SagaID.new()
+      Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
+      Dispatcher.listen_event_body(%Saga.Launched{id: saga_id})
+
+      Dispatcher.dispatch(
+        Event.new(%StartSaga{
+          id: saga_id,
+          saga: %TestAutomatonNoYield{pid: self()}
+        })
+      )
+
+      assert_receive :called
+
+      assert_receive %Event{
+        body: %Saga.Finish{id: ^saga_id}
+      }
 
       assert_receive %Event{
         body: %Saga.Launched{id: ^saga_id}
