@@ -9,6 +9,13 @@ defmodule Citadel.SagaCase do
   alias Citadel.Event
   alias Citadel.SagaLauncher
 
+  using do
+    quote do
+      use Citadel.Effectful
+      import Citadel.SagaCase, only: [assert_handle: 1]
+    end
+  end
+
   setup do
     {:ok, agent} = Agent.start(fn -> [] end)
 
@@ -43,5 +50,21 @@ defmodule Citadel.SagaCase do
     end)
 
     :ok
+  end
+
+  def assert_handle(func) do
+    import Citadel.Effectful, only: [handle: 1]
+    current = self()
+
+    spawn_link(fn ->
+      handle(func)
+      send(current, :finished)
+    end)
+
+    receive do
+      :finished -> :ok
+    after
+      1000 -> flunk("timeout assert_handle")
+    end
   end
 end
