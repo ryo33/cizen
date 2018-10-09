@@ -344,7 +344,13 @@ defmodule Citadel.AutomatonTest do
         })
       )
 
-      assert_receive %Event{body: %Saga.Crashed{id: ^saga_id, reason: %RuntimeError{}}}
+      assert_receive %Event{
+        body: %Saga.Crashed{
+          id: ^saga_id,
+          reason: %RuntimeError{},
+          stacktrace: [{TestAutomatonCrash, _, _, _} | _]
+        }
+      }
     end
   end
 end

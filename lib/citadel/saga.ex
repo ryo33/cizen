@@ -51,7 +51,7 @@ defmodule Citadel.Saga do
 
   defmodule Crashed do
     @moduledoc "A event fired on crash"
-    defstruct([:id, :reason])
+    defstruct([:id, :reason, :stacktrace])
   end
 
   @lazy_launch {__MODULE__, :lazy_launch}
@@ -76,8 +76,8 @@ defmodule Citadel.Saga do
     Dispatcher.dispatch(Event.new(%Unlaunched{id: id}))
   end
 
-  def exit(id, reason) do
-    GenServer.stop({:via, Registry, {SagaRegistry, id}}, {:shutdown, reason})
+  def exit(id, reason, trace) do
+    GenServer.stop({:via, Registry, {SagaRegistry, id}}, {:shutdown, {reason, trace}})
   end
 
   @impl true
@@ -108,7 +108,7 @@ defmodule Citadel.Saga do
     state = module.handle_event(id, event, state)
     {:noreply, {id, module, state}}
   rescue
-    reason -> {:stop, {:shutdown, reason}, {id, module, state}}
+    reason -> {:stop, {:shutdown, {reason, __STACKTRACE__}}, {id, module, state}}
   end
 
   @impl true
@@ -121,8 +121,8 @@ defmodule Citadel.Saga do
     :shutdown
   end
 
-  def terminate({:shutdown, reason}, {id, _module, _state}) do
-    Dispatcher.dispatch(Event.new(%Crashed{id: id, reason: reason}))
+  def terminate({:shutdown, {reason, trace}}, {id, _module, _state}) do
+    Dispatcher.dispatch(Event.new(%Crashed{id: id, reason: reason, stacktrace: trace}))
     :shutdown
   end
 end

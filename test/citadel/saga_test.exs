@@ -91,7 +91,14 @@ defmodule Citadel.SagaTest do
         )
 
       Dispatcher.dispatch(Event.new(%CrashTestEvent2{}))
-      assert_receive %Event{body: %Saga.Crashed{id: ^id, reason: %RuntimeError{}}}
+
+      assert_receive %Event{
+        body: %Saga.Crashed{
+          id: ^id,
+          reason: %RuntimeError{},
+          stacktrace: [{__MODULE__, _, _, _} | _]
+        }
+      }
     end
 
     defmodule(TestEvent, do: defstruct([:value]))

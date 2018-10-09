@@ -99,7 +99,7 @@ defmodule Citadel.Automaton do
           Dispatcher.dispatch(Event.new(%Saga.Launched{id: id}))
           do_yield(module, id, state)
         rescue
-          reason -> Saga.exit(id, reason)
+          reason -> Saga.exit(id, reason, __STACKTRACE__)
         end
       end)
 
