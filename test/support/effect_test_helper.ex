@@ -8,7 +8,7 @@ defmodule Citadel.EffectTestHelper do
 
   defmodule TestEffect do
     @moduledoc false
-    defstruct [:value, :resolve_immediately, :alias_of]
+    defstruct value: nil, resolve_immediately: false, alias_of: nil, ignores: []
 
     alias Citadel.Effect
     @behaviour Effect
@@ -27,8 +27,10 @@ defmodule Citadel.EffectTestHelper do
     end
 
     @impl true
-    def handle_event(_handler, event, %__MODULE__{value: value}, value) do
-      if event.body.value == :ignored do
+    def handle_event(_handler, event, effect, value) do
+      %__MODULE__{value: value, ignores: ignores} = effect
+
+      if event.body.value == :ignored or event.body.value in ignores do
         value
       else
         if value == event.body.value do

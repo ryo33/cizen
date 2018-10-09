@@ -164,7 +164,7 @@ defmodule Citadel.Effects.JoinTest do
       {:resolve, [:a, :b, :c]} = Effect.handle_event(id, event, effect, state)
     end
 
-    test "resolves if all following effects resolve immediately" do
+    test "works with aliases" do
       id = SagaID.new()
 
       effect = %Join{
@@ -178,7 +178,7 @@ defmodule Citadel.Effects.JoinTest do
       assert {:resolve, [:b]} == Effect.handle_event(id, event, effect, state)
     end
 
-    test "works with aliases" do
+    test "resolves if all following effects resolve immediately" do
       id = SagaID.new()
 
       effect = %Join{
