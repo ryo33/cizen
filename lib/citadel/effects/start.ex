@@ -1,8 +1,8 @@
 defmodule Citadel.Effects.Start do
   @moduledoc """
-  An effect to request.
+  An effect to state an saga.
 
-  Returns :ok.
+  Returns the started saga ID.
   """
 
   defstruct [:saga]

@@ -2,7 +2,7 @@ defmodule Citadel.Effects.End do
   @moduledoc """
   An effect to end a saga.
 
-  Returns the saga_id
+  Returns the saga ID.
   """
 
   defstruct [:saga_id]

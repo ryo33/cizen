@@ -1,6 +1,6 @@
 defmodule Citadel.Effects.Subscribe do
   @moduledoc """
-  An effect to request.
+  An effect to subscribe messages.
 
   Returns :ok.
   """

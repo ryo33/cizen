@@ -7,11 +7,12 @@ defmodule Citadel.RegisterChannel do
   @enforce_keys @keys
   defstruct @keys
 
-  defmodule Registered do
+  use Citadel.Request
+
+  defresponse Registered, :event_id do
     @moduledoc """
     An event to notify that RegisterChannel event is successfully handled.
     """
-
     @keys [:event_id]
     @enforce_keys @keys
     defstruct @keys
