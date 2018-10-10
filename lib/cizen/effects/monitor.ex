@@ -8,7 +8,9 @@ defmodule Cizen.Effects.Monitor do
       down_filter = perform id, %Monitor{
         saga_id: some_id
       }
-      event = perform id, %Subscribe{
+
+      # Wait until the saga finishes.
+      perform(id, %Receive{
         event_filter: down_filter
       }
   """
