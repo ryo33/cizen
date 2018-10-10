@@ -3,7 +3,7 @@ image: elixir:1.7
 before_script:
   - mix local.hex --force
   - mix local.rebar --force
-  - mix deps.get --only test
+  - mix deps.get
 
 mix:
   script:
