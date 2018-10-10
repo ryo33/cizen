@@ -1,17 +1,17 @@
-defmodule Citadel.AutomatonTest do
-  use Citadel.SagaCase
-  alias Citadel.EffectHandlerTestHelper.{TestEffect, TestEvent}
+defmodule Cizen.AutomatonTest do
+  use Cizen.SagaCase
+  alias Cizen.EffectHandlerTestHelper.{TestEffect, TestEvent}
 
-  alias Citadel.Automaton
-  alias Citadel.Dispatcher
-  alias Citadel.Event
-  alias Citadel.EventFilter
-  alias Citadel.Messenger
-  alias Citadel.Saga
-  alias Citadel.SagaID
+  alias Cizen.Automaton
+  alias Cizen.Dispatcher
+  alias Cizen.Event
+  alias Cizen.EventFilter
+  alias Cizen.Messenger
+  alias Cizen.Saga
+  alias Cizen.SagaID
 
-  alias Citadel.Automaton.PerformEffect
-  alias Citadel.StartSaga
+  alias Cizen.Automaton.PerformEffect
+  alias Cizen.StartSaga
 
   describe "perform/2" do
     test "dispatches PerformEffect event" do

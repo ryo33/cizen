@@ -1,4 +1,4 @@
-defmodule Citadel.EventID do
+defmodule Cizen.EventID do
   @moduledoc """
   Each event has a unique saga-id.
   """

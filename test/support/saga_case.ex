@@ -1,18 +1,18 @@
-defmodule Citadel.SagaCase do
+defmodule Cizen.SagaCase do
   @moduledoc """
   Run test with sagas.
   """
   use ExUnit.CaseTemplate
-  alias Citadel.TestHelper
+  alias Cizen.TestHelper
 
-  alias Citadel.Dispatcher
-  alias Citadel.Event
-  alias Citadel.SagaLauncher
+  alias Cizen.Dispatcher
+  alias Cizen.Event
+  alias Cizen.SagaLauncher
 
   using do
     quote do
-      use Citadel.Effectful
-      import Citadel.SagaCase, only: [assert_handle: 1]
+      use Cizen.Effectful
+      import Cizen.SagaCase, only: [assert_handle: 1]
     end
   end
 
@@ -53,7 +53,7 @@ defmodule Citadel.SagaCase do
   end
 
   def assert_handle(func) do
-    import Citadel.Effectful, only: [handle: 1]
+    import Cizen.Effectful, only: [handle: 1]
     current = self()
 
     spawn_link(fn ->

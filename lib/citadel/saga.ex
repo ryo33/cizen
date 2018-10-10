@@ -1,4 +1,4 @@
-defmodule Citadel.Saga do
+defmodule Cizen.Saga do
   @moduledoc """
   The saga behaviour
   """
@@ -7,11 +7,11 @@ defmodule Citadel.Saga do
 
   use GenServer
 
-  alias Citadel.Dispatcher
-  alias Citadel.Event
-  alias Citadel.Saga
-  alias Citadel.SagaID
-  alias Citadel.SagaRegistry
+  alias Cizen.Dispatcher
+  alias Cizen.Event
+  alias Cizen.Saga
+  alias Cizen.SagaID
+  alias Cizen.SagaRegistry
 
   @type state :: any
 
@@ -39,7 +39,7 @@ defmodule Citadel.Saga do
     @moduledoc "A event fired on launch"
     defstruct([:id])
 
-    import Citadel.EventBodyFilter
+    import Cizen.EventBodyFilter
 
     defeventbodyfilter SagaIDFilter, :id do
       @moduledoc """

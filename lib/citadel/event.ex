@@ -1,10 +1,10 @@
-defmodule Citadel.Event do
+defmodule Cizen.Event do
   @moduledoc """
   Helpers to handle events
   """
-  alias Citadel.EventID
-  alias Citadel.EventType
-  alias Citadel.SagaID
+  alias Cizen.EventID
+  alias Cizen.EventType
+  alias Cizen.SagaID
 
   @type body :: struct
   @type t :: %__MODULE__{

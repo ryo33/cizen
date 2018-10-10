@@ -1,9 +1,9 @@
-defmodule Citadel.Effectful do
+defmodule Cizen.Effectful do
   @moduledoc """
   Creates a block which can perform effects.
 
   ## Example
-      use Citadel.Effectful
+      use Cizen.Effectful
 
       handle(fn id ->
         some_result = perform id, some_effect
@@ -13,17 +13,17 @@ defmodule Citadel.Effectful do
       end)
   """
 
-  alias Citadel.Dispatcher
-  alias Citadel.Event
-  alias Citadel.SagaID
+  alias Cizen.Dispatcher
+  alias Cizen.Event
+  alias Cizen.SagaID
 
-  alias Citadel.StartSaga
+  alias Cizen.StartSaga
 
   defmacro __using__(_opts) do
     quote do
-      import Citadel.Effectful, only: [handle: 1]
-      import Citadel.Automaton, only: [perform: 2]
-      require Citadel.EventFilter
+      import Cizen.Effectful, only: [handle: 1]
+      import Cizen.Automaton, only: [perform: 2]
+      require Cizen.EventFilter
     end
   end
 
@@ -52,7 +52,7 @@ defmodule Citadel.Effectful do
 
   defmodule InstantAutomaton do
     @moduledoc false
-    alias Citadel.Automaton
+    alias Cizen.Automaton
     use Automaton
 
     defstruct [:block]

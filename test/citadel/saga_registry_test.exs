@@ -1,9 +1,9 @@
-defmodule Citadel.SagaRegistryTest do
-  use Citadel.SagaCase
-  doctest Citadel.SagaRegistry
-  import Citadel.TestHelper, only: [launch_test_saga: 0, assert_condition: 2]
+defmodule Cizen.SagaRegistryTest do
+  use Cizen.SagaCase
+  doctest Cizen.SagaRegistry
+  import Cizen.TestHelper, only: [launch_test_saga: 0, assert_condition: 2]
 
-  alias Citadel.SagaRegistry
+  alias Cizen.SagaRegistry
 
   test "launched saga is registered" do
     id = launch_test_saga()

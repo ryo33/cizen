@@ -1,6 +1,6 @@
-defmodule Citadel.TestSaga do
+defmodule Cizen.TestSaga do
   @moduledoc false
-  @behaviour Citadel.Saga
+  @behaviour Cizen.Saga
 
   defstruct [:launch, :handle_event, :state]
 

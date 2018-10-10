@@ -1,15 +1,15 @@
-defmodule Citadel.EffectfulTest do
-  use Citadel.SagaCase
+defmodule Cizen.EffectfulTest do
+  use Cizen.SagaCase
 
-  alias Citadel.Dispatcher
-  alias Citadel.Event
+  alias Cizen.Dispatcher
+  alias Cizen.Event
 
-  alias Citadel.Effects.{Dispatch}
+  alias Cizen.Effects.{Dispatch}
 
   defmodule(TestEvent, do: defstruct([:value]))
 
   defmodule TestModule do
-    use Citadel.Effectful
+    use Cizen.Effectful
 
     def dispatch(body) do
       handle(fn id ->

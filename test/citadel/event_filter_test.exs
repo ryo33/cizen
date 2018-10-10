@@ -1,11 +1,11 @@
-defmodule Citadel.EventFilterTest do
+defmodule Cizen.EventFilterTest do
   use ExUnit.Case
 
-  alias Citadel.Event
-  alias Citadel.EventBodyFilter
-  alias Citadel.EventBodyFilterSet
-  alias Citadel.EventFilter
-  alias Citadel.SagaID
+  alias Cizen.Event
+  alias Cizen.EventBodyFilter
+  alias Cizen.EventBodyFilterSet
+  alias Cizen.EventFilter
+  alias Cizen.SagaID
 
   defmodule(TestEvent, do: defstruct([:value_a, :value_b]))
 

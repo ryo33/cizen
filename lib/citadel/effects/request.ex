@@ -1,4 +1,4 @@
-defmodule Citadel.Effects.Request do
+defmodule Cizen.Effects.Request do
   @moduledoc """
   An effect to request.
 
@@ -12,11 +12,11 @@ defmodule Citadel.Effects.Request do
 
   defstruct [:body]
 
-  alias Citadel.Effect
-  alias Citadel.Effects.{Dispatch, Join, Map, Receive}
-  alias Citadel.Event
-  alias Citadel.EventFilter
-  alias Citadel.Request
+  alias Cizen.Effect
+  alias Cizen.Effects.{Dispatch, Join, Map, Receive}
+  alias Cizen.Event
+  alias Cizen.EventFilter
+  alias Cizen.Request
 
   @behaviour Effect
 

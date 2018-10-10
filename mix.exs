@@ -1,9 +1,9 @@
-defmodule Citadel.MixProject do
+defmodule Cizen.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :citadel,
+      app: :cizen,
       version: "0.1.0",
       elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -24,7 +24,7 @@ defmodule Citadel.MixProject do
     [
       start_phases: [start_children: [], start_daemons: []],
       extra_applications: [:logger],
-      mod: {Citadel.Application, []}
+      mod: {Cizen.Application, []}
     ]
   end
 

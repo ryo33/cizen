@@ -1,8 +1,8 @@
-defmodule Citadel.SagaIDTest do
+defmodule Cizen.SagaIDTest do
   use ExUnit.Case
-  doctest Citadel.SagaID
+  doctest Cizen.SagaID
 
-  alias Citadel.SagaID
+  alias Cizen.SagaID
 
   test "returns unique IDs" do
     assert SagaID.new() != SagaID.new()

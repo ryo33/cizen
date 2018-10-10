@@ -1,10 +1,10 @@
-defmodule Citadel.Effect do
+defmodule Cizen.Effect do
   @moduledoc """
   The effect behaviour.
   """
 
-  alias Citadel.Event
-  alias Citadel.SagaID
+  alias Cizen.Event
+  alias Cizen.SagaID
 
   @type t :: struct
   @type handler :: SagaID.t()

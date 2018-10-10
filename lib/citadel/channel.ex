@@ -1,11 +1,11 @@
-defmodule Citadel.Channel do
+defmodule Cizen.Channel do
   @moduledoc """
   A channel interferes messaging.
   """
 
-  alias Citadel.Message
-  alias Citadel.SagaID
-  import Citadel.EventBodyFilter, only: [defeventbodyfilter: 3]
+  alias Cizen.Message
+  alias Cizen.SagaID
+  import Cizen.EventBodyFilter, only: [defeventbodyfilter: 3]
 
   @type t :: %__MODULE__{
           saga_id: SagaID.t(),

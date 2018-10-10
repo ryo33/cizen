@@ -1,4 +1,4 @@
-defmodule Citadel.ReceiveMessage do
+defmodule Cizen.ReceiveMessage do
   @moduledoc """
   An event to send message.
   """

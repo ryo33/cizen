@@ -1,4 +1,4 @@
-defmodule Citadel.MonitorSaga do
+defmodule Cizen.MonitorSaga do
   @moduledoc """
   An event to start monitering a saga.
   """
@@ -16,7 +16,7 @@ defmodule Citadel.MonitorSaga do
     @enforce_keys @keys
     defstruct @keys
 
-    import Citadel.EventBodyFilter, only: [defeventbodyfilter: 3]
+    import Cizen.EventBodyFilter, only: [defeventbodyfilter: 3]
 
     defeventbodyfilter TargetSagaIDFilter, :target_saga_id do
       @moduledoc """

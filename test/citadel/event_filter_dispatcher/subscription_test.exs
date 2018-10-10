@@ -1,10 +1,10 @@
-defmodule Citadel.EventFilterDispatcher.SubscriptionTest do
+defmodule Cizen.EventFilterDispatcher.SubscriptionTest do
   use ExUnit.Case
 
-  alias Citadel.Event
-  alias Citadel.EventFilter
-  alias Citadel.EventFilterDispatcher.Subscription
-  alias Citadel.SagaID
+  alias Cizen.Event
+  alias Cizen.EventFilter
+  alias Cizen.EventFilterDispatcher.Subscription
+  alias Cizen.SagaID
 
   defmodule(TestEvent, do: defstruct([:value]))
 

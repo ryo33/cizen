@@ -1,19 +1,19 @@
-defmodule Citadel.Automaton do
+defmodule Cizen.Automaton do
   @moduledoc """
   A saga framework to create an automaton.
   """
 
-  alias Citadel.Dispatcher
-  alias Citadel.EffectHandler
-  alias Citadel.Event
-  alias Citadel.EventFilter
-  alias Citadel.EventFilterDispatcher
-  alias Citadel.Message
-  alias Citadel.Saga
-  alias Citadel.SagaID
+  alias Cizen.Dispatcher
+  alias Cizen.EffectHandler
+  alias Cizen.Event
+  alias Cizen.EventFilter
+  alias Cizen.EventFilterDispatcher
+  alias Cizen.Message
+  alias Cizen.Saga
+  alias Cizen.SagaID
 
-  alias Citadel.Automaton.PerformEffect
-  alias Citadel.ReceiveMessage
+  alias Cizen.Automaton.PerformEffect
+  alias Cizen.ReceiveMessage
 
   @finish {__MODULE__, :finish}
 
@@ -47,9 +47,9 @@ defmodule Citadel.Automaton do
 
   defmacro __using__(_opts) do
     quote do
-      alias Citadel.Automaton
-      import Citadel.Automaton, only: [perform: 2, finish: 0]
-      require Citadel.EventFilter
+      alias Cizen.Automaton
+      import Cizen.Automaton, only: [perform: 2, finish: 0]
+      require Cizen.EventFilter
 
       @behaviour Saga
       @behaviour Automaton

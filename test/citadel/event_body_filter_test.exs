@@ -1,10 +1,10 @@
-defmodule Citadel.EventBodyFilterTest do
+defmodule Cizen.EventBodyFilterTest do
   use ExUnit.Case
 
   defmodule TestEvent do
     defstruct [:some_key]
 
-    import Citadel.EventBodyFilter
+    import Cizen.EventBodyFilter
     defeventbodyfilter(SomeKeyFilter, :some_key)
 
     defeventbodyfilter(WithBlock, :some_key) do
@@ -19,7 +19,7 @@ defmodule Citadel.EventBodyFilterTest do
   describe "EventBodyFilter.defeventbodyfilter" do
     setup [:setup_filter]
 
-    alias Citadel.EventBodyFilter
+    alias Cizen.EventBodyFilter
 
     test "matches", %{filter: filter} do
       assert EventBodyFilter.test(filter, %TestEvent{some_key: :a})

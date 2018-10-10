@@ -1,15 +1,15 @@
-defmodule Citadel.SagaMonitor do
+defmodule Cizen.SagaMonitor do
   @moduledoc """
   Monitors a saga and finishes when the saga finishes, crashes, or doesn't exists.
   """
 
   defstruct []
 
-  alias Citadel.Dispatcher
-  alias Citadel.Event
-  alias Citadel.SagaRegistry
+  alias Cizen.Dispatcher
+  alias Cizen.Event
+  alias Cizen.SagaRegistry
 
-  alias Citadel.MonitorSaga
+  alias Cizen.MonitorSaga
 
   use GenServer
 

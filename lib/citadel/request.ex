@@ -1,11 +1,11 @@
-defmodule Citadel.Request do
+defmodule Cizen.Request do
   @moduledoc """
   An event to request.
   """
 
-  alias Citadel.Event
-  alias Citadel.EventBodyFilterSet
-  alias Citadel.EventFilter
+  alias Cizen.Event
+  alias Cizen.EventBodyFilterSet
+  alias Cizen.EventFilter
 
   @doc """
   Returns event filters to subscribe the response of the given event.
@@ -28,7 +28,7 @@ defmodule Citadel.Request do
       @moduledoc """
       An event body filter to filter Response by the request event id
       """
-      alias Citadel.EventBodyFilter
+      alias Cizen.EventBodyFilter
       @enforce_keys [:value]
       defstruct [:value]
       @behaviour EventBodyFilter
@@ -41,16 +41,16 @@ defmodule Citadel.Request do
 
   defmacro __using__(_opts) do
     quote do
-      import Citadel.Request, only: [defresponse: 3]
+      import Cizen.Request, only: [defresponse: 3]
       Module.register_attribute(__MODULE__, :responses, accumulate: true)
-      @before_compile Citadel.Request
+      @before_compile Cizen.Request
     end
   end
 
   @doc false
   defmacro __before_compile__(env) do
-    alias Citadel.EventBodyFilterSet
-    alias Citadel.EventFilter
+    alias Cizen.EventBodyFilterSet
+    alias Cizen.EventFilter
     responses = Module.get_attribute(env.module, :responses)
 
     filters =
@@ -67,7 +67,7 @@ defmodule Citadel.Request do
       end)
 
     quote do
-      @behaviour Citadel.Request
+      @behaviour Cizen.Request
       @impl true
       def response_event_filters(event) do
         var!(id) = event.id
@@ -82,7 +82,7 @@ defmodule Citadel.Request do
   ## Example
       defmodule Request do
         defstruct [:value]
-        use Citadel.Request
+        use Cizen.Request
         defresponse Accept, :request_id do
           defstruct [:request_id, :value]
         end
@@ -109,7 +109,7 @@ defmodule Citadel.Request do
       defmodule unquote(module) do
         unquote(block)
 
-        import Citadel.EventBodyFilter
+        import Cizen.EventBodyFilter
 
         defeventbodyfilter alias!(unquote(filter_name)), unquote(key) do
           @moduledoc """

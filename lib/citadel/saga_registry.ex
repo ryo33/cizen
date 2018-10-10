@@ -1,9 +1,9 @@
-defmodule Citadel.SagaRegistry do
+defmodule Cizen.SagaRegistry do
   @moduledoc """
   The registry for automata.
   """
 
-  alias Citadel.SagaID
+  alias Cizen.SagaID
 
   def start_link do
     Registry.start_link(keys: :unique, name: __MODULE__)

@@ -1,15 +1,15 @@
-defmodule Citadel.Effects.DispatchTest do
-  use Citadel.SagaCase
+defmodule Cizen.Effects.DispatchTest do
+  use Cizen.SagaCase
 
-  alias Citadel.Automaton
-  alias Citadel.Dispatcher
-  alias Citadel.Effect
-  alias Citadel.Effects.Dispatch
-  alias Citadel.Event
-  alias Citadel.Saga
-  alias Citadel.SagaID
+  alias Cizen.Automaton
+  alias Cizen.Dispatcher
+  alias Cizen.Effect
+  alias Cizen.Effects.Dispatch
+  alias Cizen.Event
+  alias Cizen.Saga
+  alias Cizen.SagaID
 
-  alias Citadel.StartSaga
+  alias Cizen.StartSaga
 
   defmodule(TestEvent, do: defstruct([:value]))
 

@@ -1,4 +1,4 @@
-defmodule Citadel.EndSaga do
+defmodule Cizen.EndSaga do
   @moduledoc """
   An event to end a saga.
   """

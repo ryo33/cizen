@@ -1,13 +1,13 @@
-defmodule Citadel.Effects.AllTest do
-  use Citadel.SagaCase
-  alias Citadel.EffectTestHelper.{TestEffect, TestEvent}
+defmodule Cizen.Effects.AllTest do
+  use Cizen.SagaCase
+  alias Cizen.EffectTestHelper.{TestEffect, TestEvent}
 
-  alias Citadel.Automaton
-  alias Citadel.Effect
-  alias Citadel.Effects.{All, Dispatch, Monitor, Receive, Start, Subscribe}
-  alias Citadel.Event
-  alias Citadel.EventFilter
-  alias Citadel.SagaID
+  alias Cizen.Automaton
+  alias Cizen.Effect
+  alias Cizen.Effects.{All, Dispatch, Monitor, Receive, Start, Subscribe}
+  alias Cizen.Event
+  alias Cizen.EventFilter
+  alias Cizen.SagaID
 
   describe "All" do
     test "resolves immediately with no effects" do

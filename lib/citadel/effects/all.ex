@@ -1,4 +1,4 @@
-defmodule Citadel.Effects.All do
+defmodule Cizen.Effects.All do
   @moduledoc """
   An effect to perform multiple effects.
 
@@ -12,7 +12,7 @@ defmodule Citadel.Effects.All do
 
   defstruct [:effects]
 
-  alias Citadel.Effect
+  alias Cizen.Effect
 
   @behaviour Effect
 

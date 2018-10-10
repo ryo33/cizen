@@ -1,14 +1,14 @@
-defmodule Citadel.EventFilterDispatcher.EventPusher do
+defmodule Cizen.EventFilterDispatcher.EventPusher do
   @moduledoc """
   Push event to subscribers
   """
 
   use GenServer
 
-  alias Citadel.Dispatcher
-  alias Citadel.Event
-  alias Citadel.EventFilterDispatcher.PushEvent
-  alias Citadel.SagaRegistry
+  alias Cizen.Dispatcher
+  alias Cizen.Event
+  alias Cizen.EventFilterDispatcher.PushEvent
+  alias Cizen.SagaRegistry
 
   def start_link do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)

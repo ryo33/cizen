@@ -1,10 +1,10 @@
-defmodule Citadel.ChannelTest do
-  use Citadel.SagaCase
+defmodule Cizen.ChannelTest do
+  use Cizen.SagaCase
 
-  alias Citadel.Channel
-  alias Citadel.Event
-  alias Citadel.Message
-  alias Citadel.SagaID
+  alias Cizen.Channel
+  alias Cizen.Event
+  alias Cizen.Message
+  alias Cizen.SagaID
 
   describe "adjoin?/2" do
     test "checks saga module" do

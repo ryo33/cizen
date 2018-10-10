@@ -1,22 +1,22 @@
-defmodule Citadel.SagaTest do
-  use Citadel.SagaCase
-  doctest Citadel.Saga
+defmodule Cizen.SagaTest do
+  use Cizen.SagaCase
+  doctest Cizen.Saga
 
-  alias Citadel.TestSaga
+  alias Cizen.TestSaga
 
-  import Citadel.TestHelper,
+  import Cizen.TestHelper,
     only: [
       launch_test_saga: 0,
       launch_test_saga: 1,
       assert_condition: 2
     ]
 
-  alias Citadel.Dispatcher
-  alias Citadel.Event
-  alias Citadel.Saga
-  alias Citadel.SagaID
-  alias Citadel.SagaLauncher
-  alias Citadel.SagaRegistry
+  alias Cizen.Dispatcher
+  alias Cizen.Event
+  alias Cizen.Saga
+  alias Cizen.SagaID
+  alias Cizen.SagaLauncher
+  alias Cizen.SagaRegistry
 
   describe "Saga" do
     test "dispatches Launched event on launch" do
@@ -144,7 +144,7 @@ defmodule Citadel.SagaTest do
     end
 
     defmodule LazyLaunchSaga do
-      @behaviour Citadel.Saga
+      @behaviour Cizen.Saga
 
       defstruct []
 

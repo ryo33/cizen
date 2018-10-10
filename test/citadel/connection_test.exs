@@ -1,19 +1,19 @@
-defmodule Citadel.ConnectionTest do
-  use Citadel.SagaCase
-  import Citadel.TestHelper, only: [launch_test_saga: 0]
+defmodule Cizen.ConnectionTest do
+  use Cizen.SagaCase
+  import Cizen.TestHelper, only: [launch_test_saga: 0]
 
-  alias Citadel.Channel
-  alias Citadel.Channel.EmitMessage
-  alias Citadel.Channel.FeedMessage
-  alias Citadel.Channel.RejectMessage
-  alias Citadel.Connection
-  alias Citadel.Dispatcher
-  alias Citadel.Event
-  alias Citadel.Message
-  alias Citadel.ReceiveMessage
-  alias Citadel.Saga
-  alias Citadel.SagaID
-  alias Citadel.SagaLauncher
+  alias Cizen.Channel
+  alias Cizen.Channel.EmitMessage
+  alias Cizen.Channel.FeedMessage
+  alias Cizen.Channel.RejectMessage
+  alias Cizen.Connection
+  alias Cizen.Dispatcher
+  alias Cizen.Event
+  alias Cizen.Message
+  alias Cizen.ReceiveMessage
+  alias Cizen.Saga
+  alias Cizen.SagaID
+  alias Cizen.SagaLauncher
 
   defmodule(TestEvent, do: defstruct([:value]))
 

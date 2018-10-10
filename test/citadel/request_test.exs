@@ -1,13 +1,13 @@
-defmodule Citadel.RequestTest do
+defmodule Cizen.RequestTest do
   use ExUnit.Case, async: true
 
-  alias Citadel.Event
-  alias Citadel.EventFilter
-  alias Citadel.EventID
+  alias Cizen.Event
+  alias Cizen.EventFilter
+  alias Cizen.EventID
 
   defmodule Request do
     defstruct [:value]
-    use Citadel.Request
+    use Cizen.Request
 
     defresponse ResponseA, :request_id do
       defstruct [:request_id, :value]

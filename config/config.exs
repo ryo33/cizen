@@ -10,11 +10,11 @@ use Mix.Config
 
 # You can configure your application as:
 #
-#     config :citadel, key: :value
+#     config :cizen, key: :value
 #
 # and access this configuration in your application as:
 #
-#     Application.get_env(:citadel, :key)
+#     Application.get_env(:cizen, :key)
 #
 # You can also configure a 3rd-party app:
 #

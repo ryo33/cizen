@@ -1,4 +1,4 @@
-defmodule Citadel.Effects.Monitor do
+defmodule Cizen.Effects.Monitor do
   @moduledoc """
   An effect to monitor a saga.
 
@@ -15,17 +15,17 @@ defmodule Citadel.Effects.Monitor do
 
   defstruct [:saga_id]
 
-  alias Citadel.Effect
-  alias Citadel.Effects.{Dispatch, Map}
-  alias Citadel.EventFilter
+  alias Cizen.Effect
+  alias Cizen.Effects.{Dispatch, Map}
+  alias Cizen.EventFilter
 
-  alias Citadel.MonitorSaga
+  alias Cizen.MonitorSaga
 
   @behaviour Effect
 
   @impl true
   def init(id, %__MODULE__{saga_id: saga_id}) do
-    require Citadel.EventFilter
+    require Cizen.EventFilter
 
     effect = %Map{
       effect: %Dispatch{

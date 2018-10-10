@@ -1,10 +1,10 @@
-defmodule Citadel.EventHandlerTest do
+defmodule Cizen.EventHandlerTest do
   use ExUnit.Case
-  alias Citadel.EffectHandlerTestHelper.{TestEffect, TestEvent}
+  alias Cizen.EffectHandlerTestHelper.{TestEffect, TestEvent}
 
-  alias Citadel.EffectHandler
-  alias Citadel.Event
-  alias Citadel.SagaID
+  alias Cizen.EffectHandler
+  alias Cizen.Event
+  alias Cizen.SagaID
 
   describe "init/3" do
     test "starts effect producer" do

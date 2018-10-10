@@ -1,17 +1,17 @@
-defmodule Citadel.Effects.ReceiveTest do
-  use Citadel.SagaCase
+defmodule Cizen.Effects.ReceiveTest do
+  use Cizen.SagaCase
 
-  alias Citadel.Automaton
-  alias Citadel.Dispatcher
-  alias Citadel.Effect
-  alias Citadel.Effects.Receive
-  alias Citadel.Event
-  alias Citadel.EventFilter
-  alias Citadel.Messenger
-  alias Citadel.Saga
-  alias Citadel.SagaID
+  alias Cizen.Automaton
+  alias Cizen.Dispatcher
+  alias Cizen.Effect
+  alias Cizen.Effects.Receive
+  alias Cizen.Event
+  alias Cizen.EventFilter
+  alias Cizen.Messenger
+  alias Cizen.Saga
+  alias Cizen.SagaID
 
-  alias Citadel.StartSaga
+  alias Cizen.StartSaga
 
   defmodule(TestEvent1, do: defstruct([:value]))
   defmodule(TestEvent2, do: defstruct([:value]))

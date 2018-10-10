@@ -1,11 +1,11 @@
-defmodule Citadel.Effects.MonitorTest do
-  use Citadel.SagaCase
-  alias Citadel.TestHelper
+defmodule Cizen.Effects.MonitorTest do
+  use Cizen.SagaCase
+  alias Cizen.TestHelper
 
-  alias Citadel.Effects.{Monitor, Receive}
-  alias Citadel.Event
-  alias Citadel.EventFilter
-  alias Citadel.MonitorSaga
+  alias Cizen.Effects.{Monitor, Receive}
+  alias Cizen.Event
+  alias Cizen.EventFilter
+  alias Cizen.MonitorSaga
 
   defmodule(TestEvent, do: defstruct([:value]))
 

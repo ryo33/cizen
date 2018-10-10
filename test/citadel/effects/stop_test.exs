@@ -1,8 +1,8 @@
-defmodule Citadel.Effects.EndTest do
-  use Citadel.SagaCase
-  alias Citadel.TestHelper
+defmodule Cizen.Effects.EndTest do
+  use Cizen.SagaCase
+  alias Cizen.TestHelper
 
-  alias Citadel.Effects.{End, Monitor, Receive}
+  alias Cizen.Effects.{End, Monitor, Receive}
 
   defmodule(TestEvent, do: defstruct([:value]))
 

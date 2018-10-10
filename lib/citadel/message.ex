@@ -1,10 +1,10 @@
-defmodule Citadel.Message do
+defmodule Cizen.Message do
   @moduledoc """
   A message is communication between two sagas and transmitted by channels.
   """
 
-  alias Citadel.Event
-  alias Citadel.SagaID
+  alias Cizen.Event
+  alias Cizen.SagaID
 
   @type t :: %__MODULE__{
           event: Event.t(),

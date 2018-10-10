@@ -1,4 +1,4 @@
-defmodule Citadel.Effects.Subscribe do
+defmodule Cizen.Effects.Subscribe do
   @moduledoc """
   An effect to subscribe messages.
 
@@ -12,10 +12,10 @@ defmodule Citadel.Effects.Subscribe do
 
   defstruct [:event_filter]
 
-  alias Citadel.Effect
-  alias Citadel.Effects.{Map, Request}
+  alias Cizen.Effect
+  alias Cizen.Effects.{Map, Request}
 
-  alias Citadel.SubscribeMessage
+  alias Cizen.SubscribeMessage
 
   @behaviour Effect
 

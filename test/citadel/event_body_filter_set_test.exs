@@ -1,8 +1,8 @@
-defmodule Citadel.EventBodyFilterSetTest do
+defmodule Cizen.EventBodyFilterSetTest do
   use ExUnit.Case
 
-  alias Citadel.EventBodyFilter
-  alias Citadel.EventBodyFilterSet
+  alias Cizen.EventBodyFilter
+  alias Cizen.EventBodyFilterSet
 
   defmodule(A, do: defstruct([:value]))
   defmodule(B, do: defstruct([:value]))

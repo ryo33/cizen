@@ -1,4 +1,4 @@
-defmodule Citadel.Effects.Race do
+defmodule Cizen.Effects.Race do
   @moduledoc """
   An effect to run a race for the given effects.
 
@@ -25,8 +25,8 @@ defmodule Citadel.Effects.Race do
 
   defstruct [:effects]
 
-  alias Citadel.Effect
-  alias Citadel.Effects.Map
+  alias Cizen.Effect
+  alias Cizen.Effects.Map
 
   @behaviour Effect
 

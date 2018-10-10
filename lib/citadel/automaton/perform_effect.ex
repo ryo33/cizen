@@ -1,4 +1,4 @@
-defmodule Citadel.Automaton.PerformEffect do
+defmodule Cizen.Automaton.PerformEffect do
   @moduledoc """
   An event to perform an effect.
   """

@@ -1,4 +1,4 @@
-defmodule Citadel.Application do
+defmodule Cizen.Application do
   @moduledoc false
 
   use Application
@@ -7,59 +7,59 @@ defmodule Citadel.Application do
   def start(_type, _args) do
     # List all child processes to be supervised
     children = [
-      # Starts a worker by calling: Citadel.Worker.start_link(arg)
+      # Starts a worker by calling: Cizen.Worker.start_link(arg)
       %{
-        id: Citadel.Dispatcher,
-        start: {Citadel.Dispatcher, :start_link, []}
+        id: Cizen.Dispatcher,
+        start: {Cizen.Dispatcher, :start_link, []}
       },
       %{
-        id: Citadel.SagaRegistry,
-        start: {Citadel.SagaRegistry, :start_link, []}
+        id: Cizen.SagaRegistry,
+        start: {Cizen.SagaRegistry, :start_link, []}
       }
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
-    opts = [strategy: :one_for_one, name: Citadel.Supervisor]
+    opts = [strategy: :one_for_one, name: Cizen.Supervisor]
     Supervisor.start_link(children, opts)
   end
 
   @impl true
   def start_phase(:start_children, _start_type, _args) do
-    Supervisor.start_child(Citadel.Supervisor, %{
-      id: Citadel.SagaLauncher,
-      start: {Citadel.SagaLauncher, :start_link, []}
+    Supervisor.start_child(Cizen.Supervisor, %{
+      id: Cizen.SagaLauncher,
+      start: {Cizen.SagaLauncher, :start_link, []}
     })
 
-    Supervisor.start_child(Citadel.Supervisor, %{
-      id: Citadel.EventFilterDispatcher.EventPusher,
-      start: {Citadel.EventFilterDispatcher.EventPusher, :start_link, []}
+    Supervisor.start_child(Cizen.Supervisor, %{
+      id: Cizen.EventFilterDispatcher.EventPusher,
+      start: {Cizen.EventFilterDispatcher.EventPusher, :start_link, []}
     })
 
-    Supervisor.start_child(Citadel.Supervisor, %{
-      id: Citadel.EventFilterDispatcher,
-      start: {Citadel.EventFilterDispatcher, :start_link, []}
+    Supervisor.start_child(Cizen.Supervisor, %{
+      id: Cizen.EventFilterDispatcher,
+      start: {Cizen.EventFilterDispatcher, :start_link, []}
     })
 
-    Supervisor.start_child(Citadel.Supervisor, %{
-      id: Citadel.Transmitter,
-      start: {Citadel.Transmitter, :start_link, []}
+    Supervisor.start_child(Cizen.Supervisor, %{
+      id: Cizen.Transmitter,
+      start: {Cizen.Transmitter, :start_link, []}
     })
 
-    Supervisor.start_child(Citadel.Supervisor, %{
-      id: Citadel.SagaMonitor,
-      start: {Citadel.SagaMonitor, :start_link, []}
+    Supervisor.start_child(Cizen.Supervisor, %{
+      id: Cizen.SagaMonitor,
+      start: {Cizen.SagaMonitor, :start_link, []}
     })
 
     :ok
   end
 
   def start_phase(:start_daemons, _start_type, _args) do
-    alias Citadel.SagaLauncher
-    SagaLauncher.launch_saga(%Citadel.Messenger{})
-    SagaLauncher.launch_saga(%Citadel.SagaStarter{})
-    SagaLauncher.launch_saga(%Citadel.SagaEnder{})
-    SagaLauncher.launch_saga(%Citadel.RequestResponseMediator{})
+    alias Cizen.SagaLauncher
+    SagaLauncher.launch_saga(%Cizen.Messenger{})
+    SagaLauncher.launch_saga(%Cizen.SagaStarter{})
+    SagaLauncher.launch_saga(%Cizen.SagaEnder{})
+    SagaLauncher.launch_saga(%Cizen.RequestResponseMediator{})
     :ok
   end
 end

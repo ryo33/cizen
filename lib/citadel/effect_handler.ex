@@ -1,11 +1,11 @@
-defmodule Citadel.EffectHandler do
+defmodule Cizen.EffectHandler do
   @moduledoc """
   Handles effects.
   """
 
-  alias Citadel.Effect
-  alias Citadel.Event
-  alias Citadel.SagaID
+  alias Cizen.Effect
+  alias Cizen.Event
+  alias Cizen.SagaID
 
   @type state :: %{
           handler: SagaID.t(),

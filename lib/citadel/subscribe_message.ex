@@ -1,4 +1,4 @@
-defmodule Citadel.SubscribeMessage do
+defmodule Cizen.SubscribeMessage do
   @moduledoc """
   An event to subscribe message
   """
@@ -10,7 +10,7 @@ defmodule Citadel.SubscribeMessage do
     :event_filter
   ]
 
-  use Citadel.Request
+  use Cizen.Request
 
   defresponse Subscribed, :event_id do
     @moduledoc """

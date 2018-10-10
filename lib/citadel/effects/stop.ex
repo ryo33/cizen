@@ -1,4 +1,4 @@
-defmodule Citadel.Effects.End do
+defmodule Cizen.Effects.End do
   @moduledoc """
   An effect to end a saga.
 
@@ -12,10 +12,10 @@ defmodule Citadel.Effects.End do
 
   defstruct [:saga_id]
 
-  alias Citadel.Effect
-  alias Citadel.Effects.{Dispatch, Map}
+  alias Cizen.Effect
+  alias Cizen.Effects.{Dispatch, Map}
 
-  alias Citadel.EndSaga
+  alias Cizen.EndSaga
 
   @behaviour Effect
 

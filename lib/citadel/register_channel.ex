@@ -1,4 +1,4 @@
-defmodule Citadel.RegisterChannel do
+defmodule Cizen.RegisterChannel do
   @moduledoc """
   An event to register a channel.
   """
@@ -7,7 +7,7 @@ defmodule Citadel.RegisterChannel do
   @enforce_keys @keys
   defstruct @keys
 
-  use Citadel.Request
+  use Cizen.Request
 
   defresponse Registered, :event_id do
     @moduledoc """

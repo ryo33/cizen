@@ -1,18 +1,18 @@
-defmodule Citadel.Effects.MapTest do
-  use Citadel.SagaCase
-  alias Citadel.EffectTestHelper.{TestEffect, TestEvent}
+defmodule Cizen.Effects.MapTest do
+  use Cizen.SagaCase
+  alias Cizen.EffectTestHelper.{TestEffect, TestEvent}
 
-  alias Citadel.Automaton
-  alias Citadel.Dispatcher
-  alias Citadel.Effect
-  alias Citadel.Effects.Map
-  alias Citadel.Event
-  alias Citadel.EventFilter
-  alias Citadel.Messenger
-  alias Citadel.Saga
-  alias Citadel.SagaID
+  alias Cizen.Automaton
+  alias Cizen.Dispatcher
+  alias Cizen.Effect
+  alias Cizen.Effects.Map
+  alias Cizen.Event
+  alias Cizen.EventFilter
+  alias Cizen.Messenger
+  alias Cizen.Saga
+  alias Cizen.SagaID
 
-  alias Citadel.StartSaga
+  alias Cizen.StartSaga
 
   describe "Map" do
     test "transform the result when the effect immediately resolves" do

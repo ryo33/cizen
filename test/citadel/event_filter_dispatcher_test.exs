@@ -1,15 +1,15 @@
-defmodule Citadel.EventFilterDispatcherTest do
-  use Citadel.SagaCase
+defmodule Cizen.EventFilterDispatcherTest do
+  use Cizen.SagaCase
 
-  alias Citadel.TestHelper
-  import Citadel.TestHelper, only: [launch_test_saga: 0, launch_test_saga: 1, assert_condition: 2]
+  alias Cizen.TestHelper
+  import Cizen.TestHelper, only: [launch_test_saga: 0, launch_test_saga: 1, assert_condition: 2]
 
-  alias Citadel.Dispatcher
-  alias Citadel.Event
-  alias Citadel.EventFilter
-  alias Citadel.EventFilterDispatcher
-  alias Citadel.EventFilterDispatcher.PushEvent
-  alias Citadel.SagaID
+  alias Cizen.Dispatcher
+  alias Cizen.Event
+  alias Cizen.EventFilter
+  alias Cizen.EventFilterDispatcher
+  alias Cizen.EventFilterDispatcher.PushEvent
+  alias Cizen.SagaID
 
   defmodule(TestEvent, do: defstruct([:value]))
 

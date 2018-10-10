@@ -1,18 +1,18 @@
-defmodule Citadel.TransmitterTest do
-  use Citadel.SagaCase
-  alias Citadel.TestHelper
+defmodule Cizen.TransmitterTest do
+  use Cizen.SagaCase
+  alias Cizen.TestHelper
 
-  alias Citadel.Channel
-  alias Citadel.Connection
-  alias Citadel.Dispatcher
-  alias Citadel.Event
-  alias Citadel.Message
-  alias Citadel.Saga
-  alias Citadel.SagaID
-  alias Citadel.SagaLauncher
+  alias Cizen.Channel
+  alias Cizen.Connection
+  alias Cizen.Dispatcher
+  alias Cizen.Event
+  alias Cizen.Message
+  alias Cizen.Saga
+  alias Cizen.SagaID
+  alias Cizen.SagaLauncher
 
-  alias Citadel.ReceiveMessage
-  alias Citadel.SendMessage
+  alias Cizen.ReceiveMessage
+  alias Cizen.SendMessage
 
   defmodule(TestEvent, do: defstruct([:value]))
 

@@ -1,14 +1,14 @@
-defmodule Citadel.SagaLauncherTest do
-  use Citadel.SagaCase
-  doctest Citadel.SagaLauncher
-  import Citadel.TestHelper, only: [launch_test_saga: 0, assert_condition: 2]
+defmodule Cizen.SagaLauncherTest do
+  use Cizen.SagaCase
+  doctest Cizen.SagaLauncher
+  import Cizen.TestHelper, only: [launch_test_saga: 0, assert_condition: 2]
 
-  alias Citadel.Dispatcher
-  alias Citadel.Event
-  alias Citadel.SagaID
-  alias Citadel.SagaLauncher
-  alias Citadel.SagaRegistry
-  alias Citadel.TestSaga
+  alias Cizen.Dispatcher
+  alias Cizen.Event
+  alias Cizen.SagaID
+  alias Cizen.SagaLauncher
+  alias Cizen.SagaRegistry
+  alias Cizen.TestSaga
 
   test "SagaLauncher.LaunchSaga event" do
     pid = self()

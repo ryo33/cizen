@@ -1,18 +1,18 @@
-defmodule Citadel.Effects.JoinTest do
-  use Citadel.SagaCase
-  alias Citadel.EffectTestHelper.{TestEffect, TestEvent}
+defmodule Cizen.Effects.JoinTest do
+  use Cizen.SagaCase
+  alias Cizen.EffectTestHelper.{TestEffect, TestEvent}
 
-  alias Citadel.Automaton
-  alias Citadel.Dispatcher
-  alias Citadel.Effect
-  alias Citadel.Effects.Join
-  alias Citadel.Event
-  alias Citadel.EventFilter
-  alias Citadel.Messenger
-  alias Citadel.Saga
-  alias Citadel.SagaID
+  alias Cizen.Automaton
+  alias Cizen.Dispatcher
+  alias Cizen.Effect
+  alias Cizen.Effects.Join
+  alias Cizen.Event
+  alias Cizen.EventFilter
+  alias Cizen.Messenger
+  alias Cizen.Saga
+  alias Cizen.SagaID
 
-  alias Citadel.StartSaga
+  alias Cizen.StartSaga
 
   describe "Join" do
     test "resolves immediately with no effects" do

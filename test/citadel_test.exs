@@ -1,4 +1,4 @@
-defmodule CitadelTest do
+defmodule CizenTest do
   use ExUnit.Case
-  doctest Citadel
+  doctest Cizen
 end

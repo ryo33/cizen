@@ -1,19 +1,19 @@
-defmodule Citadel.RequestResponseMediator do
+defmodule Cizen.RequestResponseMediator do
   @moduledoc """
   The request-response mediator saga.
   """
 
-  alias Citadel.Dispatcher
-  alias Citadel.Event
-  alias Citadel.EventFilterDispatcher
-  alias Citadel.Saga
-  alias Citadel.SagaID
-  alias Citadel.SagaLauncher
-  alias Citadel.SagaRegistry
+  alias Cizen.Dispatcher
+  alias Cizen.Event
+  alias Cizen.EventFilterDispatcher
+  alias Cizen.Saga
+  alias Cizen.SagaID
+  alias Cizen.SagaLauncher
+  alias Cizen.SagaRegistry
 
-  alias Citadel.EventFilterDispatcher.PushEvent
-  alias Citadel.MonitorSaga
-  alias Citadel.Request
+  alias Cizen.EventFilterDispatcher.PushEvent
+  alias Cizen.MonitorSaga
+  alias Cizen.Request
 
   defstruct []
 

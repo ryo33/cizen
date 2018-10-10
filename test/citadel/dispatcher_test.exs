@@ -1,8 +1,8 @@
-defmodule Citadel.DispatcherTest do
+defmodule Cizen.DispatcherTest do
   use ExUnit.Case
 
-  alias Citadel.Dispatcher
-  alias Citadel.Event
+  alias Cizen.Dispatcher
+  alias Cizen.Event
 
   defmodule(TestEvent, do: defstruct([:value]))
 

@@ -1,4 +1,4 @@
-defmodule Citadel.Effects.Start do
+defmodule Cizen.Effects.Start do
   @moduledoc """
   An effect to state an saga.
 
@@ -12,11 +12,11 @@ defmodule Citadel.Effects.Start do
 
   defstruct [:saga]
 
-  alias Citadel.Effect
-  alias Citadel.Effects.{Map, Request}
-  alias Citadel.SagaID
+  alias Cizen.Effect
+  alias Cizen.Effects.{Map, Request}
+  alias Cizen.SagaID
 
-  alias Citadel.StartSaga
+  alias Cizen.StartSaga
 
   @behaviour Effect
 

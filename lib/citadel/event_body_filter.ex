@@ -1,11 +1,11 @@
-defmodule Citadel.EventBodyFilter do
+defmodule Cizen.EventBodyFilter do
   @moduledoc """
   A behaviour module to define an event filter.
   """
 
   @type t :: struct
 
-  alias Citadel.EventBody
+  alias Cizen.EventBody
 
   @callback test(EventBody.t(), t) :: boolean
 
@@ -21,7 +21,7 @@ defmodule Citadel.EventBodyFilter do
   ## Example
       defmodule SomeEvent do
         defstruct [:key, :value]
-        import Citadel.EventBodyFilter
+        import Cizen.EventBodyFilter
         defeventbodyfilter KeyFilter, :key
         defeventbodyfilter ValueFilter, :key do
           @moduledoc "Some document"
@@ -44,7 +44,7 @@ defmodule Citadel.EventBodyFilter do
         @enforce_keys [:value]
         defstruct [:value]
 
-        @behaviour Citadel.EventBodyFilter
+        @behaviour Cizen.EventBodyFilter
 
         @impl true
         def test(%__MODULE__{value: value}, body) do

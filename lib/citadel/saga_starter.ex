@@ -1,20 +1,20 @@
-defmodule Citadel.SagaStarter do
+defmodule Cizen.SagaStarter do
   @moduledoc """
   Start a saga.
   """
 
   defstruct []
 
-  alias Citadel.Dispatcher
-  alias Citadel.Event
-  alias Citadel.EventFilter
-  alias Citadel.Message
-  alias Citadel.Messenger
-  alias Citadel.Saga
+  alias Cizen.Dispatcher
+  alias Cizen.Event
+  alias Cizen.EventFilter
+  alias Cizen.Message
+  alias Cizen.Messenger
+  alias Cizen.Saga
 
-  alias Citadel.ReceiveMessage
-  alias Citadel.SagaLauncher.LaunchSaga
-  alias Citadel.StartSaga
+  alias Cizen.ReceiveMessage
+  alias Cizen.SagaLauncher.LaunchSaga
+  alias Cizen.StartSaga
 
   @behaviour Saga
 

@@ -1,15 +1,15 @@
-defmodule Citadel.SagaMonitorTest do
-  use Citadel.SagaCase
-  alias Citadel.TestHelper
-  import Citadel.TestHelper, only: [assert_condition: 2]
+defmodule Cizen.SagaMonitorTest do
+  use Cizen.SagaCase
+  alias Cizen.TestHelper
+  import Cizen.TestHelper, only: [assert_condition: 2]
 
-  alias Citadel.Dispatcher
-  alias Citadel.Event
-  alias Citadel.Saga
-  alias Citadel.SagaID
-  alias Citadel.SagaMonitor
+  alias Cizen.Dispatcher
+  alias Cizen.Event
+  alias Cizen.Saga
+  alias Cizen.SagaID
+  alias Cizen.SagaMonitor
 
-  alias Citadel.MonitorSaga
+  alias Cizen.MonitorSaga
 
   describe "SagaMonitor" do
     test "does not dispatches Down until the target saga finishes" do

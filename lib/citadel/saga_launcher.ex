@@ -1,13 +1,13 @@
-defmodule Citadel.SagaLauncher do
+defmodule Cizen.SagaLauncher do
   @moduledoc """
   The core module to launch automata.
   """
 
   use GenServer
-  alias Citadel.Dispatcher
-  alias Citadel.Event
-  alias Citadel.Saga
-  alias Citadel.SagaID
+  alias Cizen.Dispatcher
+  alias Cizen.Event
+  alias Cizen.Saga
+  alias Cizen.SagaID
 
   defmodule LaunchSaga do
     @moduledoc """

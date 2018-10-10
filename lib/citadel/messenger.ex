@@ -1,21 +1,21 @@
-defmodule Citadel.Messenger do
+defmodule Cizen.Messenger do
   @moduledoc """
   Send messages.
   """
 
-  alias Citadel.Channel
-  alias Citadel.Dispatcher
-  alias Citadel.Event
-  alias Citadel.EventFilter
-  alias Citadel.EventFilterDispatcher
-  alias Citadel.EventFilterDispatcher.PushEvent
-  alias Citadel.Message
-  alias Citadel.RegisterChannel
-  alias Citadel.Saga
-  alias Citadel.SagaID
+  alias Cizen.Channel
+  alias Cizen.Dispatcher
+  alias Cizen.Event
+  alias Cizen.EventFilter
+  alias Cizen.EventFilterDispatcher
+  alias Cizen.EventFilterDispatcher.PushEvent
+  alias Cizen.Message
+  alias Cizen.RegisterChannel
+  alias Cizen.Saga
+  alias Cizen.SagaID
 
-  alias Citadel.SendMessage
-  alias Citadel.SubscribeMessage
+  alias Cizen.SendMessage
+  alias Cizen.SubscribeMessage
 
   defstruct []
 

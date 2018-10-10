@@ -1,4 +1,4 @@
-defmodule Citadel.SagaID do
+defmodule Cizen.SagaID do
   @moduledoc """
   Each saga has a unique saga-id.
   """

@@ -1,12 +1,12 @@
-defmodule Citadel.SagaEnderTest do
-  use Citadel.SagaCase
-  alias Citadel.TestHelper
+defmodule Cizen.SagaEnderTest do
+  use Cizen.SagaCase
+  alias Cizen.TestHelper
 
-  alias Citadel.Dispatcher
-  alias Citadel.Event
-  alias Citadel.Saga
+  alias Cizen.Dispatcher
+  alias Cizen.Event
+  alias Cizen.Saga
 
-  alias Citadel.EndSaga
+  alias Cizen.EndSaga
 
   describe "SagaEnder" do
     test "dispatches Saga.Finish event on EndSaga event" do

@@ -1,11 +1,11 @@
-defmodule Citadel.EventFilterDispatcher.Subscription do
+defmodule Cizen.EventFilterDispatcher.Subscription do
   @moduledoc """
   A struct to represent event subscription.
   """
 
-  alias Citadel.Event
-  alias Citadel.EventFilter
-  alias Citadel.SagaID
+  alias Cizen.Event
+  alias Cizen.EventFilter
+  alias Cizen.SagaID
 
   @type t :: %__MODULE__{
           proxy_saga_id: SagaID.t() | nil,

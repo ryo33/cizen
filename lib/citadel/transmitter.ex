@@ -1,19 +1,19 @@
-defmodule Citadel.Transmitter do
+defmodule Cizen.Transmitter do
   @moduledoc """
   Transmitter creates a connection for messaging.
   """
 
   use GenServer
 
-  alias Citadel.Connection
-  alias Citadel.Dispatcher
-  alias Citadel.Event
-  alias Citadel.SagaID
-  alias Citadel.SagaLauncher
-  alias Citadel.SagaRegistry
+  alias Cizen.Connection
+  alias Cizen.Dispatcher
+  alias Cizen.Event
+  alias Cizen.SagaID
+  alias Cizen.SagaLauncher
+  alias Cizen.SagaRegistry
 
-  alias Citadel.ReceiveMessage
-  alias Citadel.SendMessage
+  alias Cizen.ReceiveMessage
+  alias Cizen.SendMessage
 
   def start_link do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)

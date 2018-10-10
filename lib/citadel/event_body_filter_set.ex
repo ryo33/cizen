@@ -1,10 +1,10 @@
-defmodule Citadel.EventBodyFilterSet do
+defmodule Cizen.EventBodyFilterSet do
   @moduledoc """
   Create a new set of event body filters.
   """
 
-  alias Citadel.EventBody
-  alias Citadel.EventBodyFilter
+  alias Cizen.EventBody
+  alias Cizen.EventBodyFilter
 
   @type t :: %__MODULE__{
           event_body_filters: MapSet.t(EventBodyFilter.t())

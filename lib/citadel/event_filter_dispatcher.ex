@@ -1,15 +1,15 @@
-defmodule Citadel.EventFilterDispatcher do
+defmodule Cizen.EventFilterDispatcher do
   @moduledoc """
   A dispatcher based on subscription with filter set.
   """
 
   use GenServer
 
-  alias Citadel.Dispatcher
-  alias Citadel.Event
-  alias Citadel.EventFilter
-  alias Citadel.SagaID
-  alias Citadel.SagaRegistry
+  alias Cizen.Dispatcher
+  alias Cizen.Event
+  alias Cizen.EventFilter
+  alias Cizen.SagaID
+  alias Cizen.SagaRegistry
 
   defmodule PushEvent do
     @moduledoc """

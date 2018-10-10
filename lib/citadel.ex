@@ -1,3 +1,3 @@
-defmodule Citadel do
+defmodule Cizen do
   @moduledoc false
 end

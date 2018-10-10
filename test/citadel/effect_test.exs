@@ -1,15 +1,15 @@
-defmodule Citadel.EffectTest do
+defmodule Cizen.EffectTest do
   use ExUnit.Case
-  alias Citadel.EffectTestHelper.TestEvent
+  alias Cizen.EffectTestHelper.TestEvent
 
-  alias Citadel.Effect
-  alias Citadel.Event
-  alias Citadel.SagaID
+  alias Cizen.Effect
+  alias Cizen.Event
+  alias Cizen.SagaID
 
   defmodule TestEffect do
     defstruct [:init_value, :handle_event_value, :alias_of]
 
-    alias Citadel.Effect
+    alias Cizen.Effect
     @behaviour Effect
 
     @impl true

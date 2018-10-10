@@ -1,4 +1,4 @@
-defmodule Citadel.Connection do
+defmodule Cizen.Connection do
   @moduledoc """
   An saga to connect two sagas by the given channels to transmit a message.
 
@@ -12,19 +12,19 @@ defmodule Citadel.Connection do
   or all of the channels rejects it.
   """
 
-  alias Citadel.Channel
-  alias Citadel.Channel.EmitMessage
-  alias Citadel.Channel.FeedMessage
-  alias Citadel.Channel.RejectMessage
-  alias Citadel.Dispatcher
-  alias Citadel.Event
-  alias Citadel.EventFilter
-  alias Citadel.EventFilterDispatcher
-  alias Citadel.MonitorSaga
-  alias Citadel.ReceiveMessage
-  alias Citadel.Saga
+  alias Cizen.Channel
+  alias Cizen.Channel.EmitMessage
+  alias Cizen.Channel.FeedMessage
+  alias Cizen.Channel.RejectMessage
+  alias Cizen.Dispatcher
+  alias Cizen.Event
+  alias Cizen.EventFilter
+  alias Cizen.EventFilterDispatcher
+  alias Cizen.MonitorSaga
+  alias Cizen.ReceiveMessage
+  alias Cizen.Saga
 
-  alias Citadel.EventFilterDispatcher.PushEvent
+  alias Cizen.EventFilterDispatcher.PushEvent
 
   @keys [:message, :channels]
   @enforce_keys @keys

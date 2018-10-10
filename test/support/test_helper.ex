@@ -1,14 +1,14 @@
-defmodule Citadel.TestHelper do
+defmodule Cizen.TestHelper do
   @moduledoc false
   import ExUnit.Assertions, only: [flunk: 0]
 
-  alias Citadel.Dispatcher
-  alias Citadel.Event
-  alias Citadel.Saga
-  alias Citadel.SagaID
-  alias Citadel.SagaLauncher
-  alias Citadel.SagaRegistry
-  alias Citadel.TestSaga
+  alias Cizen.Dispatcher
+  alias Cizen.Event
+  alias Cizen.Saga
+  alias Cizen.SagaID
+  alias Cizen.SagaLauncher
+  alias Cizen.SagaRegistry
+  alias Cizen.TestSaga
 
   def ensure_finished(id) do
     case SagaRegistry.resolve_id(id) do

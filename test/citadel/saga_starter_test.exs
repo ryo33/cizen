@@ -1,13 +1,13 @@
-defmodule Citadel.SagaStarterTest do
-  use Citadel.SagaCase
-  alias Citadel.TestSaga
+defmodule Cizen.SagaStarterTest do
+  use Cizen.SagaCase
+  alias Cizen.TestSaga
 
-  alias Citadel.Dispatcher
-  alias Citadel.Event
-  alias Citadel.SagaID
+  alias Cizen.Dispatcher
+  alias Cizen.Event
+  alias Cizen.SagaID
 
-  alias Citadel.SagaLauncher.LaunchSaga
-  alias Citadel.StartSaga
+  alias Cizen.SagaLauncher.LaunchSaga
+  alias Cizen.StartSaga
 
   describe "SagaStarter" do
     test "dispatches LaunchSaga event on StartSaga event" do

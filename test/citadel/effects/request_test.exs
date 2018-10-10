@@ -1,21 +1,21 @@
-defmodule Citadel.Effects.RequestTest do
-  use Citadel.SagaCase
+defmodule Cizen.Effects.RequestTest do
+  use Cizen.SagaCase
 
-  alias Citadel.Automaton
-  alias Citadel.Dispatcher
-  alias Citadel.Effect
-  alias Citadel.Effects
-  alias Citadel.Event
-  alias Citadel.EventFilter
-  alias Citadel.EventID
-  alias Citadel.Saga
-  alias Citadel.SagaID
+  alias Cizen.Automaton
+  alias Cizen.Dispatcher
+  alias Cizen.Effect
+  alias Cizen.Effects
+  alias Cizen.Event
+  alias Cizen.EventFilter
+  alias Cizen.EventID
+  alias Cizen.Saga
+  alias Cizen.SagaID
 
-  alias Citadel.Request
-  alias Citadel.StartSaga
+  alias Cizen.Request
+  alias Cizen.StartSaga
 
   defmodule TestRequest do
-    alias Citadel.EventFilter
+    alias Cizen.EventFilter
 
     defstruct [:value]
 

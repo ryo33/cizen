@@ -1,4 +1,4 @@
-defmodule Citadel.StartSaga do
+defmodule Cizen.StartSaga do
   @moduledoc """
   An event to start a saga.
   """
@@ -7,11 +7,11 @@ defmodule Citadel.StartSaga do
   @enforce_keys @keys
   defstruct @keys
 
-  alias Citadel.Event
-  alias Citadel.EventFilter
-  alias Citadel.Saga
+  alias Cizen.Event
+  alias Cizen.EventFilter
+  alias Cizen.Saga
 
-  @behaviour Citadel.Request
+  @behaviour Cizen.Request
   @impl true
   def response_event_filters(%Event{body: %__MODULE__{id: id}}) do
     require EventFilter

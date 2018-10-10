@@ -1,4 +1,4 @@
-defmodule Citadel.EffectHandlerTestHelper do
+defmodule Cizen.EffectHandlerTestHelper do
   @moduledoc false
 
   defmodule TestEvent do
@@ -10,7 +10,7 @@ defmodule Citadel.EffectHandlerTestHelper do
     @moduledoc false
     defstruct [:value, :resolve_immediately, :reset, :alias_of]
 
-    alias Citadel.Effect
+    alias Cizen.Effect
     @behaviour Effect
 
     @impl true

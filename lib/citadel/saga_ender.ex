@@ -1,19 +1,19 @@
-defmodule Citadel.SagaEnder do
+defmodule Cizen.SagaEnder do
   @moduledoc """
   End a saga.
   """
 
   defstruct []
 
-  alias Citadel.Dispatcher
-  alias Citadel.Event
-  alias Citadel.EventFilter
-  alias Citadel.Message
-  alias Citadel.Messenger
-  alias Citadel.Saga
+  alias Cizen.Dispatcher
+  alias Cizen.Event
+  alias Cizen.EventFilter
+  alias Cizen.Message
+  alias Cizen.Messenger
+  alias Cizen.Saga
 
-  alias Citadel.EndSaga
-  alias Citadel.ReceiveMessage
+  alias Cizen.EndSaga
+  alias Cizen.ReceiveMessage
 
   @behaviour Saga
 

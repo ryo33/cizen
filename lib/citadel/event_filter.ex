@@ -1,12 +1,12 @@
-defmodule Citadel.EventFilter do
+defmodule Cizen.EventFilter do
   @moduledoc """
   Filter events.
   """
 
-  alias Citadel.Event
-  alias Citadel.EventBodyFilterSet
-  alias Citadel.EventType
-  alias Citadel.SagaID
+  alias Cizen.Event
+  alias Cizen.EventBodyFilterSet
+  alias Cizen.EventType
+  alias Cizen.SagaID
 
   @type t :: %__MODULE__{
           event_type: EventType.t() | nil,
@@ -88,7 +88,7 @@ defmodule Citadel.EventFilter do
             source_saga_module: source_saga_module,
             event_body_filters: event_body_filters
           ] do
-      %Citadel.EventFilter{
+      %Cizen.EventFilter{
         event_type: event_type,
         source_saga_id: source_saga_id,
         source_saga_module: source_saga_module,

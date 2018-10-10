@@ -1,4 +1,4 @@
-defmodule Citadel.Effects.Receive do
+defmodule Cizen.Effects.Receive do
   @moduledoc """
   An effect to receive an event which the saga is received.
 
@@ -16,8 +16,8 @@ defmodule Citadel.Effects.Receive do
       }
   """
 
-  alias Citadel.Effect
-  alias Citadel.EventFilter
+  alias Cizen.Effect
+  alias Cizen.EventFilter
 
   defstruct event_filter: %EventFilter{}
 

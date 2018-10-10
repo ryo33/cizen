@@ -1,16 +1,16 @@
-defmodule Citadel.RequestResponseMediatorTest do
-  use Citadel.SagaCase
-  alias Citadel.TestHelper
+defmodule Cizen.RequestResponseMediatorTest do
+  use Cizen.SagaCase
+  alias Cizen.TestHelper
 
-  alias Citadel.Dispatcher
-  alias Citadel.Event
-  alias Citadel.Request
-  alias Citadel.RequestResponseMediator
-  alias Citadel.Saga
-  alias Citadel.SagaLauncher
+  alias Cizen.Dispatcher
+  alias Cizen.Event
+  alias Cizen.Request
+  alias Cizen.RequestResponseMediator
+  alias Cizen.Saga
+  alias Cizen.SagaLauncher
 
   defmodule TestRequest do
-    alias Citadel.EventFilter
+    alias Cizen.EventFilter
 
     defstruct []
 
