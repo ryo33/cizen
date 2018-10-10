@@ -1,21 +1,25 @@
 # Cizen
 
-**TODO: Add description**
+Build highly concurrent, monitorable, and extensible applications
+with a collection of automata.
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `cizen` to your list of dependencies in `mix.exs`:
+First, add Cizen to your list of dependencies in `mix.exs`:
 
 ```elixir
-def deps do
+defp deps do
   [
     {:cizen, "~> 0.1.0"}
   ]
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/cizen](https://hexdocs.pm/cizen).
+Then, run `mix deps.get`.
+
+## License
+
+Copyright (c) 2018 Ryo33
+
+Cizen is licensed under the MIT License.
 

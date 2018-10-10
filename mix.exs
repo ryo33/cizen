@@ -5,6 +5,7 @@ defmodule Cizen.MixProject do
     [
       app: :cizen,
       version: "0.1.0",
+      package: package(),
       elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -16,7 +17,11 @@ defmodule Cizen.MixProject do
         "coveralls.detail": :test,
         "coveralls.post": :test,
         "coveralls.html": :test
-      ]
+      ],
+      source_url: "https://gitlab.com/ryo33/cizen",
+      description: """
+      Build highly concurrent, monitorable, and extensible applications with a collection of automata.
+      """
     ]
   end
 
@@ -31,10 +36,18 @@ defmodule Cizen.MixProject do
   defp deps do
     [
       {:elixir_uuid, "~> 1.2"},
-      {:poison, "~> 4.0", only: [:test]},
+      {:poison, "~> 4.0", only: :test, runtime: false},
       {:credo, "~> 0.10.0", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0.0-rc.3", only: [:dev, :test], runtime: false},
-      {:excoveralls, "~> 0.8", only: [:dev, :test], runtime: false}
+      {:excoveralls, "~> 0.8", only: [:dev, :test], runtime: false},
+      {:ex_doc, ">= 0.0.0", only: :dev}
+    ]
+  end
+
+  defp package do
+    [
+      links: %{gitlab: "https://gitlab.com/ryo33/cizen"},
+      licenses: ["MIT"]
     ]
   end
 
