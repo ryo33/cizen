@@ -3,6 +3,11 @@ defmodule Citadel.Effects.Request do
   An effect to request.
 
   Returns the response event.
+
+  ## Example
+      response_event = perform id, %Effects.Request{
+        body: some_request
+      }
   """
 
   defstruct [:body]

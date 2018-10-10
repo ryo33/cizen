@@ -27,7 +27,7 @@ defmodule Citadel.EffectTestHelper do
     end
 
     @impl true
-    def handle_event(_handler, event, effect, value) do
+    def handle_event(_handler, event, effect, _value) do
       %__MODULE__{value: value, ignores: ignores} = effect
 
       if event.body.value == :ignored or event.body.value in ignores do

@@ -1,6 +1,16 @@
 defmodule Citadel.Effectful do
   @moduledoc """
   Creates a block which can perform effects.
+
+  ## Example
+      use Citadel.Effectful
+
+      handle(fn id ->
+        some_result = perform id, some_effect
+        if some_result do
+          perform id, other_effect
+        end
+      end)
   """
 
   alias Citadel.Dispatcher

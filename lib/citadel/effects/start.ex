@@ -3,6 +3,11 @@ defmodule Citadel.Effects.Start do
   An effect to state an saga.
 
   Returns the started saga ID.
+
+  ## Example
+      saga_id = perform id, %Start{
+        saga: some_saga_struct
+      }
   """
 
   defstruct [:saga]

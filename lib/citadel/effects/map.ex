@@ -3,6 +3,12 @@ defmodule Citadel.Effects.Map do
   An effect to transform the result of effect.
 
   Returns the transformed result.
+
+  ## Example
+      perform id, %Map{
+        effect: some_effect,
+        transform: fn result -> transformed_result end
+      }
   """
 
   defstruct [:effect, :transform]

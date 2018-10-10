@@ -63,6 +63,15 @@ defmodule Citadel.EventFilter do
     end
   end
 
+  @doc """
+  Returns new event filter.
+
+  The following keys are used to create an event filter, and all of them are optional:
+    * `:event_type` - an event type.
+    * `:source_saga_id` - a saga ID.
+    * `:source_saga_module` - a module.
+    * `:event_body_filters` - a list of event body filters.
+  """
   defmacro new(params \\ []) do
     {event_type, params} = Keyword.pop(params, :event_type)
     {source_saga_id, params} = Keyword.pop(params, :source_saga_id)

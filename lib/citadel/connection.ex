@@ -1,6 +1,15 @@
 defmodule Citadel.Connection do
   @moduledoc """
-  An saga to connect two sagas by given channels.
+  An saga to connect two sagas by the given channels to transmit a message.
+
+  The channels are connected in tree structure.
+  At first, the message is fed to the root channels,
+  The message is fed to next channels on emit,
+  and transmitted to destination saga if one of the leaf channels emits the message.
+
+  After feeding message to channels,
+  the connection is blocked until one of the channels emits it
+  or all of the channels rejects it.
   """
 
   alias Citadel.Channel

@@ -22,7 +22,27 @@ defmodule Citadel.Automaton do
   @type finish :: {__MODULE__, :finish}
   @type state :: term
 
-  @callback spawn(SagaID.t(), state) :: finish | state
+  @doc """
+  Invoked when the automaton is spawned.
+  Saga.Launched event will be dispatched after this callback.
+
+  Returned value will be used as the next state to pass `yield/2` callback.
+  Returning Automaton.finish() will cause the automaton to finish.
+
+  If not defined, default implementation is used,
+  and it passes the given saga struct to `yield/2` callback.
+  """
+  @callback spawn(SagaID.t(), Saga.t()) :: finish | state
+
+  @doc """
+  Invoked when last `spawn/2` or yield/2 callback returns a next state.
+
+  Returned value will be used as the next state to pass `yield/2` callback.
+  Returning `Automaton.finish()` will cause the automaton to finish.
+
+  If not defined, default implementation is used,
+  and it returns `Automaton.finish()`.
+  """
   @callback yield(SagaID.t(), state) :: finish | state
 
   defmacro __using__(_opts) do
@@ -60,6 +80,11 @@ defmodule Citadel.Automaton do
 
   @doc """
   Performs an effect.
+
+  `perform/2` blocks the current block until the effect is resolved,
+  and returns the result of the effect.
+
+  Note that `perform/2` does not work only on the current process.
   """
   defmacro perform(id, effect) do
     quote do

@@ -3,6 +3,11 @@ defmodule Citadel.Effects.Subscribe do
   An effect to subscribe messages.
 
   Returns :ok.
+
+  ## Example
+      perform id, %Subscribe{
+        event_filter: EventFilter.new(event_type: some_event_type)
+      }
   """
 
   defstruct [:event_filter]

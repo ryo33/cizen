@@ -15,10 +15,19 @@ defmodule Citadel.Saga do
 
   @type state :: any
 
-  @doc false
+  @doc """
+  Invoked when the saga is started.
+  Saga.Launched event will be dispatched after this callback.
+
+  Returned value will be used as the next state to pass `handle_event/3` callback.
+  """
   @callback init(SagaID.t(), Saga.t()) :: state
 
-  @doc false
+  @doc """
+  Invoked when the saga receives an event.
+
+  Returned value will be used as the next state to pass `handle_event/3` callback.
+  """
   @callback handle_event(SagaID.t(), Event.t(), state) :: state
 
   defmodule Finish do

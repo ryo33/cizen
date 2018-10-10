@@ -3,6 +3,11 @@ defmodule Citadel.Effects.End do
   An effect to end a saga.
 
   Returns the saga ID.
+
+  ## Example
+      saga_id = perform id, %End{
+        saga_id: some_saga_id
+      }
   """
 
   defstruct [:saga_id]

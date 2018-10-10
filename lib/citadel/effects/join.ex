@@ -3,6 +3,11 @@ defmodule Citadel.Effects.Join do
   An effect to join multiple effects.
 
   Returns the list of resolved values.
+
+  ## Example
+        [result1, result2] = perform id, %Join{
+          effects: [effect1, effect2]
+        }
   """
 
   defstruct [:effects]

@@ -3,6 +3,11 @@ defmodule Citadel.Effects.All do
   An effect to perform multiple effects.
 
   Returns the list of resolved values.
+
+  ## Example
+        [result1, result2] = perform id, %All{
+          effects: [effect1, effect2]
+        }
   """
 
   defstruct [:effects]

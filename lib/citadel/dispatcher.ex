@@ -1,6 +1,6 @@
 defmodule Citadel.Dispatcher do
   @moduledoc """
-  The core dispatcher
+  The dispatcher.
   """
 
   alias Citadel.Event
@@ -13,7 +13,7 @@ defmodule Citadel.Dispatcher do
   end
 
   @doc """
-  Dispatch an event
+  Dispatch the event.
   """
   @spec dispatch(Citadel.Event.t()) :: :ok
   def dispatch(event) do
@@ -31,7 +31,7 @@ defmodule Citadel.Dispatcher do
   end
 
   @doc """
-  Listen all events
+  Listen all events.
   """
   @spec listen_all :: :ok
   def listen_all do
@@ -40,7 +40,7 @@ defmodule Citadel.Dispatcher do
   end
 
   @doc """
-  Listen a specific event type
+  Listen the specific event type.
   """
   @spec listen_event_type(EventType.t()) :: :ok
   def listen_event_type(event_type) do
@@ -49,7 +49,7 @@ defmodule Citadel.Dispatcher do
   end
 
   @doc """
-  Listen a specific event
+  Listen the specific event body.
   """
   @spec listen_event_body(EventBody.t()) :: :ok
   def listen_event_body(event_body) do

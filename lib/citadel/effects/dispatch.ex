@@ -3,6 +3,11 @@ defmodule Citadel.Effects.Dispatch do
   An effect to dispatch an event.
 
   Returns the dispatched event.
+
+  ## Example
+        event = perform id, %Dispatch{
+          body: some_event_body
+        }
   """
 
   defstruct [:body]

@@ -1,8 +1,19 @@
 defmodule Citadel.Effects.Receive do
   @moduledoc """
-  An effect to receive an event.
+  An effect to receive an event which the saga is received.
 
   Returns the received event.
+
+  If the `event_filter` is omitted, this receives all events.
+
+  ## Example
+      perform id, %Subscribe{
+        event_filter: EventFilter.new(event_type: some_event_type)
+      }
+
+      perform id, %Receive{
+        event_filter: EventFilter.new(event_type: some_event_type)
+      }
   """
 
   alias Citadel.Effect
