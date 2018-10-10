@@ -7,7 +7,7 @@ defmodule Cizen.Effects.EndTest do
   defmodule(TestEvent, do: defstruct([:value]))
 
   describe "End" do
-    test "starts monitor" do
+    test "ends a saga" do
       assert_handle(fn id ->
         saga_id = TestHelper.launch_test_saga()
 

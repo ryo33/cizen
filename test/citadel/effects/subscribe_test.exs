@@ -38,7 +38,7 @@ defmodule Cizen.Effects.SubscribeTest do
       end
     end
 
-    test "transforms the result" do
+    test "subscribes messages" do
       saga_id = SagaID.new()
 
       Dispatcher.dispatch(

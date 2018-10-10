@@ -72,7 +72,7 @@ defmodule Cizen.Effects.RequestTest do
       end
     end
 
-    test "transforms the result" do
+    test "works with Automaton" do
       saga_id = SagaID.new()
       Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
 

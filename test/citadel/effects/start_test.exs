@@ -34,7 +34,7 @@ defmodule Cizen.Effects.StartTest do
       end
     end
 
-    test "transforms the result" do
+    test "starts a saga" do
       saga_id = SagaID.new()
       Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
 
