@@ -18,7 +18,7 @@ defmodule Cizen.MixProject do
         "coveralls.post": :test,
         "coveralls.html": :test
       ],
-      source_url: "https://gitlab.com/ryo33/cizen",
+      source_url: "https://gitlab.com/cizen/cizen",
       description: """
       Build highly concurrent, monitorable, and extensible applications with a collection of automata.
       """
@@ -46,7 +46,7 @@ defmodule Cizen.MixProject do
 
   defp package do
     [
-      links: %{gitlab: "https://gitlab.com/ryo33/cizen"},
+      links: %{gitlab: "https://gitlab.com/cizen/cizen"},
       licenses: ["MIT"]
     ]
   end
