@@ -3,6 +3,9 @@
 Build highly concurrent, monitorable, and extensible applications
 with a collection of automata.
 
+"Cizen" means "Nature" in Japanese.  
+/'sizen/ 自然
+
 ## Installation
 
 First, add Cizen to your list of dependencies in `mix.exs`:
