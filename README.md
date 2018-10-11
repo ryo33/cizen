@@ -20,6 +20,10 @@ end
 
 Then, run `mix deps.get`.
 
+## Documentation
+
+API Reference: [https://hexdocs.pm/cizen/](https://hexdocs.pm/cizen/)
+
 ## License
 
 Copyright (c) 2018 Ryo33
