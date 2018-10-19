@@ -7,7 +7,7 @@ defmodule Cizen.EventBodyFilter do
 
   alias Cizen.EventBody
 
-  @callback test(EventBody.t(), t) :: boolean
+  @callback test(t, EventBody.t()) :: boolean
 
   @spec test(__MODULE__.t(), EventBody.t()) :: boolean
   def test(filter, event_body) do
@@ -23,7 +23,7 @@ defmodule Cizen.EventBodyFilter do
         defstruct [:key, :value]
         import Cizen.EventBodyFilter
         defeventbodyfilter KeyFilter, :key
-        defeventbodyfilter ValueFilter, :key do
+        defeventbodyfilter ValueFilter, :value do
           @moduledoc "Some document"
         end
       end
