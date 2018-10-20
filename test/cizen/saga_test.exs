@@ -49,6 +49,8 @@ defmodule Cizen.SagaTest do
     defmodule(CrashTestEvent1, do: defstruct([]))
 
     test "terminated on crash" do
+      surpress_crash_log()
+
       id =
         launch_test_saga(
           launch: fn _id, _state ->
@@ -72,6 +74,8 @@ defmodule Cizen.SagaTest do
     defmodule(CrashTestEvent2, do: defstruct([]))
 
     test "dispatches Crashed event on crash" do
+      surpress_crash_log()
+
       Dispatcher.listen_event_type(Saga.Crashed)
 
       id =

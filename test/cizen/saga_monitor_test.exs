@@ -157,6 +157,7 @@ defmodule Cizen.SagaMonitorTest do
     end
 
     test "removes the monitors after down" do
+      old_state = :sys.get_state(SagaMonitor)
       pid = self()
 
       monitor_id =
@@ -180,10 +181,7 @@ defmodule Cizen.SagaMonitorTest do
 
       assert_condition(
         100,
-        :sys.get_state(SagaMonitor) == %{
-          refs: %{},
-          target_monitors: %{}
-        }
+        :sys.get_state(SagaMonitor) == old_state
       )
     end
   end

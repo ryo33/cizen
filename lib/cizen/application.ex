@@ -60,6 +60,7 @@ defmodule Cizen.Application do
     SagaLauncher.launch_saga(%Cizen.SagaStarter{})
     SagaLauncher.launch_saga(%Cizen.SagaEnder{})
     SagaLauncher.launch_saga(%Cizen.RequestResponseMediator{})
+    SagaLauncher.launch_saga(%Cizen.CrashLogger{})
     :ok
   end
 end

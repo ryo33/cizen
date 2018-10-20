@@ -334,6 +334,8 @@ defmodule Cizen.AutomatonTest do
     end
 
     test "dispatches Crashed event on crash" do
+      surpress_crash_log()
+
       saga_id = SagaID.new()
       Dispatcher.listen_event_type(Saga.Crashed)
 

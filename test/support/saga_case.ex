@@ -12,7 +12,7 @@ defmodule Cizen.SagaCase do
   using do
     quote do
       use Cizen.Effectful
-      import Cizen.SagaCase, only: [assert_handle: 1]
+      import Cizen.SagaCase, only: [assert_handle: 1, surpress_crash_log: 0]
     end
   end
 
@@ -66,5 +66,62 @@ defmodule Cizen.SagaCase do
     after
       1000 -> flunk("timeout assert_handle")
     end
+  end
+
+  defmodule CrashLogSurpressor do
+    @moduledoc false
+    use Cizen.Automaton
+
+    alias Cizen.Channel
+    alias Cizen.Effects.{Dispatch, Receive, Request}
+    alias Cizen.EventFilter
+    alias Cizen.RegisterChannel
+    alias Cizen.Saga
+
+    defstruct []
+
+    def spawn(id, %__MODULE__{}) do
+      perform(id, %Request{
+        body: %RegisterChannel{
+          channel: %Channel{
+            saga_id: id,
+            saga_module: __MODULE__
+            # destination_saga_module: CrashLogger
+          },
+          event_filter: EventFilter.new(event_type: Saga.Crashed)
+        }
+      })
+
+      :loop
+    end
+
+    def yield(id, :loop) do
+      feed_event = perform(id, %Receive{})
+
+      %Channel.FeedMessage{
+        connection_id: connection_id,
+        channel: channel,
+        message: message
+      } = feed_event.body
+
+      perform(id, %Dispatch{
+        body: %Channel.RejectMessage{
+          connection_id: connection_id,
+          channel: channel,
+          message: message
+        }
+      })
+
+      :loop
+    end
+  end
+
+  def surpress_crash_log do
+    use Cizen.Effectful
+    alias Cizen.Effects.Start
+
+    handle(fn id ->
+      perform(id, %Start{saga: %CrashLogSurpressor{}})
+    end)
   end
 end
