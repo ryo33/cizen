@@ -192,5 +192,17 @@ defmodule Cizen.EventFilterTest do
         )
       end
     end
+
+    test "compile error for unknown event type" do
+      assert_raise ArgumentError, fn ->
+        Code.compile_quoted(
+          quote do
+            require EventFilter
+
+            EventFilter.new(event_type: UnknownEvent)
+          end
+        )
+      end
+    end
   end
 end

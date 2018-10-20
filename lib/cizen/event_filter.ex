@@ -82,6 +82,18 @@ defmodule Cizen.EventFilter do
       raise ArgumentError, "invalid keys: #{inspect(params)}"
     end
 
+    expanded = Macro.expand(event_type, __CALLER__)
+
+    if not is_nil(event_type) and is_atom(expanded) do
+      case Code.ensure_compiled(expanded) do
+        {:error, _} ->
+          raise ArgumentError, "invalid keys: #{inspect(params)}"
+
+        _ ->
+          :ok
+      end
+    end
+
     quote bind_quoted: [
             event_type: event_type,
             source_saga_id: source_saga_id,
