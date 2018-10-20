@@ -1,11 +1,11 @@
-defmodule Cizen.Effects.JoinTest do
+defmodule Cizen.Effects.ChainTest do
   use Cizen.SagaCase
   alias Cizen.EffectTestHelper.{TestEffect, TestEvent}
 
   alias Cizen.Automaton
   alias Cizen.Dispatcher
   alias Cizen.Effect
-  alias Cizen.Effects.Join
+  alias Cizen.Effects.Chain
   alias Cizen.Event
   alias Cizen.EventFilter
   alias Cizen.Messenger
@@ -14,11 +14,11 @@ defmodule Cizen.Effects.JoinTest do
 
   alias Cizen.StartSaga
 
-  describe "Join" do
+  describe "Chain" do
     test "resolves immediately with no effects" do
       id = SagaID.new()
 
-      effect = %Join{
+      effect = %Chain{
         effects: []
       }
 
@@ -28,7 +28,7 @@ defmodule Cizen.Effects.JoinTest do
     test "resolves immediately if effects resolve immediately" do
       id = SagaID.new()
 
-      effect = %Join{
+      effect = %Chain{
         effects: [
           %TestEffect{value: :a, resolve_immediately: true},
           %TestEffect{value: :b, resolve_immediately: true}
@@ -41,7 +41,7 @@ defmodule Cizen.Effects.JoinTest do
     test "does not resolve immediately if one or more effects do not resolve immediately" do
       id = SagaID.new()
 
-      effect = %Join{
+      effect = %Chain{
         effects: [
           %TestEffect{value: :a, resolve_immediately: true},
           %TestEffect{value: :b}
@@ -54,7 +54,7 @@ defmodule Cizen.Effects.JoinTest do
     test "resolves when a effect resolve" do
       id = SagaID.new()
 
-      effect = %Join{
+      effect = %Chain{
         effects: [
           %TestEffect{value: :a, resolve_immediately: true},
           %TestEffect{value: :b}
@@ -69,7 +69,7 @@ defmodule Cizen.Effects.JoinTest do
     test "consumes when the event is consumed" do
       id = SagaID.new()
 
-      effect = %Join{
+      effect = %Chain{
         effects: [
           %TestEffect{value: :a}
         ]
@@ -83,7 +83,7 @@ defmodule Cizen.Effects.JoinTest do
     test "ignores when the event is not consumed" do
       id = SagaID.new()
 
-      effect = %Join{
+      effect = %Chain{
         effects: [
           %TestEffect{value: :a}
         ]
@@ -99,7 +99,7 @@ defmodule Cizen.Effects.JoinTest do
     test "resolves with an effect which consumes an event last time" do
       id = SagaID.new()
 
-      effect = %Join{
+      effect = %Chain{
         effects: [
           %TestEffect{value: :a, resolve_immediately: true},
           %TestEffect{value: :b}
@@ -116,7 +116,7 @@ defmodule Cizen.Effects.JoinTest do
     test "resolves with an effect which ignores an event last time" do
       id = SagaID.new()
 
-      effect = %Join{
+      effect = %Chain{
         effects: [
           %TestEffect{value: :a, resolve_immediately: true},
           %TestEffect{value: :b}
@@ -133,7 +133,7 @@ defmodule Cizen.Effects.JoinTest do
     test "consumes if there are not resolved effects" do
       id = SagaID.new()
 
-      effect = %Join{
+      effect = %Chain{
         effects: [
           %TestEffect{value: :a},
           %TestEffect{value: :b}
@@ -148,7 +148,7 @@ defmodule Cizen.Effects.JoinTest do
     test "resolves after consumes" do
       id = SagaID.new()
 
-      effect = %Join{
+      effect = %Chain{
         effects: [
           %TestEffect{value: :a},
           %TestEffect{value: :b, resolve_immediately: true},
@@ -167,7 +167,7 @@ defmodule Cizen.Effects.JoinTest do
     test "works with aliases" do
       id = SagaID.new()
 
-      effect = %Join{
+      effect = %Chain{
         effects: [
           %TestEffect{value: :a, alias_of: %TestEffect{value: :b}}
         ]
@@ -181,7 +181,7 @@ defmodule Cizen.Effects.JoinTest do
     test "resolves if all following effects resolve immediately" do
       id = SagaID.new()
 
-      effect = %Join{
+      effect = %Chain{
         effects: [
           %TestEffect{value: :a},
           %TestEffect{value: :b, resolve_immediately: true},
@@ -197,7 +197,7 @@ defmodule Cizen.Effects.JoinTest do
     test "pass the results to the functions" do
       id = SagaID.new()
 
-      effect = %Join{
+      effect = %Chain{
         effects: [
           fn ->
             %TestEffect{value: :a}
@@ -233,7 +233,7 @@ defmodule Cizen.Effects.JoinTest do
 
         send(
           pid,
-          perform(id, %Join{
+          perform(id, %Chain{
             effects: [
               %TestEffect{value: :a, resolve_immediately: true},
               fn :a -> %TestEffect{value: :b} end,

@@ -1,12 +1,20 @@
-defmodule Cizen.Effects.Join do
+defmodule Cizen.Effects.Chain do
   @moduledoc """
-  An effect to join multiple effects.
+  An effect to chain multiple effects.
 
   Returns the list of resolved values.
+  If an element of the effects list is a function,
+  it called with results of resolved effects,
+  and its result is treated as the next effect.
 
   ## Example
-        [result1, result2] = perform id, %Join{
-          effects: [effect1, effect2]
+        [result1, result2, result3, result4] = perform id, %Chain{
+          effects: [
+            effect1,
+            effect2,
+            fn result1, result2 -> effect3 end,
+            effect4
+          ]
         }
   """
 

@@ -86,7 +86,7 @@ defmodule Cizen.SagaCase do
           channel: %Channel{
             saga_id: id,
             saga_module: __MODULE__
-            # destination_saga_module: CrashLogger
+            # destination_saga_module: Cizen.CrashLogger
           },
           event_filter: EventFilter.new(event_type: Saga.Crashed)
         }

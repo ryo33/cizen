@@ -13,7 +13,7 @@ defmodule Cizen.Effects.Request do
   defstruct [:body]
 
   alias Cizen.Effect
-  alias Cizen.Effects.{Dispatch, Join, Map, Receive}
+  alias Cizen.Effects.{Chain, Dispatch, Map, Receive}
   alias Cizen.Event
   alias Cizen.EventFilter
   alias Cizen.Request
@@ -25,7 +25,7 @@ defmodule Cizen.Effects.Request do
     require EventFilter
 
     effect = %Map{
-      effect: %Join{
+      effect: %Chain{
         effects: [
           %Dispatch{body: %Request{requestor_saga_id: id, body: body}},
           fn request_event ->
