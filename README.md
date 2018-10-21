@@ -3,8 +3,8 @@
 Build highly concurrent, monitorable, and extensible applications
 with a collection of automata.
 
-"Cizen" means "Nature" in Japanese.  
-/'sizen/ 自然
+"Cizen" means "Nature" in Japanese.<br />
+/&#712;sizen/ 自然
 
 ## Installation
 

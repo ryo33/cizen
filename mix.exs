@@ -10,6 +10,12 @@ defmodule Cizen.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      name: "Cizen",
+      docs: docs(),
+      source_url: "https://gitlab.com/cizen/cizen",
+      description: """
+      Build highly concurrent, monitorable, and extensible applications with a collection of automata.
+      """,
       aliases: aliases(),
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
@@ -17,11 +23,7 @@ defmodule Cizen.MixProject do
         "coveralls.detail": :test,
         "coveralls.post": :test,
         "coveralls.html": :test
-      ],
-      source_url: "https://gitlab.com/cizen/cizen",
-      description: """
-      Build highly concurrent, monitorable, and extensible applications with a collection of automata.
-      """
+      ]
     ]
   end
 
@@ -32,6 +34,16 @@ defmodule Cizen.MixProject do
       mod: {Cizen.Application, []}
     ]
   end
+
+  defp package do
+    [
+      links: %{gitlab: "https://gitlab.com/cizen/cizen"},
+      licenses: ["MIT"]
+    ]
+  end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   defp deps do
     [
@@ -44,10 +56,165 @@ defmodule Cizen.MixProject do
     ]
   end
 
-  defp package do
+  defp docs do
     [
-      links: %{gitlab: "https://gitlab.com/cizen/cizen"},
-      licenses: ["MIT"]
+      main: "readme",
+      extra_section: "GUIDES",
+      groups_for_modules: groups_for_modules(),
+      extras: extras(),
+      groups_for_extras: groups_for_extras()
+    ]
+  end
+
+  defp extras do
+    [
+      {"README.md", [filename: "readme", title: "Read Me"]},
+      "guides/getting_started.md",
+
+      "guides/basic_concepts/saga.md",
+      "guides/basic_concepts/event.md",
+      "guides/basic_concepts/automaton.md",
+      "guides/basic_concepts/effect.md",
+      "guides/basic_concepts/requestive_event.md",
+
+      "guides/advanced_concepts/channel.md",
+    ]
+  end
+
+  defp groups_for_extras do
+    [
+      "Guides": ~r/guides\/[^\/]+\.md/,
+      "Basic Concepts": ~r/guides\/basic_concepts\/.?/,
+      "Advanced Concepts": ~r/guides\/advanced_concepts\/.?/,
+    ]
+  end
+
+  defp groups_for_modules do
+    [
+      "Automaton": [
+        Cizen.Automaton,
+        Cizen.Effectful,
+      ],
+
+      "Automaton Internal": [
+        Cizen.Automaton.PerformEffect,
+        Cizen.Effect,
+        Cizen.EffectHandler,
+      ],
+
+      "Channel": [
+        Cizen.Channel,
+        Cizen.Channel.EmitMessage,
+        Cizen.Channel.FeedMessage,
+        Cizen.Channel.RejectMessage,
+        Cizen.RegisterChannel,
+        Cizen.RegisterChannel.Registered,
+      ],
+
+      "Channel Internal": [
+        Cizen.Channel.EmitMessage.ConnectionIDFilter,
+        Cizen.Channel.RejectMessage.ConnectionIDFilter,
+        Cizen.Connection,
+        Cizen.RegisterChannel.Registered.EventIdFilter,
+      ],
+
+      "Dispatchers": [
+        Cizen.Dispatcher,
+        Cizen.EventFilterDispatcher,
+        Cizen.EventFilterDispatcher.Subscribe,
+        Cizen.EventFilterDispatcher.Subscribe.Subscribed,
+        Cizen.EventFilterDispatcher.Subscription,
+      ],
+
+      "Dispatcher Internal": [
+        Cizen.EventFilterDispatcher.EventPusher,
+        Cizen.EventFilterDispatcher.PushEvent,
+      ],
+
+      "Effects": [
+        Cizen.Effects,
+        Cizen.Effects.All,
+        Cizen.Effects.Dispatch,
+        Cizen.Effects.End,
+        Cizen.Effects.Chain,
+        Cizen.Effects.Map,
+        Cizen.Effects.Monitor,
+        Cizen.Effects.Race,
+        Cizen.Effects.Receive,
+        Cizen.Effects.Request,
+        Cizen.Effects.Start,
+        Cizen.Effects.Subscribe,
+      ],
+
+      "Effects Internal": [
+        Cizen.Effects.HybridMap,
+      ],
+
+      "Effectful": [
+        Cizen.Effectful,
+      ],
+
+      "Event": [
+        Cizen.Event,
+        Cizen.EventBodyFilter,
+        Cizen.EventBodyFilterSet,
+        Cizen.EventFilter,
+        Cizen.EventID,
+      ],
+
+      "Messaging": [
+        Cizen.Message,
+        Cizen.ReceiveMessage,
+        Cizen.SubscribeMessage,
+        Cizen.SubscribeMessage.Subscribed,
+        Cizen.SubscribeMessage.Subscribed.EventIdFilter,
+      ],
+
+      "Messaging Internal": [
+        Cizen.Messenger,
+        Cizen.SendMessage,
+        Cizen.Transmitter,
+      ],
+
+      "Requesting": [
+        Cizen.Request,
+        Cizen.Request.Response,
+      ],
+
+      "Requesting Internal": [
+        Cizen.Request.Response.RequestEventIDFilter,
+        Cizen.RequestResponseMediator,
+        Cizen.RequestResponseMediator.Worker,
+      ],
+
+      "Saga": [
+        Cizen.CrashLogger,
+        Cizen.EndSaga,
+        Cizen.MonitorSaga,
+        Cizen.MonitorSaga.Down,
+        Cizen.Saga,
+        Cizen.Saga.Crashed,
+        Cizen.Saga.Finish,
+        Cizen.Saga.Finished,
+        Cizen.Saga.Launched,
+        Cizen.Saga.Launched.SagaIDFilter,
+        Cizen.Saga.Unlaunched,
+        Cizen.SagaID,
+        Cizen.SagaMonitor,
+        Cizen.SagaRegistry,
+        Cizen.StartSaga,
+        Cizen.StartSaga.SagaFilter,
+        Cizen.StartSaga.SagaModuleFilter,
+      ],
+
+      "Saga Internal": [
+        Cizen.MonitorSaga.Down.TargetSagaIDFilter,
+        Cizen.SagaEnder,
+        Cizen.SagaLauncher,
+        Cizen.SagaLauncher.LaunchSaga,
+        Cizen.SagaLauncher.UnlaunchSaga,
+        Cizen.SagaStarter,
+      ]
     ]
   end
 
@@ -62,7 +229,4 @@ defmodule Cizen.MixProject do
       ]
     ]
   end
-
-  defp elixirc_paths(:test), do: ["lib", "test/support"]
-  defp elixirc_paths(_), do: ["lib"]
 end

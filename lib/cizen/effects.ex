@@ -5,7 +5,13 @@ defmodule Cizen.Effects do
   `use Cizen.Effects` aliases all effects.
   It alse aliases Map effect, but `Elixir.Map`'s APIs are still available.
 
-  ## Alias all functions
+  ## Alias all effects
+
+      use Cizen.Effects
+
+  ## Alias only specified effects
+
+      use Cizen.Effects, only: [Subscribe, Receive, Dispatch]
   """
 
   @effects [All, Chain, Dispatch, End, Map, Monitor, Race, Receive, Request, Start, Subscribe]
