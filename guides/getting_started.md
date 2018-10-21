@@ -2,7 +2,7 @@
 
 Cizen is a library to build applications with automata and events.
 
-For our getting started tutorial, we are going to create an automaton works like a stask.
+For our getting started tutorial, we are going to create an automaton works like a stack.
 The automaton will works like the following implementation with `GenServer`:
 
     defmodule Stack do
