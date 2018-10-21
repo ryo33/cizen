@@ -5,7 +5,6 @@ defmodule Cizen.Effects.MapTest do
   alias Cizen.Automaton
   alias Cizen.Dispatcher
   alias Cizen.Effect
-  alias Cizen.Effects.Map
   alias Cizen.Event
   alias Cizen.EventFilter
   alias Cizen.Messenger
@@ -13,6 +12,8 @@ defmodule Cizen.Effects.MapTest do
   alias Cizen.SagaID
 
   alias Cizen.StartSaga
+
+  use Cizen.Effects, only: [Map]
 
   describe "Map" do
     test "transform the result when the effect immediately resolves" do

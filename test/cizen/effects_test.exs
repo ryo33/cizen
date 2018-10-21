@@ -7,27 +7,46 @@ defmodule Cizen.EffectsTest do
     assert Code.ensure_loaded?(Chain)
     assert Code.ensure_loaded?(Dispatch)
     assert Code.ensure_loaded?(End)
-    assert {:module, Cizen.Effects.Map} == Code.ensure_loaded(Map)
     assert Code.ensure_loaded?(Monitor)
     assert Code.ensure_loaded?(Race)
     assert Code.ensure_loaded?(Receive)
     assert Code.ensure_loaded?(Request)
     assert Code.ensure_loaded?(Start)
     assert Code.ensure_loaded?(Subscribe)
+
+    Code.compile_quoted(
+      quote do
+        %Map{effect: %Receive{}, transform: fn x -> x end}
+      end
+    )
   end
 
   test "aliases only specified effects" do
-    use Cizen.Effects, only: [Chain, Dispatch, End]
+    use Cizen.Effects, only: [Chain, Dispatch, End, Receive]
     refute Code.ensure_loaded?(All)
     assert Code.ensure_loaded?(Chain)
     assert Code.ensure_loaded?(Dispatch)
     assert Code.ensure_loaded?(End)
-    assert {:module, Elixir.Map} == Code.ensure_loaded(Map)
     refute Code.ensure_loaded?(Monitor)
     refute Code.ensure_loaded?(Race)
-    refute Code.ensure_loaded?(Receive)
+    assert Code.ensure_loaded?(Receive)
     refute Code.ensure_loaded?(Request)
     refute Code.ensure_loaded?(Start)
     refute Code.ensure_loaded?(Subscribe)
+
+    assert_raise CompileError, fn ->
+      Code.compile_quoted(
+        quote do
+          %Map{effect: %Receive{}, transform: fn x -> x end}
+        end
+      )
+    end
+  end
+
+  test "Elixir.Map's interfaces are available when use Cizen.Effects" do
+    use Cizen.Effects
+    %Map{effect: %Receive{}, transform: fn x -> x end}
+    assert 1 == Map.size(%{a: :a})
+    assert %{a: :a, b: :b} == Map.put(%{a: :a}, :b, :b)
   end
 end
