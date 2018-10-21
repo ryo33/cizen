@@ -1,6 +1,11 @@
 defmodule Cizen.Effects do
   @moduledoc """
   A convenience module to use effects.
+
+  `use Cizen.Effects` aliases all effects.
+  It alse aliases Map effect, but `Elixir.Map`'s APIs are still available.
+
+  ## Alias all functions
   """
 
   @effects [All, Chain, Dispatch, End, Map, Monitor, Race, Receive, Request, Start, Subscribe]
@@ -24,6 +29,12 @@ defmodule Cizen.Effects do
   end
 
   defmodule HybridMap do
+    @moduledoc """
+    Hybrid module of `Elixir.Map` and `Cizen.Effects.Map`
+
+    This module is used with `Cizen.Effects.__using__/1` in order to avoid
+    conflict between `Elixir.Map` and `Cizen.Effects.Map`
+    """
     defstruct [:effect, :transform]
     @behaviour Cizen.Effect
 
@@ -41,11 +52,13 @@ defmodule Cizen.Effects do
     for {name, arity} <- Elixir.Map.__info__(:functions) do
       unless {name, arity} in @deprecated_functions do
         args =
-          Stream.cycle([:ok])
+          [:ok]
+          |> Stream.cycle()
           |> Stream.transform(0, fn _, acc ->
             {[{String.to_atom(<<?a + acc>>), [], nil}], acc + 1}
           end)
           |> Enum.take(arity)
+
         defdelegate unquote({name, [], args}), to: Elixir.Map
       end
     end
