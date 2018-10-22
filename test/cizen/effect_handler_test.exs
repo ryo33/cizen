@@ -25,7 +25,7 @@ defmodule Cizen.EventHandlerTest do
   end
 
   defp do_feed(state, body) do
-    EffectHandler.feed_event(state, Event.new(body))
+    EffectHandler.feed_event(state, Event.new(nil, body))
   end
 
   describe "feed_event/3" do

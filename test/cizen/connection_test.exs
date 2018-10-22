@@ -26,13 +26,13 @@ defmodule Cizen.ConnectionTest do
       Dispatcher.listen_event_body(%Saga.Finished{id: saga_id})
 
       message = %Message{
-        event: Event.new(%TestEvent{}),
+        event: Event.new(nil, %TestEvent{}),
         destination_saga_id: SagaID.new(),
         destination_saga_module: TestSaga
       }
 
       Dispatcher.dispatch(
-        Event.new(%SagaLauncher.LaunchSaga{
+        Event.new(nil, %SagaLauncher.LaunchSaga{
           id: saga_id,
           saga: %Connection{
             message: message,
@@ -61,7 +61,7 @@ defmodule Cizen.ConnectionTest do
     Dispatcher.listen_event_body(%Saga.Finished{id: saga_id})
 
     message = %Message{
-      event: Event.new(%TestEvent{}),
+      event: Event.new(nil, %TestEvent{}),
       destination_saga_id: SagaID.new(),
       destination_saga_module: TestSaga
     }
@@ -95,7 +95,7 @@ defmodule Cizen.ConnectionTest do
     channels = [channel_a, channel_b, channel_c, channel_d]
 
     Dispatcher.dispatch(
-      Event.new(%SagaLauncher.LaunchSaga{
+      Event.new(nil, %SagaLauncher.LaunchSaga{
         id: saga_id,
         saga: %Connection{
           message: message,
@@ -164,7 +164,7 @@ defmodule Cizen.ConnectionTest do
       flush(context)
 
       event =
-        Event.new(%EmitMessage{
+        Event.new(nil, %EmitMessage{
           connection_id: connection_id,
           channel: channel_a,
           message: message
@@ -207,7 +207,7 @@ defmodule Cizen.ConnectionTest do
       flush(context)
 
       event =
-        Event.new(%EmitMessage{
+        Event.new(nil, %EmitMessage{
           connection_id: connection_id,
           channel: channel_c,
           message: message
@@ -242,7 +242,7 @@ defmodule Cizen.ConnectionTest do
       flush(context)
 
       event =
-        Event.new(%EmitMessage{
+        Event.new(nil, %EmitMessage{
           connection_id: connection_id,
           channel: channel_c,
           message: message
@@ -252,7 +252,7 @@ defmodule Cizen.ConnectionTest do
       assert_receive ^event
 
       event =
-        Event.new(%EmitMessage{
+        Event.new(nil, %EmitMessage{
           connection_id: connection_id,
           channel: channel_d,
           message: message
@@ -283,7 +283,7 @@ defmodule Cizen.ConnectionTest do
       flush(context)
 
       event =
-        Event.new(%EmitMessage{
+        Event.new(nil, %EmitMessage{
           connection_id: connection_id,
           channel: channel_c,
           message: message
@@ -318,7 +318,7 @@ defmodule Cizen.ConnectionTest do
       flush(context)
 
       event =
-        Event.new(%EmitMessage{
+        Event.new(nil, %EmitMessage{
           connection_id: connection_id,
           channel: channel_a,
           message: message
@@ -330,7 +330,7 @@ defmodule Cizen.ConnectionTest do
       assert_receive %Event{body: %FeedMessage{channel: ^channel_d}}
 
       Dispatcher.dispatch(
-        Event.new(%RejectMessage{
+        Event.new(nil, %RejectMessage{
           connection_id: connection_id,
           channel: channel_b,
           message: message
@@ -338,7 +338,7 @@ defmodule Cizen.ConnectionTest do
       )
 
       Dispatcher.dispatch(
-        Event.new(%RejectMessage{
+        Event.new(nil, %RejectMessage{
           connection_id: connection_id,
           channel: channel_c,
           message: message
@@ -346,7 +346,7 @@ defmodule Cizen.ConnectionTest do
       )
 
       Dispatcher.dispatch(
-        Event.new(%RejectMessage{
+        Event.new(nil, %RejectMessage{
           connection_id: connection_id,
           channel: channel_d,
           message: message
@@ -377,7 +377,7 @@ defmodule Cizen.ConnectionTest do
       flush(context)
 
       event =
-        Event.new(%EmitMessage{
+        Event.new(nil, %EmitMessage{
           connection_id: connection_id,
           channel: channel_a,
           message: message
@@ -389,7 +389,7 @@ defmodule Cizen.ConnectionTest do
       assert_receive %Event{body: %FeedMessage{channel: ^channel_d}}
 
       Dispatcher.dispatch(
-        Event.new(%RejectMessage{
+        Event.new(nil, %RejectMessage{
           connection_id: connection_id,
           channel: channel_b,
           message: message
@@ -397,7 +397,7 @@ defmodule Cizen.ConnectionTest do
       )
 
       Dispatcher.dispatch(
-        Event.new(%RejectMessage{
+        Event.new(nil, %RejectMessage{
           connection_id: connection_id,
           channel: channel_c,
           message: message
@@ -421,7 +421,7 @@ defmodule Cizen.ConnectionTest do
       flush(context)
 
       Dispatcher.dispatch(
-        Event.new(%Saga.Finish{
+        Event.new(nil, %Saga.Finish{
           id: channels.a.saga_id
         })
       )
@@ -438,7 +438,7 @@ defmodule Cizen.ConnectionTest do
 
   test "finishes when one or more channels are already finished" do
     message = %Message{
-      event: Event.new(%TestEvent{}),
+      event: Event.new(nil, %TestEvent{}),
       destination_saga_id: SagaID.new(),
       destination_saga_module: TestSaga
     }
@@ -453,7 +453,7 @@ defmodule Cizen.ConnectionTest do
     Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
 
     Dispatcher.dispatch(
-      Event.new(%SagaLauncher.LaunchSaga{
+      Event.new(nil, %SagaLauncher.LaunchSaga{
         id: saga_id,
         saga: %Connection{
           message: message,

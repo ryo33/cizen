@@ -28,27 +28,25 @@ defmodule Cizen.EventFilterTest do
   describe "test/2" do
     test "matches when all parameters are matched" do
       saga_id = SagaID.new()
-      saga_module = TestSaga
 
       assert EventFilter.test(
                %EventFilter{
                  event_type: TestEvent,
                  source_saga_id: saga_id,
-                 source_saga_module: saga_module,
                  event_body_filter_set:
                    EventBodyFilterSet.new([
                      %TestEventBodyFilterA{value: :a},
                      %TestEventBodyFilterB{value: :b}
                    ])
                },
-               Event.new(%TestEvent{value_a: :a, value_b: :b}, saga_id, saga_module)
+               Event.new(saga_id, %TestEvent{value_a: :a, value_b: :b})
              )
     end
 
     test "matches when all parameters are nil" do
       assert EventFilter.test(
                %EventFilter{},
-               Event.new(%TestEvent{})
+               Event.new(nil, %TestEvent{})
              )
     end
 
@@ -57,36 +55,24 @@ defmodule Cizen.EventFilterTest do
 
       assert EventFilter.test(
                %EventFilter{source_saga_id: saga_id},
-               Event.new(%TestEvent{}, saga_id)
+               Event.new(saga_id, %TestEvent{})
              )
 
       refute EventFilter.test(
                %EventFilter{source_saga_id: saga_id},
-               Event.new(%TestEvent{}, SagaID.new())
-             )
-    end
-
-    test "checks source saga module" do
-      assert EventFilter.test(
-               %EventFilter{source_saga_module: TestSaga},
-               Event.new(%TestEvent{}, SagaID.new(), TestSaga)
-             )
-
-      refute EventFilter.test(
-               %EventFilter{source_saga_module: TestSaga},
-               Event.new(%TestEvent{}, SagaID.new(), UnknownSaga)
+               Event.new(SagaID.new(), %TestEvent{})
              )
     end
 
     test "checks event type" do
       assert EventFilter.test(
                %EventFilter{event_type: TestEvent},
-               Event.new(%TestEvent{})
+               Event.new(nil, %TestEvent{})
              )
 
       refute EventFilter.test(
                %EventFilter{event_type: UnknownEvent},
-               Event.new(%TestEvent{})
+               Event.new(nil, %TestEvent{})
              )
     end
 
@@ -100,7 +86,7 @@ defmodule Cizen.EventFilterTest do
                      %TestEventBodyFilterB{value: :b}
                    ])
                },
-               Event.new(%TestEvent{value_a: :a, value_b: :b})
+               Event.new(nil, %TestEvent{value_a: :a, value_b: :b})
              )
 
       refute EventFilter.test(
@@ -112,7 +98,7 @@ defmodule Cizen.EventFilterTest do
                      %TestEventBodyFilterB{value: :b}
                    ])
                },
-               Event.new(%TestEvent{value_a: :c, value_b: :c})
+               Event.new(nil, %TestEvent{value_a: :c, value_b: :c})
              )
     end
   end
@@ -121,14 +107,12 @@ defmodule Cizen.EventFilterTest do
     test "works with all parameters" do
       event_type = TestEvent
       saga_id = SagaID.new()
-      saga_module = TestSaga
       require EventFilter
 
       actual =
         EventFilter.new(
           event_type: event_type,
           source_saga_id: saga_id,
-          source_saga_module: saga_module,
           event_body_filters: [
             %TestEventBodyFilterA{value: :a},
             %TestEventBodyFilterB{value: :b}
@@ -138,7 +122,6 @@ defmodule Cizen.EventFilterTest do
       expected = %EventFilter{
         event_type: event_type,
         source_saga_id: saga_id,
-        source_saga_module: saga_module,
         event_body_filter_set:
           EventBodyFilterSet.new([
             %TestEventBodyFilterA{value: :a},
@@ -157,7 +140,6 @@ defmodule Cizen.EventFilterTest do
       expected = %EventFilter{
         event_type: event_type,
         source_saga_id: nil,
-        source_saga_module: nil,
         event_body_filter_set: EventBodyFilterSet.new([])
       }
 
@@ -171,7 +153,6 @@ defmodule Cizen.EventFilterTest do
       expected = %EventFilter{
         event_type: nil,
         source_saga_id: nil,
-        source_saga_module: nil,
         event_body_filter_set: EventBodyFilterSet.new([])
       }
 

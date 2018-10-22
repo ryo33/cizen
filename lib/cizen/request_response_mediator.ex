@@ -28,7 +28,7 @@ defmodule Cizen.RequestResponseMediator do
 
     @impl true
     def init(id, %__MODULE__{request: request}) do
-      event = Event.new(request.body.body)
+      event = Event.new(id, request.body.body)
 
       module = Event.type(event)
 
@@ -47,7 +47,7 @@ defmodule Cizen.RequestResponseMediator do
       requestor_saga_id = request.body.requestor_saga_id
 
       Dispatcher.dispatch(
-        Event.new(%MonitorSaga{
+        Event.new(id, %MonitorSaga{
           monitor_saga_id: id,
           target_saga_id: requestor_saga_id
         })
@@ -62,23 +62,22 @@ defmodule Cizen.RequestResponseMediator do
 
       Dispatcher.dispatch(
         Event.new(
+          id,
           %Request.Response{
             request_event_id: request_event_id,
             requestor_saga_id: requestor_saga_id,
             event: event
-          },
-          id,
-          __MODULE__
+          }
         )
       )
 
-      Dispatcher.dispatch(Event.new(%Saga.Finish{id: id}, id, __MODULE__))
+      Dispatcher.dispatch(Event.new(id, %Saga.Finish{id: id}))
       state
     end
 
     @impl true
     def handle_event(id, %Event{body: %MonitorSaga.Down{}}, state) do
-      Dispatcher.dispatch(Event.new(%Saga.Finish{id: id}, id, __MODULE__))
+      Dispatcher.dispatch(Event.new(id, %Saga.Finish{id: id}))
       state
     end
   end
@@ -96,12 +95,11 @@ defmodule Cizen.RequestResponseMediator do
   def handle_event(id, %Event{body: %Request{}} = request, state) do
     Dispatcher.dispatch(
       Event.new(
+        id,
         %SagaLauncher.LaunchSaga{
           id: SagaID.new(),
           saga: %Worker{request: request}
-        },
-        id,
-        __MODULE__
+        }
       )
     )
 

@@ -40,7 +40,7 @@ defmodule Cizen.RequestResponseMediatorTest do
       requestor_id = TestHelper.launch_test_saga()
 
       Dispatcher.dispatch(
-        Event.new(%Request{
+        Event.new(nil, %Request{
           requestor_saga_id: requestor_id,
           body: %TestRequest{}
         })
@@ -64,12 +64,12 @@ defmodule Cizen.RequestResponseMediatorTest do
 
         receive do
           %Event{body: %TestRequest{}} ->
-            Dispatcher.dispatch(Event.new(%TestRequest.TestResponseA{value: :a}))
+            Dispatcher.dispatch(Event.new(nil, %TestRequest.TestResponseA{value: :a}))
         end
       end)
 
       request =
-        Event.new(%Request{
+        Event.new(nil, %Request{
           requestor_saga_id: requestor_id,
           body: %TestRequest{}
         })
@@ -100,12 +100,12 @@ defmodule Cizen.RequestResponseMediatorTest do
 
         receive do
           %Event{body: %TestRequest{}} ->
-            Dispatcher.dispatch(Event.new(%TestRequest.TestResponseA{value: :a}))
+            Dispatcher.dispatch(Event.new(nil, %TestRequest.TestResponseA{value: :a}))
         end
       end)
 
       request =
-        Event.new(%Request{
+        Event.new(nil, %Request{
           requestor_saga_id: requestor_id,
           body: %TestRequest{}
         })
@@ -124,7 +124,7 @@ defmodule Cizen.RequestResponseMediatorTest do
       requestor_id = TestHelper.launch_test_saga()
 
       request =
-        Event.new(%Request{
+        Event.new(nil, %Request{
           requestor_saga_id: requestor_id,
           body: %TestRequest{}
         })

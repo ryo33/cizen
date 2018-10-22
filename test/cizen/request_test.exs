@@ -21,12 +21,12 @@ defmodule Cizen.RequestTest do
   describe "use Request" do
     test "works" do
       # Defines response_event_filters/1
-      event = Event.new(%Request{value: :somevalue})
+      event = Event.new(nil, %Request{value: :somevalue})
       [event_filter_b, event_filter_a] = Request.response_event_filters(event)
       # Matches
       assert EventFilter.test(
                event_filter_a,
-               Event.new(%Request.ResponseA{
+               Event.new(nil, %Request.ResponseA{
                  request_id: event.id,
                  value: :somevalue
                })
@@ -36,7 +36,7 @@ defmodule Cizen.RequestTest do
       # Does not matches
       refute EventFilter.test(
                event_filter_a,
-               Event.new(%Request.ResponseA{
+               Event.new(nil, %Request.ResponseA{
                  request_id: EventID.new(),
                  value: :somevalue
                })
@@ -45,7 +45,7 @@ defmodule Cizen.RequestTest do
       # Matches
       assert EventFilter.test(
                event_filter_b,
-               Event.new(%Request.ResponseB{
+               Event.new(nil, %Request.ResponseB{
                  request_id: event.id,
                  value: :somevalue
                })
@@ -55,7 +55,7 @@ defmodule Cizen.RequestTest do
       # Does not matches
       refute EventFilter.test(
                event_filter_b,
-               Event.new(%Request.ResponseB{
+               Event.new(nil, %Request.ResponseB{
                  request_id: EventID.new(),
                  value: :somevalue
                })

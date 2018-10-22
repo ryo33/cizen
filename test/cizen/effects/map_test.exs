@@ -47,7 +47,7 @@ defmodule Cizen.Effects.MapTest do
       }
 
       {effect, state} = Effect.init(id, effect)
-      event = Event.new(%TestEvent{value: :a})
+      event = Event.new(nil, %TestEvent{value: :a})
       assert {:resolve, :transformed_a} == Effect.handle_event(id, event, effect, state)
     end
 
@@ -60,7 +60,7 @@ defmodule Cizen.Effects.MapTest do
       }
 
       {effect, state} = Effect.init(id, effect)
-      event = Event.new(%TestEvent{value: :b})
+      event = Event.new(nil, %TestEvent{value: :b})
       assert {:consume, {effect.effect, :a}} == Effect.handle_event(id, event, effect, state)
     end
 
@@ -73,7 +73,7 @@ defmodule Cizen.Effects.MapTest do
       }
 
       {effect, state} = Effect.init(id, effect)
-      event = Event.new(%TestEvent{value: :ignored})
+      event = Event.new(nil, %TestEvent{value: :ignored})
       assert {effect.effect, :a} == Effect.handle_event(id, event, effect, state)
     end
 
@@ -90,7 +90,7 @@ defmodule Cizen.Effects.MapTest do
 
       {effect, state} = Effect.init(id, effect)
       assert {effect.effect.alias_of, :b} == state
-      event = Event.new(%TestEvent{value: :b})
+      event = Event.new(nil, %TestEvent{value: :b})
       assert {:resolve, :transformed_b} == Effect.handle_event(id, event, effect, state)
     end
 
@@ -132,7 +132,7 @@ defmodule Cizen.Effects.MapTest do
       Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
 
       Dispatcher.dispatch(
-        Event.new(%StartSaga{
+        Event.new(nil, %StartSaga{
           id: saga_id,
           saga: %TestAutomaton{pid: self()}
         })
@@ -143,19 +143,19 @@ defmodule Cizen.Effects.MapTest do
       assert_receive :transformed_a
 
       Dispatcher.dispatch(
-        Event.new(%TestEvent{
+        Event.new(nil, %TestEvent{
           value: :c
         })
       )
 
       Dispatcher.dispatch(
-        Event.new(%TestEvent{
+        Event.new(nil, %TestEvent{
           value: :ignored
         })
       )
 
       Dispatcher.dispatch(
-        Event.new(%TestEvent{
+        Event.new(nil, %TestEvent{
           value: :b
         })
       )

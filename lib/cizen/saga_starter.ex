@@ -36,7 +36,7 @@ defmodule Cizen.SagaStarter do
         },
         state
       ) do
-    Dispatcher.dispatch(Event.new(%LaunchSaga{id: saga_id, saga: saga}, id, __MODULE__))
+    Dispatcher.dispatch(Event.new(id, %LaunchSaga{id: saga_id, saga: saga}))
     state
   end
 end

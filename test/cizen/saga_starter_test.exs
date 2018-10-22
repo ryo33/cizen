@@ -16,7 +16,7 @@ defmodule Cizen.SagaStarterTest do
       saga_id = SagaID.new()
 
       Dispatcher.dispatch(
-        Event.new(%StartSaga{
+        Event.new(nil, %StartSaga{
           id: saga_id,
           saga: %TestSaga{}
         })

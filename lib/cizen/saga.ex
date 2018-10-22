@@ -73,8 +73,7 @@ defmodule Cizen.Saga do
   end
 
   def launch(id, saga) do
-    {:ok, _pid} =
-      GenServer.start(__MODULE__, {id, saga})
+    {:ok, _pid} = GenServer.start(__MODULE__, {id, saga})
   end
 
   def unlaunch(id) do
@@ -82,7 +81,7 @@ defmodule Cizen.Saga do
   catch
     :exit, _ -> :ok
   after
-    Dispatcher.dispatch(Event.new(%Unlaunched{id: id}))
+    Dispatcher.dispatch(Event.new(nil, %Unlaunched{id: id}))
   end
 
   def exit(id, reason, trace) do
@@ -101,7 +100,7 @@ defmodule Cizen.Saga do
           state
 
         state ->
-          Dispatcher.dispatch(Event.new(%Launched{id: id}))
+          Dispatcher.dispatch(Event.new(id, %Launched{id: id}))
           state
       end
 
@@ -127,12 +126,12 @@ defmodule Cizen.Saga do
   end
 
   def terminate({:shutdown, %Event{}}, {id, _module, _state}) do
-    Dispatcher.dispatch(Event.new(%Finished{id: id}))
+    Dispatcher.dispatch(Event.new(id, %Finished{id: id}))
     :shutdown
   end
 
   def terminate({:shutdown, {reason, trace}}, {id, _module, _state}) do
-    Dispatcher.dispatch(Event.new(%Crashed{id: id, reason: reason, stacktrace: trace}))
+    Dispatcher.dispatch(Event.new(id, %Crashed{id: id, reason: reason, stacktrace: trace}))
     :shutdown
   end
 end

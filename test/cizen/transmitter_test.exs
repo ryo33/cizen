@@ -21,7 +21,7 @@ defmodule Cizen.TransmitterTest do
     Dispatcher.listen_event_type(Saga.Launched)
 
     message = %Message{
-      event: Event.new(%TestEvent{}),
+      event: Event.new(nil, %TestEvent{}),
       destination_saga_id: SagaID.new(),
       destination_saga_module: TestSaga
     }
@@ -31,7 +31,7 @@ defmodule Cizen.TransmitterTest do
     ]
 
     Dispatcher.dispatch(
-      Event.new(%SendMessage{
+      Event.new(nil, %SendMessage{
         message: message,
         channels: channels
       })
@@ -56,7 +56,7 @@ defmodule Cizen.TransmitterTest do
     Dispatcher.listen_event_type(ReceiveMessage)
 
     message = %Message{
-      event: Event.new(%TestEvent{}),
+      event: Event.new(nil, %TestEvent{}),
       destination_saga_id: SagaID.new(),
       destination_saga_module: TestSaga
     }
@@ -64,7 +64,7 @@ defmodule Cizen.TransmitterTest do
     channels = []
 
     Dispatcher.dispatch(
-      Event.new(%SendMessage{
+      Event.new(nil, %SendMessage{
         message: message,
         channels: channels
       })
@@ -93,13 +93,13 @@ defmodule Cizen.TransmitterTest do
       TestHelper.launch_test_saga(handle_event: fn _id, event, _state -> send(pid, event) end)
 
     message = %Message{
-      event: Event.new(%TestEvent{}),
+      event: Event.new(nil, %TestEvent{}),
       destination_saga_id: saga_id,
       destination_saga_module: TestSaga
     }
 
     event =
-      Event.new(%ReceiveMessage{
+      Event.new(nil, %ReceiveMessage{
         message: message
       })
 

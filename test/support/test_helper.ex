@@ -25,7 +25,7 @@ defmodule Cizen.TestHelper do
     saga_id = SagaID.new()
 
     Dispatcher.dispatch(
-      Event.new(%SagaLauncher.LaunchSaga{
+      Event.new(nil, %SagaLauncher.LaunchSaga{
         id: saga_id,
         saga: %TestSaga{
           launch: fn id, state ->

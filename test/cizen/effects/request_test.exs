@@ -45,7 +45,7 @@ defmodule Cizen.Effects.RequestTest do
       response = %TestRequest.TestResponse{value: 2}
 
       event =
-        Event.new(%Request.Response{
+        Event.new(nil, %Request.Response{
           requestor_saga_id: saga_id,
           request_event_id: EventID.new(),
           event: response
@@ -81,12 +81,12 @@ defmodule Cizen.Effects.RequestTest do
 
         receive do
           %Event{body: %TestRequest{value: value}} ->
-            Dispatcher.dispatch(Event.new(%TestRequest.TestResponse{value: value + 1}))
+            Dispatcher.dispatch(Event.new(nil, %TestRequest.TestResponse{value: value + 1}))
         end
       end)
 
       Dispatcher.dispatch(
-        Event.new(%StartSaga{
+        Event.new(nil, %StartSaga{
           id: saga_id,
           saga: %TestAutomaton{pid: self()}
         })

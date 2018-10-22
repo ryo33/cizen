@@ -35,7 +35,7 @@ defmodule Cizen.SagaEnder do
         },
         state
       ) do
-    Dispatcher.dispatch(Event.new(%Saga.Finish{id: saga_id}, id, __MODULE__))
+    Dispatcher.dispatch(Event.new(id, %Saga.Finish{id: saga_id}))
     state
   end
 end

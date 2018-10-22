@@ -62,7 +62,7 @@ defmodule Cizen.Effects.ChainTest do
       }
 
       {_, state} = Effect.init(id, effect)
-      event = Event.new(%TestEvent{value: :b})
+      event = Event.new(nil, %TestEvent{value: :b})
       assert {:resolve, [:a, :b]} == Effect.handle_event(id, event, effect, state)
     end
 
@@ -76,7 +76,7 @@ defmodule Cizen.Effects.ChainTest do
       }
 
       {_, state} = Effect.init(id, effect)
-      event = Event.new(%TestEvent{value: :b})
+      event = Event.new(nil, %TestEvent{value: :b})
       assert match?({:consume, _}, Effect.handle_event(id, event, effect, state))
     end
 
@@ -90,7 +90,7 @@ defmodule Cizen.Effects.ChainTest do
       }
 
       {_, state} = Effect.init(id, effect)
-      event = Event.new(%TestEvent{value: :ignored})
+      event = Event.new(nil, %TestEvent{value: :ignored})
       state = Effect.handle_event(id, event, effect, state)
       refute match?({:resolve, _}, state)
       refute match?({:consume, _}, state)
@@ -107,9 +107,9 @@ defmodule Cizen.Effects.ChainTest do
       }
 
       {_, state} = Effect.init(id, effect)
-      event = Event.new(%TestEvent{value: :c})
+      event = Event.new(nil, %TestEvent{value: :c})
       {:consume, state} = Effect.handle_event(id, event, effect, state)
-      event = Event.new(%TestEvent{value: :b})
+      event = Event.new(nil, %TestEvent{value: :b})
       assert {:resolve, [:a, :b]} == Effect.handle_event(id, event, effect, state)
     end
 
@@ -124,9 +124,9 @@ defmodule Cizen.Effects.ChainTest do
       }
 
       {_, state} = Effect.init(id, effect)
-      event = Event.new(%TestEvent{value: :ignored})
+      event = Event.new(nil, %TestEvent{value: :ignored})
       state = Effect.handle_event(id, event, effect, state)
-      event = Event.new(%TestEvent{value: :b})
+      event = Event.new(nil, %TestEvent{value: :b})
       assert {:resolve, [:a, :b]} == Effect.handle_event(id, event, effect, state)
     end
 
@@ -141,7 +141,7 @@ defmodule Cizen.Effects.ChainTest do
       }
 
       {_, state} = Effect.init(id, effect)
-      event = Event.new(%TestEvent{value: :a})
+      event = Event.new(nil, %TestEvent{value: :a})
       assert {:consume, _} = Effect.handle_event(id, event, effect, state)
     end
 
@@ -157,10 +157,10 @@ defmodule Cizen.Effects.ChainTest do
       }
 
       {_, state} = Effect.init(id, effect)
-      event = Event.new(%TestEvent{value: :a})
+      event = Event.new(nil, %TestEvent{value: :a})
       {:consume, state} = Effect.handle_event(id, event, effect, state)
 
-      event = Event.new(%TestEvent{value: :c})
+      event = Event.new(nil, %TestEvent{value: :c})
       {:resolve, [:a, :b, :c]} = Effect.handle_event(id, event, effect, state)
     end
 
@@ -174,7 +174,7 @@ defmodule Cizen.Effects.ChainTest do
       }
 
       {_, state} = Effect.init(id, effect)
-      event = Event.new(%TestEvent{value: :b})
+      event = Event.new(nil, %TestEvent{value: :b})
       assert {:resolve, [:b]} == Effect.handle_event(id, event, effect, state)
     end
 
@@ -190,7 +190,7 @@ defmodule Cizen.Effects.ChainTest do
       }
 
       {_, state} = Effect.init(id, effect)
-      event = Event.new(%TestEvent{value: :a})
+      event = Event.new(nil, %TestEvent{value: :a})
       assert {:resolve, [:a, :b, :c]} == Effect.handle_event(id, event, effect, state)
     end
 
@@ -212,9 +212,9 @@ defmodule Cizen.Effects.ChainTest do
       }
 
       {_, state} = Effect.init(id, effect)
-      event = Event.new(%TestEvent{value: :a})
+      event = Event.new(nil, %TestEvent{value: :a})
       {:consume, state} = Effect.handle_event(id, event, effect, state)
-      event = Event.new(%TestEvent{value: :c})
+      event = Event.new(nil, %TestEvent{value: :c})
       assert {:resolve, [:a, :b, :c]} == Effect.handle_event(id, event, effect, state)
     end
 
@@ -251,7 +251,7 @@ defmodule Cizen.Effects.ChainTest do
       Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
 
       Dispatcher.dispatch(
-        Event.new(%StartSaga{
+        Event.new(nil, %StartSaga{
           id: saga_id,
           saga: %TestAutomaton{pid: self()}
         })
@@ -260,13 +260,13 @@ defmodule Cizen.Effects.ChainTest do
       assert_receive :launched
 
       Dispatcher.dispatch(
-        Event.new(%TestEvent{
+        Event.new(nil, %TestEvent{
           value: :b
         })
       )
 
       Dispatcher.dispatch(
-        Event.new(%TestEvent{
+        Event.new(nil, %TestEvent{
           value: :c
         })
       )

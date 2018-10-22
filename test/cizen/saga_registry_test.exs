@@ -26,6 +26,7 @@ defmodule Cizen.SagaRegistryTest do
     def init(_id, %__MODULE__{}) do
       :ok
     end
+
     @impl true
     def handle_event(_id, _event, :ok) do
       :ok
@@ -36,10 +37,12 @@ defmodule Cizen.SagaRegistryTest do
     test "returns a saga struct" do
       assert_handle(fn id ->
         use Cizen.Effects
+
         id =
           perform id, %Start{
             saga: %TestSaga{value: :some_value}
           }
+
         assert {:ok, %TestSaga{value: :some_value}} = SagaRegistry.get_saga(id)
       end)
     end

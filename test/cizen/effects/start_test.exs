@@ -39,7 +39,7 @@ defmodule Cizen.Effects.StartTest do
       Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
 
       Dispatcher.dispatch(
-        Event.new(%StartSaga{
+        Event.new(nil, %StartSaga{
           id: saga_id,
           saga: %TestAutomaton{pid: self()}
         })

@@ -71,7 +71,7 @@ defmodule Cizen.SagaMonitor do
 
   defp down(monitor, target) do
     Dispatcher.dispatch(
-      Event.new(%MonitorSaga.Down{
+      Event.new(nil, %MonitorSaga.Down{
         monitor_saga_id: monitor,
         target_saga_id: target
       })

@@ -15,7 +15,7 @@ defmodule Cizen.EventFilterDispatcher.SubscriptionTest do
                  subscriber_saga_id: SagaID.new(),
                  event_filter: %EventFilter{}
                },
-               Event.new(%TestEvent{value: true})
+               Event.new(nil, %TestEvent{value: true})
              )
     end
 
@@ -27,7 +27,7 @@ defmodule Cizen.EventFilterDispatcher.SubscriptionTest do
                    event_type: TestEvent
                  }
                },
-               Event.new(%TestEvent{value: true})
+               Event.new(nil, %TestEvent{value: true})
              )
 
       refute Subscription.match?(
@@ -37,7 +37,7 @@ defmodule Cizen.EventFilterDispatcher.SubscriptionTest do
                    event_type: UnknownEvent
                  }
                },
-               Event.new(%TestEvent{value: true})
+               Event.new(nil, %TestEvent{value: true})
              )
     end
   end

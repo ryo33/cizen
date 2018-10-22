@@ -60,7 +60,7 @@ defmodule Cizen.EventFilterDispatcher do
         })
 
         Dispatcher.dispatch(
-          Event.new(%__MODULE__.Subscribe{
+          Event.new(id, %__MODULE__.Subscribe{
             subscription: subscription
           })
         )
@@ -99,7 +99,7 @@ defmodule Cizen.EventFilterDispatcher do
           subscriptions = MapSet.put(state.subscriptions, subscription)
 
           Dispatcher.dispatch(
-            Event.new(%__MODULE__.Subscribe.Subscribed{subscription: subscription})
+            Event.new(nil, %__MODULE__.Subscribe.Subscribed{subscription: subscription})
           )
 
           %{state | refs: refs, subscriptions: subscriptions}
@@ -128,7 +128,7 @@ defmodule Cizen.EventFilterDispatcher do
     end)
     |> Enum.each(fn {saga_id, subscriptions} ->
       Dispatcher.dispatch(
-        Event.new(%PushEvent{
+        Event.new(nil, %PushEvent{
           saga_id: saga_id,
           event: event,
           subscriptions: subscriptions

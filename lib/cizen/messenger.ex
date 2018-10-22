@@ -27,7 +27,7 @@ defmodule Cizen.Messenger do
     task =
       Task.async(fn ->
         event =
-          Event.new(%SubscribeMessage{
+          Event.new(saga_id, %SubscribeMessage{
             subscriber_saga_id: saga_id,
             subscriber_saga_module: saga_module,
             event_filter: event_filter
@@ -53,7 +53,7 @@ defmodule Cizen.Messenger do
     task =
       Task.async(fn ->
         event =
-          Event.new(%RegisterChannel{
+          Event.new(channel.saga_id, %RegisterChannel{
             channel: channel,
             event_filter: event_filter
           })
@@ -91,7 +91,7 @@ defmodule Cizen.Messenger do
       EventFilterDispatcher.subscribe_as_proxy(id, saga_id, saga_module, body.event_filter, meta)
 
       Dispatcher.dispatch(
-        Event.new(%SubscribeMessage.Subscribed{
+        Event.new(id, %SubscribeMessage.Subscribed{
           event_id: event_id
         })
       )
@@ -109,7 +109,7 @@ defmodule Cizen.Messenger do
       EventFilterDispatcher.subscribe_as_proxy(id, saga_id, saga_module, body.event_filter, meta)
 
       Dispatcher.dispatch(
-        Event.new(%RegisterChannel.Registered{
+        Event.new(id, %RegisterChannel.Registered{
           event_id: event_id
         })
       )
@@ -120,7 +120,7 @@ defmodule Cizen.Messenger do
 
   @impl true
   def handle_event(
-        _id,
+        id,
         %Event{
           body: %PushEvent{
             event: event,
@@ -157,7 +157,7 @@ defmodule Cizen.Messenger do
         end)
 
       Dispatcher.dispatch(
-        Event.new(%SendMessage{
+        Event.new(id, %SendMessage{
           message: message,
           channels: matched_channels
         })

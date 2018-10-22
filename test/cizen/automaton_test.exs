@@ -67,7 +67,7 @@ defmodule Cizen.AutomatonTest do
       Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
 
       Dispatcher.dispatch(
-        Event.new(%StartSaga{
+        Event.new(nil, %StartSaga{
           id: saga_id,
           saga: %TestAutomatonNotFinish{}
         })
@@ -96,7 +96,7 @@ defmodule Cizen.AutomatonTest do
       Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
 
       Dispatcher.dispatch(
-        Event.new(%StartSaga{
+        Event.new(nil, %StartSaga{
           id: saga_id,
           saga: %TestAutomatonFinishOnYield{}
         })
@@ -124,7 +124,7 @@ defmodule Cizen.AutomatonTest do
       Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
 
       Dispatcher.dispatch(
-        Event.new(%StartSaga{
+        Event.new(nil, %StartSaga{
           id: saga_id,
           saga: %TestAutomatonFinishOnSpawn{}
         })
@@ -166,7 +166,7 @@ defmodule Cizen.AutomatonTest do
       Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
 
       Dispatcher.dispatch(
-        Event.new(%StartSaga{
+        Event.new(nil, %StartSaga{
           id: saga_id,
           saga: %TestAutomaton{pid: self()}
         })
@@ -175,7 +175,7 @@ defmodule Cizen.AutomatonTest do
       assert_receive :launched
 
       Dispatcher.dispatch(
-        Event.new(%TestEvent{
+        Event.new(nil, %TestEvent{
           value: :a,
           count: 1
         })
@@ -184,14 +184,14 @@ defmodule Cizen.AutomatonTest do
       assert_receive {:a, 1}
 
       Dispatcher.dispatch(
-        Event.new(%TestEvent{
+        Event.new(nil, %TestEvent{
           value: :c,
           count: 2
         })
       )
 
       Dispatcher.dispatch(
-        Event.new(%TestEvent{
+        Event.new(nil, %TestEvent{
           value: :b,
           count: 1
         })
@@ -200,14 +200,14 @@ defmodule Cizen.AutomatonTest do
       assert_receive {:b, 1}
 
       Dispatcher.dispatch(
-        Event.new(%TestEvent{
+        Event.new(nil, %TestEvent{
           value: :c,
           count: 3
         })
       )
 
       Dispatcher.dispatch(
-        Event.new(%TestEvent{
+        Event.new(nil, %TestEvent{
           value: :c,
           count: 3
         })
@@ -224,7 +224,7 @@ defmodule Cizen.AutomatonTest do
       Dispatcher.listen_event_body(%Saga.Launched{id: saga_id})
 
       Dispatcher.dispatch(
-        Event.new(%StartSaga{
+        Event.new(nil, %StartSaga{
           id: saga_id,
           saga: %TestAutomaton{pid: self()}
         })
@@ -237,7 +237,7 @@ defmodule Cizen.AutomatonTest do
       }
 
       Dispatcher.dispatch(
-        Event.new(%TestEvent{
+        Event.new(nil, %TestEvent{
           value: :a,
           count: 1
         })
@@ -267,7 +267,7 @@ defmodule Cizen.AutomatonTest do
       Dispatcher.listen_event_body(%Saga.Launched{id: saga_id})
 
       Dispatcher.dispatch(
-        Event.new(%StartSaga{
+        Event.new(nil, %StartSaga{
           id: saga_id,
           saga: %TestAutomatonNoSpawn{pid: self()}
         })
@@ -303,7 +303,7 @@ defmodule Cizen.AutomatonTest do
       Dispatcher.listen_event_body(%Saga.Launched{id: saga_id})
 
       Dispatcher.dispatch(
-        Event.new(%StartSaga{
+        Event.new(nil, %StartSaga{
           id: saga_id,
           saga: %TestAutomatonNoYield{pid: self()}
         })
@@ -340,7 +340,7 @@ defmodule Cizen.AutomatonTest do
       Dispatcher.listen_event_type(Saga.Crashed)
 
       Dispatcher.dispatch(
-        Event.new(%StartSaga{
+        Event.new(nil, %StartSaga{
           id: saga_id,
           saga: %TestAutomatonCrash{}
         })

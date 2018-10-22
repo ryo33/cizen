@@ -35,8 +35,8 @@ defmodule Cizen.DispatcherTest do
 
     wait_until_receive(:task1)
     wait_until_receive(:task2)
-    Dispatcher.dispatch(Event.new(%TestEvent{value: :a}))
-    Dispatcher.dispatch(Event.new(%TestEvent{value: :b}))
+    Dispatcher.dispatch(Event.new(nil, %TestEvent{value: :a}))
+    Dispatcher.dispatch(Event.new(nil, %TestEvent{value: :b}))
     Task.await(task1)
     Task.await(task2)
   end
@@ -66,8 +66,8 @@ defmodule Cizen.DispatcherTest do
 
     wait_until_receive(:task1)
     wait_until_receive(:task2)
-    Dispatcher.dispatch(Event.new(%TestEventA{value: :a}))
-    Dispatcher.dispatch(Event.new(%TestEventB{value: :b}))
+    Dispatcher.dispatch(Event.new(nil, %TestEventA{value: :a}))
+    Dispatcher.dispatch(Event.new(nil, %TestEventB{value: :b}))
     Task.await(task1)
     Task.await(task2)
   end
@@ -94,8 +94,8 @@ defmodule Cizen.DispatcherTest do
 
     wait_until_receive(:task1)
     wait_until_receive(:task2)
-    Dispatcher.dispatch(Event.new(%TestEvent{value: :a}))
-    Dispatcher.dispatch(Event.new(%TestEvent{value: :b}))
+    Dispatcher.dispatch(Event.new(nil, %TestEvent{value: :a}))
+    Dispatcher.dispatch(Event.new(nil, %TestEvent{value: :b}))
     Task.await(task1)
     Task.await(task2)
   end

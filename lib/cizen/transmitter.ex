@@ -30,13 +30,13 @@ defmodule Cizen.Transmitter do
   def handle_info(%Event{body: %SendMessage{} = body}, state) do
     if body.channels == [] do
       Dispatcher.dispatch(
-        Event.new(%ReceiveMessage{
+        Event.new(nil, %ReceiveMessage{
           message: body.message
         })
       )
     else
       Dispatcher.dispatch(
-        Event.new(%SagaLauncher.LaunchSaga{
+        Event.new(nil, %SagaLauncher.LaunchSaga{
           id: SagaID.new(),
           saga: %Connection{
             message: body.message,

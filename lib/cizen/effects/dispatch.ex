@@ -19,8 +19,8 @@ defmodule Cizen.Effects.Dispatch do
   @behaviour Effect
 
   @impl true
-  def init(_handler, %__MODULE__{body: body}) do
-    event = Event.new(body)
+  def init(handler, %__MODULE__{body: body}) do
+    event = Event.new(handler, body)
     Dispatcher.dispatch(event)
     {:resolve, event}
   end

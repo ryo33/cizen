@@ -28,21 +28,21 @@ defmodule Cizen.SagaTest do
     test "finishes on Finish event" do
       Dispatcher.listen_event_type(Saga.Launched)
       id = launch_test_saga()
-      Dispatcher.dispatch(Event.new(%Saga.Finish{id: id}))
+      Dispatcher.dispatch(Event.new(nil, %Saga.Finish{id: id}))
       assert_condition(100, :error == SagaRegistry.get_pid(id))
     end
 
     test "dispatches Finished event on finish" do
       Dispatcher.listen_event_type(Saga.Finished)
       id = launch_test_saga()
-      Dispatcher.dispatch(Event.new(%Saga.Finish{id: id}))
+      Dispatcher.dispatch(Event.new(nil, %Saga.Finish{id: id}))
       assert_receive %Event{body: %Saga.Finished{id: ^id}}
     end
 
     test "dispatches Unlaunched event on unlaunch" do
       Dispatcher.listen_event_type(Saga.Unlaunched)
       id = launch_test_saga()
-      Dispatcher.dispatch(Event.new(%SagaLauncher.UnlaunchSaga{id: id}))
+      Dispatcher.dispatch(Event.new(nil, %SagaLauncher.UnlaunchSaga{id: id}))
       assert_receive %Event{body: %Saga.Unlaunched{id: id}}
     end
 
@@ -67,7 +67,7 @@ defmodule Cizen.SagaTest do
           end
         )
 
-      Dispatcher.dispatch(Event.new(%CrashTestEvent1{}))
+      Dispatcher.dispatch(Event.new(nil, %CrashTestEvent1{}))
       assert_condition(100, :error == SagaRegistry.get_pid(id))
     end
 
@@ -94,7 +94,7 @@ defmodule Cizen.SagaTest do
           end
         )
 
-      Dispatcher.dispatch(Event.new(%CrashTestEvent2{}))
+      Dispatcher.dispatch(Event.new(nil, %CrashTestEvent2{}))
 
       assert_receive %Event{
         body: %Saga.Crashed{
@@ -119,7 +119,7 @@ defmodule Cizen.SagaTest do
           handle_event: fn _id, %Event{body: body}, state ->
             case body do
               %TestEvent{value: value} ->
-                Dispatcher.dispatch(Event.new(%TestEventReply{value: value}))
+                Dispatcher.dispatch(Event.new(nil, %TestEventReply{value: value}))
                 state
 
               _ ->
@@ -128,7 +128,7 @@ defmodule Cizen.SagaTest do
           end
         )
 
-      Dispatcher.dispatch(Event.new(%TestEvent{value: id}))
+      Dispatcher.dispatch(Event.new(nil, %TestEvent{value: id}))
       assert_receive %Event{body: %TestEventReply{value: id}}
     end
 
@@ -138,7 +138,7 @@ defmodule Cizen.SagaTest do
       id =
         launch_test_saga(
           launch: fn id, state ->
-            Dispatcher.dispatch(Event.new(%Saga.Finish{id: id}))
+            Dispatcher.dispatch(Event.new(nil, %Saga.Finish{id: id}))
             state
           end
         )
@@ -160,7 +160,7 @@ defmodule Cizen.SagaTest do
 
       @impl true
       def handle_event(id, %Event{body: %TestEvent{}}, :ok) do
-        Dispatcher.dispatch(Event.new(%Saga.Launched{id: id}))
+        Dispatcher.dispatch(Event.new(nil, %Saga.Launched{id: id}))
         :ok
       end
     end
@@ -170,7 +170,7 @@ defmodule Cizen.SagaTest do
       id = SagaID.new()
       Saga.launch(id, %LazyLaunchSaga{})
       refute_receive %Event{body: %Saga.Launched{id: ^id}}
-      Dispatcher.dispatch(Event.new(%TestEvent{}))
+      Dispatcher.dispatch(Event.new(nil, %TestEvent{}))
       assert_receive %Event{body: %Saga.Launched{id: ^id}}
     end
   end

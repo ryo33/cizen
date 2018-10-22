@@ -88,9 +88,7 @@ defmodule Cizen.Automaton do
   """
   defmacro perform(id, effect) do
     quote do
-      Dispatcher.dispatch(
-        Event.new(%PerformEffect{effect: unquote(effect)}, unquote(id), __MODULE__)
-      )
+      Dispatcher.dispatch(Event.new(unquote(id), %PerformEffect{effect: unquote(effect)}))
 
       receive do
         response -> response
@@ -101,7 +99,7 @@ defmodule Cizen.Automaton do
   defp do_yield(module, id, state) do
     case state do
       @finish ->
-        Dispatcher.dispatch(Event.new(%Saga.Finish{id: id}))
+        Dispatcher.dispatch(Event.new(id, %Saga.Finish{id: id}))
 
       state ->
         state = module.yield(id, state)
@@ -121,7 +119,7 @@ defmodule Cizen.Automaton do
       spawn_link(fn ->
         try do
           state = module.spawn(id, saga)
-          Dispatcher.dispatch(Event.new(%Saga.Launched{id: id}))
+          Dispatcher.dispatch(Event.new(id, %Saga.Launched{id: id}))
           do_yield(module, id, state)
         rescue
           reason -> Saga.exit(id, reason, __STACKTRACE__)

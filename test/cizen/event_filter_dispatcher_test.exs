@@ -30,8 +30,8 @@ defmodule Cizen.EventFilterDispatcherTest do
 
     EventFilterDispatcher.subscribe(saga_id, nil, event_filter)
 
-    Dispatcher.dispatch(Event.new(%TestEvent{value: :a}, source_saga_id))
-    Dispatcher.dispatch(Event.new(%TestEvent{value: :b}, SagaID.new()))
+    Dispatcher.dispatch(Event.new(source_saga_id, %TestEvent{value: :a}))
+    Dispatcher.dispatch(Event.new(SagaID.new(), %TestEvent{value: :b}))
 
     assert_receive %Event{
       body: %PushEvent{
@@ -67,7 +67,7 @@ defmodule Cizen.EventFilterDispatcherTest do
       source_saga_id: SagaID.new()
     })
 
-    Dispatcher.dispatch(Event.new(%TestEvent{value: :a}, source_saga_id))
+    Dispatcher.dispatch(Event.new(source_saga_id, %TestEvent{value: :a}))
 
     assert_receive {:a,
                     %Event{
@@ -109,7 +109,7 @@ defmodule Cizen.EventFilterDispatcherTest do
         :b
       )
 
-    Dispatcher.dispatch(Event.new(%TestEvent{value: :a}, source_saga_id))
+    Dispatcher.dispatch(Event.new(source_saga_id, %TestEvent{value: :a}))
 
     received =
       assert_receive %Event{
@@ -140,7 +140,7 @@ defmodule Cizen.EventFilterDispatcherTest do
       }
     )
 
-    Dispatcher.dispatch(Event.new(%TestEvent{value: :a}, source_saga_id))
+    Dispatcher.dispatch(Event.new(source_saga_id, %TestEvent{value: :a}))
 
     assert_receive %Event{
       body: %PushEvent{
@@ -160,12 +160,12 @@ defmodule Cizen.EventFilterDispatcherTest do
 
     Dispatcher.dispatch(
       Event.new(
+        source_saga_id,
         %PushEvent{
           saga_id: launch_test_saga(),
-          event: Event.new(%TestEvent{}),
+          event: Event.new(nil, %TestEvent{}),
           subscriptions: []
-        },
-        source_saga_id
+        }
       )
     )
 
@@ -189,7 +189,7 @@ defmodule Cizen.EventFilterDispatcherTest do
 
     assert_condition(100, :sys.get_state(EventFilterDispatcher) == old_state)
 
-    Dispatcher.dispatch(Event.new(%TestEvent{value: :a}, source_saga_id))
+    Dispatcher.dispatch(Event.new(source_saga_id, %TestEvent{value: :a}))
 
     refute_receive %Event{body: %PushEvent{event: %Event{body: %TestEvent{}}}}
   end

@@ -25,7 +25,7 @@ defmodule Cizen.SagaMonitorTest do
       target_id = TestHelper.launch_test_saga()
 
       Dispatcher.dispatch(
-        Event.new(%MonitorSaga{monitor_saga_id: monitor_id, target_saga_id: target_id})
+        Event.new(nil, %MonitorSaga{monitor_saga_id: monitor_id, target_saga_id: target_id})
       )
 
       refute_receive %Event{
@@ -46,10 +46,10 @@ defmodule Cizen.SagaMonitorTest do
       target_id = TestHelper.launch_test_saga()
 
       Dispatcher.dispatch(
-        Event.new(%MonitorSaga{monitor_saga_id: monitor_id, target_saga_id: target_id})
+        Event.new(nil, %MonitorSaga{monitor_saga_id: monitor_id, target_saga_id: target_id})
       )
 
-      Dispatcher.dispatch(Event.new(%Saga.Finish{id: target_id}))
+      Dispatcher.dispatch(Event.new(nil, %Saga.Finish{id: target_id}))
 
       assert_receive %Event{
         body: %MonitorSaga.Down{monitor_saga_id: ^monitor_id, target_saga_id: ^target_id}
@@ -76,14 +76,14 @@ defmodule Cizen.SagaMonitorTest do
       target_id = TestHelper.launch_test_saga()
 
       Dispatcher.dispatch(
-        Event.new(%MonitorSaga{monitor_saga_id: monitor_a, target_saga_id: target_id})
+        Event.new(nil, %MonitorSaga{monitor_saga_id: monitor_a, target_saga_id: target_id})
       )
 
       Dispatcher.dispatch(
-        Event.new(%MonitorSaga{monitor_saga_id: monitor_b, target_saga_id: target_id})
+        Event.new(nil, %MonitorSaga{monitor_saga_id: monitor_b, target_saga_id: target_id})
       )
 
-      Dispatcher.dispatch(Event.new(%Saga.Finish{id: target_id}))
+      Dispatcher.dispatch(Event.new(nil, %Saga.Finish{id: target_id}))
 
       assert_receive {:a,
                       %Event{
@@ -115,7 +115,7 @@ defmodule Cizen.SagaMonitorTest do
       target_id = SagaID.new()
 
       Dispatcher.dispatch(
-        Event.new(%MonitorSaga{monitor_saga_id: monitor_id, target_saga_id: target_id})
+        Event.new(nil, %MonitorSaga{monitor_saga_id: monitor_id, target_saga_id: target_id})
       )
 
       assert_receive %Event{
@@ -136,18 +136,18 @@ defmodule Cizen.SagaMonitorTest do
       target_id = TestHelper.launch_test_saga()
 
       Dispatcher.dispatch(
-        Event.new(%MonitorSaga{monitor_saga_id: monitor_id, target_saga_id: target_id})
+        Event.new(nil, %MonitorSaga{monitor_saga_id: monitor_id, target_saga_id: target_id})
       )
 
       Dispatcher.dispatch(
-        Event.new(%MonitorSaga{monitor_saga_id: monitor_id, target_saga_id: target_id})
+        Event.new(nil, %MonitorSaga{monitor_saga_id: monitor_id, target_saga_id: target_id})
       )
 
       Dispatcher.dispatch(
-        Event.new(%MonitorSaga{monitor_saga_id: monitor_id, target_saga_id: target_id})
+        Event.new(nil, %MonitorSaga{monitor_saga_id: monitor_id, target_saga_id: target_id})
       )
 
-      Dispatcher.dispatch(Event.new(%Saga.Finish{id: target_id}))
+      Dispatcher.dispatch(Event.new(nil, %Saga.Finish{id: target_id}))
 
       assert_receive %Event{
         body: %MonitorSaga.Down{monitor_saga_id: ^monitor_id, target_saga_id: ^target_id}
@@ -170,10 +170,10 @@ defmodule Cizen.SagaMonitorTest do
       target_id = TestHelper.launch_test_saga()
 
       Dispatcher.dispatch(
-        Event.new(%MonitorSaga{monitor_saga_id: monitor_id, target_saga_id: target_id})
+        Event.new(nil, %MonitorSaga{monitor_saga_id: monitor_id, target_saga_id: target_id})
       )
 
-      Dispatcher.dispatch(Event.new(%Saga.Finish{id: target_id}))
+      Dispatcher.dispatch(Event.new(nil, %Saga.Finish{id: target_id}))
 
       assert_receive %Event{
         body: %MonitorSaga.Down{monitor_saga_id: ^monitor_id, target_saga_id: ^target_id}

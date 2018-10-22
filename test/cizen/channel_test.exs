@@ -45,7 +45,7 @@ defmodule Cizen.ChannelTest do
                    destination_saga_module: TestSaga
                  },
                  %Message{
-                   event: Event.new(%TestEvent{}),
+                   event: Event.new(nil, %TestEvent{}),
                    destination_saga_id: destination_saga_id,
                    destination_saga_module: TestSaga
                  }
@@ -64,7 +64,7 @@ defmodule Cizen.ChannelTest do
                    destination_saga_module: TestSaga
                  },
                  %Message{
-                   event: Event.new(%TestEvent{}),
+                   event: Event.new(nil, %TestEvent{}),
                    destination_saga_id: destination_saga_id,
                    destination_saga_module: TestSaga
                  }
@@ -79,7 +79,7 @@ defmodule Cizen.ChannelTest do
                    destination_saga_module: nil
                  },
                  %Message{
-                   event: Event.new(%TestEvent{}),
+                   event: Event.new(nil, %TestEvent{}),
                    destination_saga_id: destination_saga_id,
                    destination_saga_module: TestSaga
                  }
@@ -98,7 +98,7 @@ defmodule Cizen.ChannelTest do
                    destination_saga_module: UnknownSaga
                  },
                  %Message{
-                   event: Event.new(%TestEvent{}),
+                   event: Event.new(nil, %TestEvent{}),
                    destination_saga_id: destination_saga_id,
                    destination_saga_module: TestSaga
                  }
@@ -113,7 +113,7 @@ defmodule Cizen.ChannelTest do
                    destination_saga_module: UnknownSaga
                  },
                  %Message{
-                   event: Event.new(%TestEvent{}),
+                   event: Event.new(nil, %TestEvent{}),
                    destination_saga_id: destination_saga_id,
                    destination_saga_module: TestSaga
                  }
@@ -128,7 +128,7 @@ defmodule Cizen.ChannelTest do
                    destination_saga_module: nil
                  },
                  %Message{
-                   event: Event.new(%TestEvent{}),
+                   event: Event.new(nil, %TestEvent{}),
                    destination_saga_id: destination_saga_id,
                    destination_saga_module: TestSaga
                  }

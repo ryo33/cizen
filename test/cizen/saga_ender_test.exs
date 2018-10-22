@@ -15,7 +15,7 @@ defmodule Cizen.SagaEnderTest do
       saga_id = TestHelper.launch_test_saga()
 
       Dispatcher.dispatch(
-        Event.new(%EndSaga{
+        Event.new(nil, %EndSaga{
           id: saga_id
         })
       )

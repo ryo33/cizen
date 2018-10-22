@@ -52,7 +52,7 @@ defmodule Cizen.SagaLauncher do
       end)
 
     Dispatcher.dispatch(
-      Event.new(%LaunchSaga{
+      Event.new(nil, %LaunchSaga{
         id: id,
         saga: saga
       })

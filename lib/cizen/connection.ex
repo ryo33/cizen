@@ -37,13 +37,13 @@ defmodule Cizen.Connection do
 
     if Enum.empty?(next_channels) do
       Dispatcher.dispatch(
-        Event.new(%ReceiveMessage{
+        Event.new(id, %ReceiveMessage{
           message: message
         })
       )
 
       Dispatcher.dispatch(
-        Event.new(%Saga.Finish{
+        Event.new(id, %Saga.Finish{
           id: id
         })
       )
@@ -52,7 +52,7 @@ defmodule Cizen.Connection do
     else
       Enum.each(next_channels, fn channel ->
         Dispatcher.dispatch(
-          Event.new(%FeedMessage{
+          Event.new(id, %FeedMessage{
             connection_id: id,
             channel: channel,
             message: message
@@ -78,7 +78,9 @@ defmodule Cizen.Connection do
     require EventFilter
 
     Enum.each(channels, fn %Channel{saga_id: saga_id} ->
-      Dispatcher.dispatch(Event.new(%MonitorSaga{monitor_saga_id: id, target_saga_id: saga_id}))
+      Dispatcher.dispatch(
+        Event.new(id, %MonitorSaga{monitor_saga_id: id, target_saga_id: saga_id})
+      )
     end)
 
     subscribe_emit_message_task =
@@ -171,7 +173,7 @@ defmodule Cizen.Connection do
 
     if MapSet.size(active_channels) == 0 do
       Dispatcher.dispatch(
-        Event.new(%Saga.Finish{
+        Event.new(id, %Saga.Finish{
           id: id
         })
       )
@@ -185,7 +187,7 @@ defmodule Cizen.Connection do
   @impl true
   def handle_event(id, %Event{body: %MonitorSaga.Down{}}, state) do
     Dispatcher.dispatch(
-      Event.new(%Saga.Finish{
+      Event.new(id, %Saga.Finish{
         id: id
       })
     )

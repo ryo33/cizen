@@ -58,7 +58,7 @@ defmodule Cizen.Effects.AllTest do
       }
 
       {_, state} = Effect.init(id, effect)
-      event = Event.new(%TestEvent{value: :b})
+      event = Event.new(nil, %TestEvent{value: :b})
       assert match?({:consume, _}, Effect.handle_event(id, event, effect, state))
     end
 
@@ -73,7 +73,7 @@ defmodule Cizen.Effects.AllTest do
       }
 
       {_, state} = Effect.init(id, effect)
-      event = Event.new(%TestEvent{value: :ignored})
+      event = Event.new(nil, %TestEvent{value: :ignored})
       state = Effect.handle_event(id, event, effect, state)
       refute match?({:resolve, _}, state)
       refute match?({:consume, _}, state)
@@ -91,9 +91,9 @@ defmodule Cizen.Effects.AllTest do
       }
 
       {_, state} = Effect.init(id, effect)
-      event = Event.new(%TestEvent{value: :b})
+      event = Event.new(nil, %TestEvent{value: :b})
       {:consume, state} = Effect.handle_event(id, event, effect, state)
-      event = Event.new(%TestEvent{value: :c})
+      event = Event.new(nil, %TestEvent{value: :c})
       assert {:resolve, [:a, :b, :c]} == Effect.handle_event(id, event, effect, state)
     end
 
@@ -118,9 +118,9 @@ defmodule Cizen.Effects.AllTest do
       }
 
       {_, state} = Effect.init(id, effect)
-      event = Event.new(%TestEvent{value: :c})
+      event = Event.new(nil, %TestEvent{value: :c})
       {:consume, state} = Effect.handle_event(id, event, effect, state)
-      event = Event.new(%TestEvent{value: :d})
+      event = Event.new(nil, %TestEvent{value: :d})
       assert {:resolve, [:b, :c, :d]} == Effect.handle_event(id, event, effect, state)
     end
 

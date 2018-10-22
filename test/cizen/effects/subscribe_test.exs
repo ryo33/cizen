@@ -42,14 +42,14 @@ defmodule Cizen.Effects.SubscribeTest do
       saga_id = SagaID.new()
 
       Dispatcher.dispatch(
-        Event.new(%StartSaga{
+        Event.new(nil, %StartSaga{
           id: saga_id,
           saga: %TestAutomaton{pid: self()}
         })
       )
 
       assert_receive :ok
-      event = Event.new(%TestEvent{value: :a})
+      event = Event.new(nil, %TestEvent{value: :a})
       Dispatcher.dispatch(event)
       assert_receive ^event
     end

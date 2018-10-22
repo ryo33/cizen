@@ -15,7 +15,7 @@ defmodule Cizen.SagaLauncherTest do
     saga_id = SagaID.new()
 
     Dispatcher.dispatch(
-      Event.new(%SagaLauncher.LaunchSaga{
+      Event.new(nil, %SagaLauncher.LaunchSaga{
         id: saga_id,
         saga: %TestSaga{
           launch: fn id, _state ->
@@ -31,7 +31,7 @@ defmodule Cizen.SagaLauncherTest do
   test "SagaLauncher.UnlaunchSaga event" do
     id = launch_test_saga()
     assert {:ok, pid} = SagaRegistry.get_pid(id)
-    Dispatcher.dispatch(Event.new(%SagaLauncher.UnlaunchSaga{id: id}))
+    Dispatcher.dispatch(Event.new(nil, %SagaLauncher.UnlaunchSaga{id: id}))
     assert_condition(100, Process.alive?(pid))
   end
 end

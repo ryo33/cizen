@@ -34,7 +34,7 @@ defmodule Cizen.Effectful do
       pid = self()
 
       Dispatcher.dispatch(
-        Event.new(%StartSaga{
+        Event.new(nil, %StartSaga{
           id: SagaID.new(),
           saga: %InstantAutomaton{
             block: fn id ->

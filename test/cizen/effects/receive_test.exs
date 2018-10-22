@@ -38,14 +38,14 @@ defmodule Cizen.Effects.ReceiveTest do
     test "resolves if matched", %{handler: id, effect: effect} do
       {_, state} = Effect.init(id, effect)
 
-      event = Event.new(%TestEvent1{})
+      event = Event.new(nil, %TestEvent1{})
       assert {:resolve, ^event} = Effect.handle_event(id, event, effect, state)
     end
 
     test "does not resolve or consume if not matched", %{handler: id, effect: effect} do
       {_, state} = Effect.init(id, effect)
 
-      next = Effect.handle_event(id, Event.new(%TestEvent2{}), effect, state)
+      next = Effect.handle_event(id, Event.new(nil, %TestEvent2{}), effect, state)
 
       refute match?(
                {:resolve, _},
@@ -94,7 +94,7 @@ defmodule Cizen.Effects.ReceiveTest do
       Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
 
       Dispatcher.dispatch(
-        Event.new(%StartSaga{
+        Event.new(nil, %StartSaga{
           id: saga_id,
           saga: %TestAutomaton{pid: self()}
         })
@@ -102,12 +102,12 @@ defmodule Cizen.Effects.ReceiveTest do
 
       assert_receive :launched
 
-      event1 = Event.new(%TestEvent1{value: 1})
+      event1 = Event.new(nil, %TestEvent1{value: 1})
       Dispatcher.dispatch(event1)
 
       assert_receive ^event1
 
-      event2 = Event.new(%TestEvent2{value: 2})
+      event2 = Event.new(nil, %TestEvent2{value: 2})
       Dispatcher.dispatch(event2)
 
       assert_receive ^event2

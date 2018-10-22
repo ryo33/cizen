@@ -27,7 +27,7 @@ defmodule Cizen.MenssengerTest do
     }
 
     Dispatcher.dispatch(
-      Event.new(%SubscribeMessage{
+      Event.new(nil, %SubscribeMessage{
         subscriber_saga_id: subscriber_saga_id,
         subscriber_saga_module: TestSaga,
         event_filter: event_filter
@@ -61,7 +61,7 @@ defmodule Cizen.MenssengerTest do
     }
 
     Dispatcher.dispatch(
-      Event.new(%RegisterChannel{
+      Event.new(nil, %RegisterChannel{
         channel: channel,
         event_filter: event_filter
       })
@@ -102,7 +102,7 @@ defmodule Cizen.MenssengerTest do
     Messenger.register_channel(channel_b, event_filter)
     Messenger.register_channel(channel_c, another_event_filter)
 
-    event = Event.new(%TestEvent{}, source_saga_id)
+    event = Event.new(source_saga_id, %TestEvent{})
     Dispatcher.dispatch(event)
 
     received_a =
@@ -145,7 +145,7 @@ defmodule Cizen.MenssengerTest do
     Messenger.subscribe_message(subscriber_saga_a, TestSagaA, event_filter)
     Messenger.subscribe_message(subscriber_saga_b, TestSagaB, event_filter)
 
-    event = Event.new(%TestEvent{}, source_saga_id)
+    event = Event.new(source_saga_id, %TestEvent{})
     Dispatcher.dispatch(event)
 
     assert_receive %Event{
@@ -196,7 +196,7 @@ defmodule Cizen.MenssengerTest do
     Messenger.register_channel(channel_a, event_filter)
     Messenger.register_channel(channel_b, event_filter)
 
-    event = Event.new(%TestEvent{}, source_saga_id)
+    event = Event.new(source_saga_id, %TestEvent{})
     Dispatcher.dispatch(event)
 
     received =
@@ -226,7 +226,7 @@ defmodule Cizen.MenssengerTest do
     Messenger.register_channel(channel_a, event_filter)
     Messenger.register_channel(channel_b, event_filter)
 
-    event = Event.new(%TestEvent{}, source_saga_id)
+    event = Event.new(source_saga_id, %TestEvent{})
     Dispatcher.dispatch(event)
 
     refute_receive %Event{body: %Saga.Crashed{}}
