@@ -3,6 +3,7 @@ defmodule Cizen.SagaRegistry do
   The registry for automata.
   """
 
+  alias Cizen.Saga
   alias Cizen.SagaID
 
   def start_link do
@@ -10,12 +11,23 @@ defmodule Cizen.SagaRegistry do
   end
 
   @doc """
-  Resolve an saga id to a pid.
+  Returns the pid for the given saga id.
   """
-  @spec resolve_id(SagaID.t()) :: {:ok, pid} | :error
-  def resolve_id(id) do
+  @spec get_pid(SagaID.t()) :: {:ok, pid} | :error
+  def get_pid(id) do
     case Registry.lookup(__MODULE__, id) do
       [{pid, _}] -> {:ok, pid}
+      _ -> :error
+    end
+  end
+
+  @doc """
+  Returns the saga struct for the given saga id.
+  """
+  @spec get_saga(SagaID.t()) :: {:ok, Saga.t()} | :error
+  def get_saga(id) do
+    case Registry.lookup(__MODULE__, id) do
+      [{_, saga}] -> {:ok, saga}
       _ -> :error
     end
   end

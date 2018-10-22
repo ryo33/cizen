@@ -12,6 +12,7 @@ defmodule Cizen.SagaCase do
   using do
     quote do
       use Cizen.Effectful
+      use Cizen.Effects
       import Cizen.SagaCase, only: [assert_handle: 1, surpress_crash_log: 0]
     end
   end

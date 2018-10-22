@@ -74,7 +74,7 @@ defmodule Cizen.Saga do
 
   def launch(id, saga) do
     {:ok, _pid} =
-      GenServer.start(__MODULE__, {id, saga}, name: {:via, Registry, {SagaRegistry, id}})
+      GenServer.start(__MODULE__, {id, saga})
   end
 
   def unlaunch(id) do
@@ -91,6 +91,7 @@ defmodule Cizen.Saga do
 
   @impl true
   def init({id, saga}) do
+    Registry.register(SagaRegistry, id, saga)
     Dispatcher.listen_event_body(%Finish{id: id})
     module = Saga.module(saga)
 

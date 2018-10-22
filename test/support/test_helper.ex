@@ -11,7 +11,7 @@ defmodule Cizen.TestHelper do
   alias Cizen.TestSaga
 
   def ensure_finished(id) do
-    case SagaRegistry.resolve_id(id) do
+    case SagaRegistry.get_pid(id) do
       {:ok, _pid} ->
         Saga.unlaunch(id)
 

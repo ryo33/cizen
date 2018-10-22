@@ -29,7 +29,7 @@ defmodule Cizen.SagaTest do
       Dispatcher.listen_event_type(Saga.Launched)
       id = launch_test_saga()
       Dispatcher.dispatch(Event.new(%Saga.Finish{id: id}))
-      assert_condition(100, :error == SagaRegistry.resolve_id(id))
+      assert_condition(100, :error == SagaRegistry.get_pid(id))
     end
 
     test "dispatches Finished event on finish" do
@@ -68,7 +68,7 @@ defmodule Cizen.SagaTest do
         )
 
       Dispatcher.dispatch(Event.new(%CrashTestEvent1{}))
-      assert_condition(100, :error == SagaRegistry.resolve_id(id))
+      assert_condition(100, :error == SagaRegistry.get_pid(id))
     end
 
     defmodule(CrashTestEvent2, do: defstruct([]))
@@ -144,7 +144,7 @@ defmodule Cizen.SagaTest do
         )
 
       assert_receive %Event{body: %Saga.Finished{id: ^id}}
-      assert_condition(100, :error == SagaRegistry.resolve_id(id))
+      assert_condition(100, :error == SagaRegistry.get_pid(id))
     end
 
     defmodule LazyLaunchSaga do

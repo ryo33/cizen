@@ -92,7 +92,7 @@ defmodule Cizen.EventFilterDispatcher do
 
   def handle_info(%Event{body: %__MODULE__.Subscribe{subscription: subscription}}, state) do
     state =
-      case SagaRegistry.resolve_id(subscription.subscriber_saga_id) do
+      case SagaRegistry.get_pid(subscription.subscriber_saga_id) do
         {:ok, pid} ->
           ref = Process.monitor(pid)
           refs = Map.put(state.refs, ref, subscription)

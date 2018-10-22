@@ -110,7 +110,7 @@ defmodule Cizen.RequestResponseMediator do
 
   @impl true
   def handle_event(_id, %Event{body: %Request.Response{}} = response, state) do
-    case SagaRegistry.resolve_id(response.body.requestor_saga_id) do
+    case SagaRegistry.get_pid(response.body.requestor_saga_id) do
       {:ok, pid} -> send(pid, response)
       _ -> :ok
     end

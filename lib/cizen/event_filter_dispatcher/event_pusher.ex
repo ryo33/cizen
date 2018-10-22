@@ -22,7 +22,7 @@ defmodule Cizen.EventFilterDispatcher.EventPusher do
 
   @impl true
   def handle_info(%Event{body: %PushEvent{saga_id: saga_id}} = event, state) do
-    case SagaRegistry.resolve_id(saga_id) do
+    case SagaRegistry.get_pid(saga_id) do
       {:ok, pid} -> send(pid, event)
       _ -> :ok
     end

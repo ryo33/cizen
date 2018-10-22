@@ -33,7 +33,7 @@ defmodule Cizen.SagaMonitor do
       {:noreply, state}
     else
       state =
-        case SagaRegistry.resolve_id(target) do
+        case SagaRegistry.get_pid(target) do
           {:ok, pid} ->
             ref = Process.monitor(pid)
             refs = Map.put(state.refs, ref, target)
@@ -58,7 +58,7 @@ defmodule Cizen.SagaMonitor do
   end
 
   def handle_info(%Event{body: %MonitorSaga.Down{monitor_saga_id: monitor}} = event, state) do
-    case SagaRegistry.resolve_id(monitor) do
+    case SagaRegistry.get_pid(monitor) do
       {:ok, pid} ->
         send(pid, event)
 
