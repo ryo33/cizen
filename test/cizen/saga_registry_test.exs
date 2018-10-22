@@ -1,53 +1,154 @@
 defmodule Cizen.SagaRegistryTest do
   use Cizen.SagaCase
-  doctest Cizen.SagaRegistry
-  import Cizen.TestHelper, only: [launch_test_saga: 0, assert_condition: 2]
+  alias Cizen.TestHelper
 
+  alias Cizen.CizenSagaRegistry
+  alias Cizen.SagaID
   alias Cizen.SagaRegistry
 
-  describe "get_pid/1" do
-    test "launched saga is registered" do
-      id = launch_test_saga()
-      assert {:ok, pid} = SagaRegistry.get_pid(id)
+  defp setup_registry(_context) do
+    {:ok, _} = SagaRegistry.start_link(keys: :unique, name: __MODULE__)
+    :ok
+  end
+
+  describe "register/4" do
+    setup [:setup_registry]
+
+    test "registers the given key-value" do
+      id = TestHelper.launch_test_saga()
+      assert {:ok, _} = SagaRegistry.register(__MODULE__, id, :a, :value_a)
+      {:ok, pid} = CizenSagaRegistry.get_pid(id)
+      assert [{pid, {id, :value_a}}] == Registry.lookup(__MODULE__, :a)
     end
 
-    test "killed saga is unregistered" do
-      id = launch_test_saga()
-      assert {:ok, pid} = SagaRegistry.get_pid(id)
-      true = Process.exit(pid, :kill)
-      assert_condition(100, :error == SagaRegistry.get_pid(id))
+    test "remove the entry on finish" do
+      id = TestHelper.launch_test_saga()
+      assert {:ok, _} = SagaRegistry.register(__MODULE__, id, :a, :value_a)
+      TestHelper.ensure_finished(id)
+      :timer.sleep(1)
+      assert [] == Registry.lookup(__MODULE__, :a)
+    end
+
+    test "returns error if the saga does not exists" do
+      id = SagaID.new()
+      assert {:error, :no_saga} == SagaRegistry.register(__MODULE__, id, :a, :value_a)
+    end
+
+    test "returns error if already registered" do
+      saga_a = TestHelper.launch_test_saga()
+      saga_b = TestHelper.launch_test_saga()
+      assert {:ok, _} = SagaRegistry.register(__MODULE__, saga_a, :a, :value_a)
+
+      assert {:error, {:already_registered, saga_a}} ==
+               SagaRegistry.register(__MODULE__, saga_b, :a, :c)
+    end
+
+    test "doesn't deadlock in Saga" do
+      pid = self()
+
+      TestHelper.launch_test_saga(
+        launch: fn id, _ ->
+          SagaRegistry.register(__MODULE__, id, :a, :value_a)
+          send(pid, :registered)
+        end
+      )
+
+      assert_receive :registered
     end
   end
 
-  defmodule TestSaga do
-    @behaviour Cizen.Saga
-    defstruct [:value]
-    @impl true
-    def init(_id, %__MODULE__{}) do
-      :ok
-    end
-
-    @impl true
-    def handle_event(_id, _event, :ok) do
-      :ok
-    end
+  defp setup_registered(_context) do
+    saga_a = TestHelper.launch_test_saga()
+    saga_b = TestHelper.launch_test_saga()
+    {:ok, _} = SagaRegistry.register(__MODULE__, saga_a, :a, :value_a)
+    {:ok, _} = SagaRegistry.register(__MODULE__, saga_b, :b, :value_b)
+    %{saga_a: saga_a, saga_b: saga_b}
   end
 
-  describe "get_saga/1" do
-    test "returns a saga struct" do
-      assert_handle(fn id ->
-        use Cizen.Effects
+  describe "dispatch/4" do
+    setup [:setup_registry, :setup_registered]
 
-        id =
-          perform id, %Start{
-            saga: %TestSaga{value: :some_value}
-          }
+    defmodule TestDispatcher do
+      def dispatch(entries, pid) do
+        for entry <- entries do
+          send(pid, entry)
+        end
+      end
+    end
 
-        assert {:ok, %TestSaga{value: :some_value}} = SagaRegistry.get_saga(id)
+    test "works with a callback", %{saga_a: saga_a} do
+      pid = self()
+
+      SagaRegistry.dispatch(__MODULE__, :a, fn entries ->
+        for entry <- entries do
+          send(pid, entry)
+        end
       end)
+
+      assert_receive {^saga_a, :value_a}
     end
 
-    test "returns error for unregistered saga" do
+    test "works with {module, function, arguments}", %{saga_a: saga_a} do
+      pid = self()
+      SagaRegistry.dispatch(__MODULE__, :a, {TestDispatcher, :dispatch, [pid]})
+      assert_receive {^saga_a, :value_a}
+    end
+  end
+
+  describe "lookup/2" do
+    setup [:setup_registry, :setup_registered]
+
+    test "works", %{saga_a: saga_a} do
+      assert [{saga_a, :value_a}] == SagaRegistry.lookup(__MODULE__, :a)
+    end
+  end
+
+  describe "unregister/3" do
+    setup [:setup_registry, :setup_registered]
+
+    test "works", %{saga_a: saga_a} do
+      SagaRegistry.unregister(__MODULE__, saga_a, :a)
+      assert 1 == SagaRegistry.count(__MODULE__)
+    end
+
+    test "doesn't deadlock in Saga" do
+      pid = self()
+
+      TestHelper.launch_test_saga(
+        launch: fn id, _ ->
+          SagaRegistry.register(__MODULE__, id, :c, :value_c)
+          SagaRegistry.unregister(__MODULE__, id, :c)
+          send(pid, :unregistered)
+        end
+      )
+
+      assert_receive :unregistered
+      assert 2 == SagaRegistry.count(__MODULE__)
+    end
+  end
+
+  describe "update_value/4" do
+    setup [:setup_registry, :setup_registered]
+
+    test "works", %{saga_a: saga_a} do
+      SagaRegistry.update_value(__MODULE__, saga_a, :a, fn value -> {:changed, value} end)
+      assert [{saga_a, {:changed, :value_a}}] == SagaRegistry.lookup(__MODULE__, :a)
+    end
+
+    test "doesn't deadlock in Saga" do
+      pid = self()
+
+      id =
+        TestHelper.launch_test_saga(
+          launch: fn id, _ ->
+            SagaRegistry.register(__MODULE__, id, :c, 1)
+            SagaRegistry.update_value(__MODULE__, id, :c, fn value -> value + 1 end)
+            send(pid, :updated)
+          end
+        )
+
+      assert_receive :updated
+      assert [{id, 2}] == SagaRegistry.lookup(__MODULE__, :c)
     end
   end
 end

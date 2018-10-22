@@ -13,8 +13,8 @@ defmodule Cizen.Application do
         start: {Cizen.Dispatcher, :start_link, []}
       },
       %{
-        id: Cizen.SagaRegistry,
-        start: {Cizen.SagaRegistry, :start_link, []}
+        id: Cizen.CizenSagaRegistry,
+        start: {Cizen.CizenSagaRegistry, :start_link, []}
       }
     ]
 

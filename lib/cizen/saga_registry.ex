@@ -1,34 +1,94 @@
 defmodule Cizen.SagaRegistry do
   @moduledoc """
-  The registry for automata.
+  A key-value saga storage.
   """
 
+  alias Cizen.CizenSagaRegistry
   alias Cizen.Saga
   alias Cizen.SagaID
 
-  def start_link do
-    Registry.start_link(keys: :unique, name: __MODULE__)
+  @type registry :: Registry.registry()
+  @type key :: Registry.key()
+  @type value :: Registry.value()
+  @type guards :: Registry.guards()
+  @type entry :: {SagaID.t(), value}
+  @type dispatcher :: ([entry] -> term()) | {module(), atom(), [any()]}
+
+  defdelegate start_link(options), to: Registry
+  defdelegate count(registry), to: Registry
+  defdelegate meta(registry, key), to: Registry
+  defdelegate put_meta(registry, key, value), to: Registry
+
+  @spec dispatch(registry(), key(), dispatcher(), keyword()) :: :ok
+  def dispatch(registry, key, mfa_or_fun, opts \\ []) do
+    dispatcher = fn entries ->
+      entries = Enum.map(entries, fn {_pid, entry} -> entry end)
+
+      case mfa_or_fun do
+        fun when is_function(fun) ->
+          fun.(entries)
+
+        {module, function, arguments} ->
+          apply(module, function, [entries | arguments])
+      end
+    end
+
+    Registry.dispatch(registry, key, dispatcher, opts)
   end
 
-  @doc """
-  Returns the pid for the given saga id.
-  """
-  @spec get_pid(SagaID.t()) :: {:ok, pid} | :error
-  def get_pid(id) do
-    case Registry.lookup(__MODULE__, id) do
-      [{pid, _}] -> {:ok, pid}
-      _ -> :error
+  @spec lookup(registry(), key()) :: [entry]
+  def lookup(registry, key) do
+    entries = Registry.lookup(registry, key)
+    Enum.map(entries, fn {_pid, entry} -> entry end)
+  end
+
+  defp call_in_saga(saga_id, request) do
+    case CizenSagaRegistry.get_pid(saga_id) do
+      {:ok, pid} ->
+        if pid == self() do
+          Saga.handle_request(request)
+        else
+          try do
+            GenServer.call(pid, request)
+          catch
+            # rare case
+            :exit, _ -> {:error, :no_saga}
+          end
+        end
+
+      _ ->
+        {:error, :no_saga}
     end
   end
 
-  @doc """
-  Returns the saga struct for the given saga id.
-  """
-  @spec get_saga(SagaID.t()) :: {:ok, Saga.t()} | :error
-  def get_saga(id) do
-    case Registry.lookup(__MODULE__, id) do
-      [{_, saga}] -> {:ok, saga}
-      _ -> :error
+  @spec register(registry(), SagaID.t(), key(), value()) ::
+          {:ok, pid()} | {:error, {:already_registered, SagaID.t()}} | {:error, :no_saga}
+  def register(registry, saga_id, key, value) do
+    result = call_in_saga(saga_id, {:register, registry, saga_id, key, value})
+
+    case result do
+      {:error, {:already_registered, pid}} ->
+        try do
+          saga_id = GenServer.call(pid, :get_saga_id)
+          {:error, {:already_registered, saga_id}}
+        catch
+          # rare case
+          :exit, _ -> register(registry, saga_id, key, value)
+        end
+
+      result ->
+        result
     end
+  end
+
+  @spec unregister(registry(), SagaID.t(), key()) :: :ok | {:error, :no_saga}
+  def unregister(registry, saga_id, key) do
+    call_in_saga(saga_id, {:unregister, registry, key})
+  end
+
+  @spec update_value(registry(), SagaID.t(), key(), (value() -> value())) ::
+          {new_value :: term(), old_value :: term()} | {:error, :no_saga}
+  def update_value(registry, saga_id, key, callback) do
+    call_in_saga(saga_id, {:update_value, registry, key, callback})
   end
 end

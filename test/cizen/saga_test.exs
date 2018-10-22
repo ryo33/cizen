@@ -11,12 +11,12 @@ defmodule Cizen.SagaTest do
       assert_condition: 2
     ]
 
+  alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.Saga
   alias Cizen.SagaID
   alias Cizen.SagaLauncher
-  alias Cizen.SagaRegistry
 
   describe "Saga" do
     test "dispatches Launched event on launch" do
@@ -29,7 +29,7 @@ defmodule Cizen.SagaTest do
       Dispatcher.listen_event_type(Saga.Launched)
       id = launch_test_saga()
       Dispatcher.dispatch(Event.new(nil, %Saga.Finish{id: id}))
-      assert_condition(100, :error == SagaRegistry.get_pid(id))
+      assert_condition(100, :error == CizenSagaRegistry.get_pid(id))
     end
 
     test "dispatches Finished event on finish" do
@@ -68,7 +68,7 @@ defmodule Cizen.SagaTest do
         )
 
       Dispatcher.dispatch(Event.new(nil, %CrashTestEvent1{}))
-      assert_condition(100, :error == SagaRegistry.get_pid(id))
+      assert_condition(100, :error == CizenSagaRegistry.get_pid(id))
     end
 
     defmodule(CrashTestEvent2, do: defstruct([]))
@@ -144,7 +144,7 @@ defmodule Cizen.SagaTest do
         )
 
       assert_receive %Event{body: %Saga.Finished{id: ^id}}
-      assert_condition(100, :error == SagaRegistry.get_pid(id))
+      assert_condition(100, :error == CizenSagaRegistry.get_pid(id))
     end
 
     defmodule LazyLaunchSaga do

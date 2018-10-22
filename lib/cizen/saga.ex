@@ -7,11 +7,11 @@ defmodule Cizen.Saga do
 
   use GenServer
 
+  alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.Saga
   alias Cizen.SagaID
-  alias Cizen.SagaRegistry
 
   @type state :: any
 
@@ -77,7 +77,7 @@ defmodule Cizen.Saga do
   end
 
   def unlaunch(id) do
-    GenServer.stop({:via, Registry, {SagaRegistry, id}}, :shutdown)
+    GenServer.stop({:via, Registry, {CizenSagaRegistry, id}}, :shutdown)
   catch
     :exit, _ -> :ok
   after
@@ -85,12 +85,12 @@ defmodule Cizen.Saga do
   end
 
   def exit(id, reason, trace) do
-    GenServer.stop({:via, Registry, {SagaRegistry, id}}, {:shutdown, {reason, trace}})
+    GenServer.stop({:via, Registry, {CizenSagaRegistry, id}}, {:shutdown, {reason, trace}})
   end
 
   @impl true
   def init({id, saga}) do
-    Registry.register(SagaRegistry, id, saga)
+    Registry.register(CizenSagaRegistry, id, saga)
     Dispatcher.listen_event_body(%Finish{id: id})
     module = Saga.module(saga)
 
@@ -133,5 +133,32 @@ defmodule Cizen.Saga do
   def terminate({:shutdown, {reason, trace}}, {id, _module, _state}) do
     Dispatcher.dispatch(Event.new(id, %Crashed{id: id, reason: reason, stacktrace: trace}))
     :shutdown
+  end
+
+  @impl true
+  def handle_call(:get_saga_id, _from, state) do
+    [saga_id] = Registry.keys(CizenSagaRegistry, self())
+    {:reply, saga_id, state}
+  end
+
+  def handle_call(request, _from, state) do
+    result = handle_request(request)
+    {:reply, result, state}
+  end
+
+  def handle_request({:register, registry, saga_id, key, value}) do
+    Registry.register(registry, key, {saga_id, value})
+  end
+
+  def handle_request({:unregister, registry, key}) do
+    Registry.unregister(registry, key)
+  end
+
+  def handle_request({:unregister_match, registry, key, pattern, guards}) do
+    Registry.unregister_match(registry, key, pattern, guards)
+  end
+
+  def handle_request({:update_value, registry, key, callback}) do
+    Registry.update_value(registry, key, fn {saga_id, value} -> {saga_id, callback.(value)} end)
   end
 end

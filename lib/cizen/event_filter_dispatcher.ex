@@ -5,11 +5,11 @@ defmodule Cizen.EventFilterDispatcher do
 
   use GenServer
 
+  alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.EventFilter
   alias Cizen.SagaID
-  alias Cizen.SagaRegistry
 
   defmodule PushEvent do
     @moduledoc """
@@ -92,7 +92,7 @@ defmodule Cizen.EventFilterDispatcher do
 
   def handle_info(%Event{body: %__MODULE__.Subscribe{subscription: subscription}}, state) do
     state =
-      case SagaRegistry.get_pid(subscription.subscriber_saga_id) do
+      case CizenSagaRegistry.get_pid(subscription.subscriber_saga_id) do
         {:ok, pid} ->
           ref = Process.monitor(pid)
           refs = Map.put(state.refs, ref, subscription)

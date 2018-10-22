@@ -5,12 +5,12 @@ defmodule Cizen.Transmitter do
 
   use GenServer
 
+  alias Cizen.CizenSagaRegistry
   alias Cizen.Connection
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.SagaID
   alias Cizen.SagaLauncher
-  alias Cizen.SagaRegistry
 
   alias Cizen.ReceiveMessage
   alias Cizen.SendMessage
@@ -51,7 +51,7 @@ defmodule Cizen.Transmitter do
 
   @impl true
   def handle_info(%Event{body: %ReceiveMessage{message: message}} = event, state) do
-    case SagaRegistry.get_pid(message.destination_saga_id) do
+    case CizenSagaRegistry.get_pid(message.destination_saga_id) do
       {:ok, pid} ->
         send(pid, event)
 

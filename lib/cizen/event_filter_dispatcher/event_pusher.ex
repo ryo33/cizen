@@ -5,10 +5,10 @@ defmodule Cizen.EventFilterDispatcher.EventPusher do
 
   use GenServer
 
+  alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.EventFilterDispatcher.PushEvent
-  alias Cizen.SagaRegistry
 
   def start_link do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
@@ -22,7 +22,7 @@ defmodule Cizen.EventFilterDispatcher.EventPusher do
 
   @impl true
   def handle_info(%Event{body: %PushEvent{saga_id: saga_id}} = event, state) do
-    case SagaRegistry.get_pid(saga_id) do
+    case CizenSagaRegistry.get_pid(saga_id) do
       {:ok, pid} -> send(pid, event)
       _ -> :ok
     end
