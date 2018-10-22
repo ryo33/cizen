@@ -1,6 +1,8 @@
 defmodule Cizen.SagaRegistry do
   @moduledoc """
   A key-value saga storage.
+
+  It works like `Registry`.
   """
 
   alias Cizen.CizenSagaRegistry
