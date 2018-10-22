@@ -6,8 +6,6 @@ defmodule Cizen.Automaton do
   alias Cizen.Dispatcher
   alias Cizen.EffectHandler
   alias Cizen.Event
-  alias Cizen.EventFilter
-  alias Cizen.EventFilterDispatcher
   alias Cizen.Message
   alias Cizen.Saga
   alias Cizen.SagaID
@@ -87,8 +85,8 @@ defmodule Cizen.Automaton do
   Note that `perform/2` does not work only on the current process.
   """
   defmacro perform(id, effect) do
-    quote do
-      Dispatcher.dispatch(Event.new(unquote(id), %PerformEffect{effect: unquote(effect)}))
+    quote bind_quoted: [id: id, effect: effect] do
+      Dispatcher.dispatch(Event.new(id, %PerformEffect{handler: id, effect: effect}))
 
       receive do
         response -> response
@@ -108,11 +106,6 @@ defmodule Cizen.Automaton do
   end
 
   def init(id, saga) do
-    EventFilterDispatcher.subscribe(id, __MODULE__, %EventFilter{
-      source_saga_id: id,
-      event_type: PerformEffect
-    })
-
     module = Saga.module(saga)
 
     pid =
@@ -131,19 +124,7 @@ defmodule Cizen.Automaton do
     {Saga.lazy_launch(), {pid, handler_state}}
   end
 
-  def handle_event(
-        _id,
-        %Event{
-          body: %EventFilterDispatcher.PushEvent{
-            event: %Event{
-              body: %PerformEffect{
-                effect: effect
-              }
-            }
-          }
-        },
-        {pid, handler}
-      ) do
+  def handle_event(_id, %Event{body: %PerformEffect{effect: effect}}, {pid, handler}) do
     handle_result(pid, EffectHandler.perform_effect(handler, effect))
   end
 

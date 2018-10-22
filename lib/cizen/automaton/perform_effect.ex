@@ -3,7 +3,7 @@ defmodule Cizen.Automaton.PerformEffect do
   An event to perform an effect.
   """
 
-  @keys [:effect]
+  @keys [:handler, :effect]
   @enforce_keys @keys
   defstruct @keys
 end
