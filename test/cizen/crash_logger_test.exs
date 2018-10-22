@@ -28,12 +28,13 @@ defmodule Cizen.CrashLoggerTest do
     output =
       capture_log(fn ->
         Dispatcher.dispatch(Event.new(nil, %CrashTestEvent{}))
-        :timer.sleep(100)
         require Logger
         Logger.flush()
+        :timer.sleep(50)
       end)
 
     assert output =~ "saga #{saga_id} is crashed"
+    assert output =~ "%Cizen.TestSaga{"
     assert output =~ "(RuntimeError) Crash!!!"
     assert output =~ "test/cizen/crash_logger_test.exs:"
   end

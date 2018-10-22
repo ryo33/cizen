@@ -23,11 +23,16 @@ defmodule Cizen.CrashLogger do
 
     %Saga.Crashed{
       id: saga_id,
+      saga: saga,
       reason: reason,
       stacktrace: stacktrace
     } = crashed_event.body
 
-    message = "saga #{saga_id} is crashed\n"
+    message = """
+    saga #{saga_id} is crashed
+    #{inspect(saga)}
+    """
+
     Logger.error(message <> Exception.format(:error, reason, stacktrace))
 
     :loop
