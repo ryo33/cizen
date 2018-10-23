@@ -30,7 +30,7 @@ defmodule Cizen.EventFilterDispatcher do
   """
   @spec subscribe(SagaID.t(), EventFilter.t(), meta :: term) :: __MODULE__.Subscription.t()
   def subscribe(id, event_filter, meta \\ nil) do
-    subscribe_as_proxy(nil, id, event_filter, meta)
+    subscribe_as_proxy(nil, id, nil, event_filter, meta)
   end
 
   @doc """
@@ -39,28 +39,31 @@ defmodule Cizen.EventFilterDispatcher do
   @spec subscribe_as_proxy(
           proxy :: SagaID.t() | nil,
           SagaID.t(),
+          SagaID.t() | nil,
           EventFilter.t(),
           meta :: term
         ) :: __MODULE__.Subscription.t()
-  def subscribe_as_proxy(proxy_id, id, event_filter, meta \\ nil) do
+  def subscribe_as_proxy(proxy_id, id, lifetime_id, event_filter, meta \\ nil) do
     subscription = %__MODULE__.Subscription{
       proxy_saga_id: proxy_id,
       subscriber_saga_id: id,
+      lifetime_saga_id: lifetime_id,
       event_filter: event_filter,
       meta: meta
     }
 
+    event =
+      Event.new(id, %__MODULE__.Subscribe{
+        subscription: subscription
+      })
+
     task =
       Task.async(fn ->
         Dispatcher.listen_event_body(%__MODULE__.Subscribe.Subscribed{
-          subscription: subscription
+          subscribe_id: event.id
         })
 
-        Dispatcher.dispatch(
-          Event.new(id, %__MODULE__.Subscribe{
-            subscription: subscription
-          })
-        )
+        Dispatcher.dispatch(event)
 
         receive do
           %Event{body: %__MODULE__.Subscribe.Subscribed{}} -> :ok
@@ -80,43 +83,73 @@ defmodule Cizen.EventFilterDispatcher do
      %{
        # ref => subscription
        refs: %{},
-       subscriptions: MapSet.new([])
+       # subscription => refs
+       subscriptions: %{}
      }}
   end
 
   @impl true
   def handle_info(%Event{body: %PushEvent{}}, state), do: {:noreply, state}
 
-  def handle_info(%Event{body: %__MODULE__.Subscribe{subscription: subscription}}, state) do
-    state =
-      case CizenSagaRegistry.get_pid(subscription.subscriber_saga_id) do
-        {:ok, pid} ->
-          ref = Process.monitor(pid)
-          refs = Map.put(state.refs, ref, subscription)
-          subscriptions = MapSet.put(state.subscriptions, subscription)
+  def handle_info(%Event{body: %__MODULE__.Subscribe{subscription: subscription}} = event, state) do
+    lifetimes = [subscription.subscriber_saga_id]
 
-          Dispatcher.dispatch(
-            Event.new(nil, %__MODULE__.Subscribe.Subscribed{subscription: subscription})
-          )
-
-          %{state | refs: refs, subscriptions: subscriptions}
-
-        :error ->
-          state
+    lifetimes =
+      if is_nil(subscription.lifetime_saga_id) do
+        lifetimes
+      else
+        [subscription.lifetime_saga_id | lifetimes]
       end
+
+    pids =
+      Enum.map(lifetimes, fn lifetime ->
+        case CizenSagaRegistry.get_pid(lifetime) do
+          {:ok, pid} -> pid
+          _ -> nil
+        end
+      end)
+
+    state =
+      if Enum.all?(pids, &is_pid/1) do
+        refs =
+          pids
+          |> Enum.map(&Process.monitor/1)
+
+        subscriptions = Map.put(state.subscriptions, subscription, refs)
+
+        refs =
+          Enum.reduce(refs, state.refs, fn ref, refs ->
+            Map.put(refs, ref, subscription)
+          end)
+
+        %{state | refs: refs, subscriptions: subscriptions}
+      else
+        state
+      end
+
+    Dispatcher.dispatch(Event.new(nil, %__MODULE__.Subscribe.Subscribed{subscribe_id: event.id}))
 
     {:noreply, state}
   end
 
   def handle_info({:DOWN, ref, :process, _, _}, state) do
     {subscription, refs} = Map.pop(state.refs, ref)
-    subscriptions = MapSet.delete(state.subscriptions, subscription)
+    {drop, subscriptions} = Map.pop(state.subscriptions, subscription)
+
+    refs =
+      if not is_nil(drop) and length(drop) > 1 do
+        Map.drop(refs, drop)
+      else
+        refs
+      end
+
     state = %{state | refs: refs, subscriptions: subscriptions}
     {:noreply, state}
   end
 
   def handle_info(%Event{} = event, state) do
     state.subscriptions
+    |> Map.keys()
     |> Enum.filter(fn subscription ->
       __MODULE__.Subscription.match?(subscription, event)
     end)

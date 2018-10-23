@@ -12,7 +12,7 @@ defmodule Cizen.EventFilterDispatcher.Subscribe do
     An event which is fired after subscription is created.
     """
 
-    @keys [:subscription]
+    @keys [:subscribe_id]
     @enforce_keys @keys
     defstruct @keys
   end

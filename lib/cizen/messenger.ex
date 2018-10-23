@@ -86,13 +86,8 @@ defmodule Cizen.Messenger do
         lifetime_saga_id: lifetime
       } = body
 
-      meta = {:subscriber, subscriber}
-
-      if is_nil(lifetime) do
-        EventFilterDispatcher.subscribe_as_proxy(id, subscriber, event_filter, meta)
-      else
-        EventFilterDispatcher.subscribe_as_proxy(id, lifetime, event_filter, meta)
-      end
+      meta = :subscriber
+      EventFilterDispatcher.subscribe_as_proxy(id, subscriber, lifetime, event_filter, meta)
 
       Dispatcher.dispatch(
         Event.new(id, %SubscribeMessage.Subscribed{
@@ -109,7 +104,7 @@ defmodule Cizen.Messenger do
     spawn_link(fn ->
       saga_id = body.channel_saga_id
       meta = :channel
-      EventFilterDispatcher.subscribe_as_proxy(id, saga_id, body.event_filter, meta)
+      EventFilterDispatcher.subscribe_as_proxy(id, saga_id, nil, body.event_filter, meta)
 
       Dispatcher.dispatch(
         Event.new(id, %RegisterChannel.Registered{
@@ -143,7 +138,7 @@ defmodule Cizen.Messenger do
 
     subscribers =
       subscriptions
-      |> Enum.map(fn %EventFilterDispatcher.Subscription{meta: {:subscriber, subscriber}} ->
+      |> Enum.map(fn %EventFilterDispatcher.Subscription{subscriber_saga_id: subscriber} ->
         subscriber
       end)
 

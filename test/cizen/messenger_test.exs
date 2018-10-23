@@ -39,7 +39,7 @@ defmodule Cizen.MenssengerTest do
         subscription: %EventFilterDispatcher.Subscription{
           subscriber_saga_id: ^subscriber_id,
           event_filter: ^event_filter,
-          meta: {:subscriber, ^subscriber_id}
+          meta: :subscriber
         }
       }
     }
@@ -341,7 +341,6 @@ defmodule Cizen.MenssengerTest do
 
   test "unsubscribe when the given lifetime saga finishes" do
     pid = self()
-    Dispatcher.listen_event_type(SendMessage)
 
     subscriber = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
 
@@ -369,5 +368,36 @@ defmodule Cizen.MenssengerTest do
     Dispatcher.dispatch(event)
 
     refute_receive {^subscriber, ^event}
+  end
+
+  test "removes subscription with lifetime when the subsriber finishes" do
+    subscriber = launch_test_saga()
+
+    source_id = launch_test_saga()
+    lifetime_saga = launch_test_saga()
+
+    assert_handle(fn id ->
+      perform id, %Request{
+        body: %SubscribeMessage{
+          subscriber_saga_id: subscriber,
+          event_filter: %EventFilter{source_saga_id: source_id},
+          lifetime_saga_id: lifetime_saga
+        }
+      }
+    end)
+
+    Dispatcher.listen_event_type(SendMessage)
+
+    event = Event.new(source_id, %TestEvent{value: :a})
+    Dispatcher.dispatch(event)
+
+    assert_receive %Event{body: %SendMessage{saga_id: ^subscriber, event: ^event}}
+
+    TestHelper.ensure_finished(subscriber)
+
+    event = Event.new(source_id, %TestEvent{value: :b})
+    Dispatcher.dispatch(event)
+
+    refute_receive %Event{body: %SendMessage{saga_id: ^subscriber, event: ^event}}
   end
 end

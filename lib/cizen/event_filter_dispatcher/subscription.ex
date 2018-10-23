@@ -9,6 +9,7 @@ defmodule Cizen.EventFilterDispatcher.Subscription do
 
   @type t :: %__MODULE__{
           proxy_saga_id: SagaID.t() | nil,
+          lifetime_saga_id: SagaID.t() | nil,
           subscriber_saga_id: SagaID.t(),
           event_filter: EventFilter.t(),
           meta: term
@@ -17,6 +18,7 @@ defmodule Cizen.EventFilterDispatcher.Subscription do
   @enforce_keys [:subscriber_saga_id, :event_filter]
   defstruct [
     :proxy_saga_id,
+    :lifetime_saga_id,
     :subscriber_saga_id,
     :event_filter,
     :meta

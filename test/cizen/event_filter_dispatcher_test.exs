@@ -46,10 +46,23 @@ defmodule Cizen.EventFilterDispatcherTest do
   test "dispatches EventFilterDispatcher.Subscribe.Subscribed event" do
     saga_id = launch_test_saga()
     Dispatcher.listen_event_type(EventFilterDispatcher.Subscribe.Subscribed)
-    subscription = EventFilterDispatcher.subscribe(saga_id, %EventFilter{}, :value)
+
+    subscription = %EventFilterDispatcher.Subscription{
+      subscriber_saga_id: saga_id,
+      event_filter: %EventFilter{},
+      meta: :value
+    }
+
+    event =
+      Event.new(saga_id, %EventFilterDispatcher.Subscribe{
+        subscription: subscription
+      })
+
+    Dispatcher.dispatch(event)
+    id = event.id
 
     assert_receive %Event{
-      body: %EventFilterDispatcher.Subscribe.Subscribed{subscription: ^subscription}
+      body: %EventFilterDispatcher.Subscribe.Subscribed{subscribe_id: ^id}
     }
   end
 
@@ -177,6 +190,7 @@ defmodule Cizen.EventFilterDispatcherTest do
     EventFilterDispatcher.subscribe_as_proxy(
       proxy_saga_id,
       saga_id,
+      nil,
       %EventFilter{
         source_saga_id: source_saga_id
       }
@@ -234,5 +248,29 @@ defmodule Cizen.EventFilterDispatcherTest do
     Dispatcher.dispatch(Event.new(source_saga_id, %TestEvent{value: :a}))
 
     refute_receive %Event{body: %PushEvent{saga_id: ^saga_id, event: %Event{body: %TestEvent{}}}}
+  end
+
+  test "remove the subscription when the lifetime saga finishes" do
+    proxy = launch_test_saga()
+    subscriber = launch_test_saga()
+    lifetime = launch_test_saga()
+    source_saga_id = launch_test_saga()
+
+    old_state = :sys.get_state(EventFilterDispatcher)
+
+    Dispatcher.listen_event_type(PushEvent)
+
+    EventFilterDispatcher.subscribe_as_proxy(proxy, subscriber, lifetime, %EventFilter{
+      event_type: TestEvent,
+      source_saga_id: source_saga_id
+    })
+
+    TestHelper.ensure_finished(lifetime)
+
+    assert_condition(100, :sys.get_state(EventFilterDispatcher) == old_state)
+
+    Dispatcher.dispatch(Event.new(source_saga_id, %TestEvent{value: :a}))
+
+    refute_receive %Event{body: %PushEvent{saga_id: ^proxy, event: %Event{body: %TestEvent{}}}}
   end
 end
