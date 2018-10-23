@@ -16,10 +16,11 @@ defmodule Cizen.SagaRegistry do
   @type entry :: {SagaID.t(), value}
   @type dispatcher :: ([entry] -> term()) | {module(), atom(), [any()]}
 
-  defdelegate start_link(options), to: Registry
+  defdelegate child_spec(options), to: Registry
   defdelegate count(registry), to: Registry
   defdelegate meta(registry, key), to: Registry
   defdelegate put_meta(registry, key, value), to: Registry
+  defdelegate start_link(options), to: Registry
 
   @spec dispatch(registry(), key(), dispatcher(), keyword()) :: :ok
   def dispatch(registry, key, mfa_or_fun, opts \\ []) do
@@ -38,29 +39,21 @@ defmodule Cizen.SagaRegistry do
     Registry.dispatch(registry, key, dispatcher, opts)
   end
 
+  @spec keys(registry(), SagaID.t()) :: [value()]
+  def keys(registry, saga_id) do
+    case CizenSagaRegistry.get_pid(saga_id) do
+      {:ok, pid} ->
+        Registry.keys(registry, pid)
+
+      _ ->
+        []
+    end
+  end
+
   @spec lookup(registry(), key()) :: [entry]
   def lookup(registry, key) do
     entries = Registry.lookup(registry, key)
     Enum.map(entries, fn {_pid, entry} -> entry end)
-  end
-
-  defp call_in_saga(saga_id, request) do
-    case CizenSagaRegistry.get_pid(saga_id) do
-      {:ok, pid} ->
-        if pid == self() do
-          Saga.handle_request(request)
-        else
-          try do
-            GenServer.call(pid, request)
-          catch
-            # rare case
-            :exit, _ -> {:error, :no_saga}
-          end
-        end
-
-      _ ->
-        {:error, :no_saga}
-    end
   end
 
   @spec register(registry(), SagaID.t(), key(), value()) ::
@@ -92,5 +85,24 @@ defmodule Cizen.SagaRegistry do
           {new_value :: term(), old_value :: term()} | {:error, :no_saga}
   def update_value(registry, saga_id, key, callback) do
     call_in_saga(saga_id, {:update_value, registry, key, callback})
+  end
+
+  defp call_in_saga(saga_id, request) do
+    case CizenSagaRegistry.get_pid(saga_id) do
+      {:ok, pid} ->
+        if pid == self() do
+          Saga.handle_request(request)
+        else
+          try do
+            GenServer.call(pid, request)
+          catch
+            # rare case
+            :exit, _ -> {:error, :no_saga}
+          end
+        end
+
+      _ ->
+        {:error, :no_saga}
+    end
   end
 end

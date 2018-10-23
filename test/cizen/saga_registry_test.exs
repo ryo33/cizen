@@ -151,4 +151,23 @@ defmodule Cizen.SagaRegistryTest do
       assert [{id, 2}] == SagaRegistry.lookup(__MODULE__, :c)
     end
   end
+
+  describe "keys/2" do
+    setup [:setup_registry, :setup_registered]
+
+    test "works", %{saga_a: saga_a, saga_b: saga_b} do
+      {:ok, _} = SagaRegistry.register(__MODULE__, saga_b, :b2, :value_b2)
+
+      assert [:a] == SagaRegistry.keys(__MODULE__, saga_a)
+
+      b_keys = SagaRegistry.keys(__MODULE__, saga_b)
+      assert length(b_keys)
+      assert :b in b_keys
+      assert :b2 in b_keys
+    end
+
+    test "returns empty for an unknown saga ID" do
+      assert [] == SagaRegistry.keys(__MODULE__, SagaID.new())
+    end
+  end
 end
