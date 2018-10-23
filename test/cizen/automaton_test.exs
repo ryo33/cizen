@@ -1,6 +1,7 @@
 defmodule Cizen.AutomatonTest do
   use Cizen.SagaCase
   alias Cizen.EffectHandlerTestHelper.{TestEffect, TestEvent}
+  alias Cizen.TestHelper
 
   alias Cizen.Automaton
   alias Cizen.Dispatcher
@@ -18,7 +19,7 @@ defmodule Cizen.AutomatonTest do
       import Automaton, only: [perform: 2]
 
       Dispatcher.listen_event_type(PerformEffect)
-      saga_id = SagaID.new()
+      saga_id = TestHelper.launch_test_saga()
       effect = %TestEffect{value: :a}
 
       spawn_link(fn ->
@@ -31,10 +32,11 @@ defmodule Cizen.AutomatonTest do
     test "block until message is coming and returns the message" do
       import Automaton, only: [perform: 2]
       current = self()
+      saga_id = TestHelper.launch_test_saga()
 
       pid =
         spawn_link(fn ->
-          assert :value == perform(SagaID.new(), %TestEffect{value: :a})
+          assert :value == perform(saga_id, %TestEffect{value: :a})
           send(current, :ok)
         end)
 

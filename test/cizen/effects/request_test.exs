@@ -1,5 +1,6 @@
 defmodule Cizen.Effects.RequestTest do
   use Cizen.SagaCase
+  alias Cizen.TestHelper
 
   alias Cizen.Automaton
   alias Cizen.Dispatcher
@@ -8,7 +9,6 @@ defmodule Cizen.Effects.RequestTest do
   alias Cizen.Event
   alias Cizen.EventFilter
   alias Cizen.EventID
-  alias Cizen.Saga
   alias Cizen.SagaID
 
   alias Cizen.Request
@@ -35,7 +35,7 @@ defmodule Cizen.Effects.RequestTest do
 
   describe "Request" do
     test "does not resolves on a response for another request" do
-      saga_id = SagaID.new()
+      saga_id = TestHelper.launch_test_saga()
 
       {effect, state} =
         Effect.init(saga_id, %Effects.Request{
@@ -73,9 +73,6 @@ defmodule Cizen.Effects.RequestTest do
     end
 
     test "works with Automaton" do
-      saga_id = SagaID.new()
-      Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
-
       spawn_link(fn ->
         Dispatcher.listen_event_type(TestRequest)
 
@@ -87,7 +84,7 @@ defmodule Cizen.Effects.RequestTest do
 
       Dispatcher.dispatch(
         Event.new(nil, %StartSaga{
-          id: saga_id,
+          id: SagaID.new(),
           saga: %TestAutomaton{pid: self()}
         })
       )

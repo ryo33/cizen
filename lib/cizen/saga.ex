@@ -1,6 +1,23 @@
 defmodule Cizen.Saga do
   @moduledoc """
   The saga behaviour
+
+  ## Example
+
+      defmodule SomeSaga do
+        @behaviour Cizen.Saga
+        defstruct []
+
+        @impl true
+        def init(_id, saga) do
+          saga
+        end
+
+        @impl true
+        def handle_event(_id, _event, state) do
+          state
+        end
+      end
   """
 
   @type t :: struct

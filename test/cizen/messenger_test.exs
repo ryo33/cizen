@@ -82,7 +82,7 @@ defmodule Cizen.MenssengerTest do
   test "dispatches SendMessage event" do
     Dispatcher.listen_event_type(SendMessage)
 
-    source_saga_id = SagaID.new()
+    source_saga_id = launch_test_saga()
 
     event_filter = %EventFilter{source_saga_id: source_saga_id}
     another_event_filter = %EventFilter{source_saga_id: SagaID.new()}
@@ -135,7 +135,7 @@ defmodule Cizen.MenssengerTest do
   test "dispatches SendMessage event without channels" do
     Dispatcher.listen_event_type(SendMessage)
 
-    source_saga_id = SagaID.new()
+    source_saga_id = launch_test_saga()
 
     event_filter = %EventFilter{source_saga_id: source_saga_id}
 
@@ -174,7 +174,7 @@ defmodule Cizen.MenssengerTest do
   test "filters channels with using Channel.match?/2" do
     Dispatcher.listen_event_type(SendMessage)
 
-    source_saga_id = SagaID.new()
+    source_saga_id = launch_test_saga()
 
     event_filter = %EventFilter{source_saga_id: source_saga_id}
 
@@ -216,7 +216,7 @@ defmodule Cizen.MenssengerTest do
   test "doesn't crash if there is no subscribers" do
     Dispatcher.listen_event_type(Saga.Crashed)
 
-    source_saga_id = SagaID.new()
+    source_saga_id = launch_test_saga()
 
     event_filter = %EventFilter{source_saga_id: source_saga_id}
 

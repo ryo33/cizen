@@ -34,7 +34,8 @@ defmodule Cizen.TestHelper do
             state = launch.(id, state)
             state
           end,
-          handle_event: Keyword.get(opts, :handle_event, fn _id, _event, state -> state end)
+          handle_event: Keyword.get(opts, :handle_event, fn _id, _event, state -> state end),
+          extra: Keyword.get(opts, :extra, nil)
         }
       })
     )

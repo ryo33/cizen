@@ -2,7 +2,7 @@ defmodule Cizen.TestSaga do
   @moduledoc false
   @behaviour Cizen.Saga
 
-  defstruct [:launch, :handle_event, :state]
+  defstruct [:launch, :handle_event, :state, :extra]
 
   @impl true
   def init(id, %__MODULE__{launch: launch, handle_event: handle_event, state: state} = struct) do
@@ -17,4 +17,7 @@ defmodule Cizen.TestSaga do
     state = handle_event.(id, event, state)
     %__MODULE__{struct | state: state}
   end
+
+  import Cizen.SagaFilter
+  defsagafilter ExtraFilter, :extra
 end

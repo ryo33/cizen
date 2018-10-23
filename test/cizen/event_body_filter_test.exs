@@ -5,9 +5,9 @@ defmodule Cizen.EventBodyFilterTest do
     defstruct [:some_key]
 
     import Cizen.EventBodyFilter
-    defeventbodyfilter(SomeKeyFilter, :some_key)
+    defeventbodyfilter SomeKeyFilter, :some_key
 
-    defeventbodyfilter(WithBlock, :some_key) do
+    defeventbodyfilter WithBlock, :some_key do
       def some_function, do: :defined
     end
   end

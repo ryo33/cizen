@@ -1,5 +1,6 @@
 defmodule Cizen.Effects.DispatchTest do
   use Cizen.SagaCase
+  alias Cizen.TestHelper
 
   alias Cizen.Automaton
   alias Cizen.Dispatcher
@@ -14,7 +15,7 @@ defmodule Cizen.Effects.DispatchTest do
   defmodule(TestEvent, do: defstruct([:value]))
 
   defp setup_dispatch(_context) do
-    id = SagaID.new()
+    id = TestHelper.launch_test_saga()
 
     effect = %Dispatch{
       body: %TestEvent{value: :a}
