@@ -6,11 +6,13 @@ defmodule Cizen.Effects.Subscribe do
 
   ## Example
       perform id, %Subscribe{
-        event_filter: EventFilter.new(event_type: some_event_type)
+        event_filter: EventFilter.new(event_type: some_event_type),
+        lifetime_saga_id: some_saga_id
       }
   """
 
-  defstruct [:event_filter]
+  @enforce_keys [:event_filter]
+  defstruct [:event_filter, :lifetime_saga_id]
 
   alias Cizen.Effect
   alias Cizen.Effects.{Map, Request}
@@ -20,10 +22,19 @@ defmodule Cizen.Effects.Subscribe do
   @behaviour Effect
 
   @impl true
-  def init(id, %__MODULE__{event_filter: event_filter}) do
+  def init(id, %__MODULE__{} = saga) do
+    %__MODULE__{
+      event_filter: event_filter,
+      lifetime_saga_id: lifetime_saga_id
+    } = saga
+
     effect = %Map{
       effect: %Request{
-        body: %SubscribeMessage{subscriber_saga_id: id, event_filter: event_filter}
+        body: %SubscribeMessage{
+          subscriber_saga_id: id,
+          event_filter: event_filter,
+          lifetime_saga_id: lifetime_saga_id
+        }
       },
       transform: fn _response -> :ok end
     }

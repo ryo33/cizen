@@ -60,12 +60,12 @@ defmodule Cizen.SagaCase do
     current = self()
 
     spawn_link(fn ->
-      handle(func)
-      send(current, :finished)
+      result = handle(func)
+      send(current, {:finished, result})
     end)
 
     receive do
-      :finished -> :ok
+      {:finished, result} -> result
     after
       1000 -> flunk("timeout assert_handle")
     end

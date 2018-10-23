@@ -1,16 +1,19 @@
 defmodule Cizen.MenssengerTest do
   use Cizen.SagaCase
+  alias Cizen.TestHelper
   import Cizen.TestHelper, only: [launch_test_saga: 0, launch_test_saga: 1]
 
-  alias Cizen.Channel.EmitMessage
-  alias Cizen.Channel.FeedMessage
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.EventFilter
   alias Cizen.EventFilterDispatcher
   alias Cizen.Messenger
-  alias Cizen.RegisterChannel
   alias Cizen.SagaID
+
+  alias Cizen.Channel.EmitMessage
+  alias Cizen.Channel.FeedMessage
+  alias Cizen.RegisterChannel
+  alias Cizen.SendMessage
   alias Cizen.SubscribeMessage
 
   defmodule(TestEvent, do: defstruct([:value]))
@@ -36,7 +39,7 @@ defmodule Cizen.MenssengerTest do
         subscription: %EventFilterDispatcher.Subscription{
           subscriber_saga_id: ^subscriber_id,
           event_filter: ^event_filter,
-          meta: :subscriber
+          meta: {:subscriber, ^subscriber_id}
         }
       }
     }
@@ -334,5 +337,37 @@ defmodule Cizen.MenssengerTest do
 
     assert_receive {^subscriber_a, ^event}
     assert_receive {^subscriber_b, ^event}
+  end
+
+  test "unsubscribe when the given lifetime saga finishes" do
+    pid = self()
+    Dispatcher.listen_event_type(SendMessage)
+
+    subscriber = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
+
+    source_id = launch_test_saga()
+    lifetime_saga = launch_test_saga()
+
+    assert_handle(fn id ->
+      perform id, %Request{
+        body: %SubscribeMessage{
+          subscriber_saga_id: subscriber,
+          event_filter: %EventFilter{source_saga_id: source_id},
+          lifetime_saga_id: lifetime_saga
+        }
+      }
+    end)
+
+    event = Event.new(source_id, %TestEvent{value: :a})
+    Dispatcher.dispatch(event)
+
+    assert_receive {^subscriber, ^event}
+
+    TestHelper.ensure_finished(lifetime_saga)
+
+    event = Event.new(source_id, %TestEvent{value: :b})
+    Dispatcher.dispatch(event)
+
+    refute_receive {^subscriber, ^event}
   end
 end

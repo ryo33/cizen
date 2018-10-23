@@ -6,7 +6,8 @@ defmodule Cizen.SubscribeMessage do
   @enforce_keys [:subscriber_saga_id, :event_filter]
   defstruct [
     :subscriber_saga_id,
-    :event_filter
+    :event_filter,
+    :lifetime_saga_id
   ]
 
   use Cizen.Request
