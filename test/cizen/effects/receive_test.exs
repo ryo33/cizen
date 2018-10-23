@@ -77,8 +77,8 @@ defmodule Cizen.Effects.ReceiveTest do
           event_type: TestEvent2
         }
 
-        Messenger.subscribe_message(id, __MODULE__, test_event1_filter)
-        Messenger.subscribe_message(id, __MODULE__, test_event2_filter)
+        Messenger.subscribe_message(id, test_event1_filter)
+        Messenger.subscribe_message(id, test_event2_filter)
 
         send(pid, :launched)
 

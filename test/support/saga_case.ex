@@ -9,6 +9,8 @@ defmodule Cizen.SagaCase do
   alias Cizen.Event
   alias Cizen.SagaLauncher
 
+  alias Cizen.RegisterChannel
+
   using do
     quote do
       use Cizen.Effectful
@@ -73,8 +75,7 @@ defmodule Cizen.SagaCase do
     @moduledoc false
     use Cizen.Automaton
 
-    alias Cizen.Channel
-    alias Cizen.Effects.{Dispatch, Receive, Request}
+    alias Cizen.Effects.{Receive, Request}
     alias Cizen.EventFilter
     alias Cizen.RegisterChannel
     alias Cizen.Saga
@@ -84,11 +85,7 @@ defmodule Cizen.SagaCase do
     def spawn(id, %__MODULE__{}) do
       perform(id, %Request{
         body: %RegisterChannel{
-          channel: %Channel{
-            saga_id: id,
-            saga_module: __MODULE__
-            # destination_saga_module: Cizen.CrashLogger
-          },
+          channel_saga_id: id,
           event_filter: EventFilter.new(event_type: Saga.Crashed)
         }
       })
@@ -97,21 +94,7 @@ defmodule Cizen.SagaCase do
     end
 
     def yield(id, :loop) do
-      feed_event = perform(id, %Receive{})
-
-      %Channel.FeedMessage{
-        connection_id: connection_id,
-        channel: channel,
-        message: message
-      } = feed_event.body
-
-      perform(id, %Dispatch{
-        body: %Channel.RejectMessage{
-          connection_id: connection_id,
-          channel: channel,
-          message: message
-        }
-      })
+      perform(id, %Receive{})
 
       :loop
     end

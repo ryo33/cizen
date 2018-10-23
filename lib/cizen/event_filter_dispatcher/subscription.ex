@@ -10,7 +10,6 @@ defmodule Cizen.EventFilterDispatcher.Subscription do
   @type t :: %__MODULE__{
           proxy_saga_id: SagaID.t() | nil,
           subscriber_saga_id: SagaID.t(),
-          subscriber_saga_module: module | nil,
           event_filter: EventFilter.t(),
           meta: term
         }
@@ -19,7 +18,6 @@ defmodule Cizen.EventFilterDispatcher.Subscription do
   defstruct [
     :proxy_saga_id,
     :subscriber_saga_id,
-    :subscriber_saga_module,
     :event_filter,
     :meta
   ]

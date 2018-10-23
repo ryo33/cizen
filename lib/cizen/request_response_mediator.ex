@@ -36,7 +36,7 @@ defmodule Cizen.RequestResponseMediator do
       |> module.response_event_filters()
       |> Enum.map(
         &Task.async(fn ->
-          EventFilterDispatcher.subscribe(id, __MODULE__, &1)
+          EventFilterDispatcher.subscribe(id, &1)
         end)
       )
       |> Enum.each(&Task.await(&1))

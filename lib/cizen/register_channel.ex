@@ -3,7 +3,7 @@ defmodule Cizen.RegisterChannel do
   An event to register a channel.
   """
 
-  @keys [:channel, :event_filter]
+  @keys [:channel_saga_id, :event_filter]
   @enforce_keys @keys
   defstruct @keys
 

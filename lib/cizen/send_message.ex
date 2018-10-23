@@ -3,7 +3,7 @@ defmodule Cizen.SendMessage do
   An event to send message.
   """
 
-  @keys [:message, :channels]
+  @keys [:event, :saga_id]
   @enforce_keys @keys
   defstruct @keys
 end

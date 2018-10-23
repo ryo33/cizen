@@ -15,7 +15,7 @@ defmodule Cizen.EventFilterDispatcherTest do
 
   test "subscribe/3 sets the meta data" do
     saga_id = launch_test_saga()
-    subscription = EventFilterDispatcher.subscribe(saga_id, nil, %EventFilter{}, :value)
+    subscription = EventFilterDispatcher.subscribe(saga_id, %EventFilter{}, :value)
     assert subscription.meta == :value
   end
 
@@ -28,7 +28,7 @@ defmodule Cizen.EventFilterDispatcherTest do
       source_saga_id: source_saga_id
     }
 
-    EventFilterDispatcher.subscribe(saga_id, nil, event_filter)
+    EventFilterDispatcher.subscribe(saga_id, event_filter)
 
     Dispatcher.dispatch(Event.new(source_saga_id, %TestEvent{value: :a}))
     Dispatcher.dispatch(Event.new(launch_test_saga(), %TestEvent{value: :b}))
@@ -46,7 +46,7 @@ defmodule Cizen.EventFilterDispatcherTest do
   test "dispatches EventFilterDispatcher.Subscribe.Subscribed event" do
     saga_id = launch_test_saga()
     Dispatcher.listen_event_type(EventFilterDispatcher.Subscribe.Subscribed)
-    subscription = EventFilterDispatcher.subscribe(saga_id, nil, %EventFilter{}, :value)
+    subscription = EventFilterDispatcher.subscribe(saga_id, %EventFilter{}, :value)
 
     assert_receive %Event{
       body: %EventFilterDispatcher.Subscribe.Subscribed{subscription: ^subscription}
@@ -59,11 +59,11 @@ defmodule Cizen.EventFilterDispatcherTest do
     saga_b = launch_test_saga(handle_event: fn _id, event, _state -> send(pid, {:b, event}) end)
     source_saga_id = launch_test_saga()
 
-    EventFilterDispatcher.subscribe(saga_a, nil, %EventFilter{
+    EventFilterDispatcher.subscribe(saga_a, %EventFilter{
       source_saga_id: source_saga_id
     })
 
-    EventFilterDispatcher.subscribe(saga_b, nil, %EventFilter{
+    EventFilterDispatcher.subscribe(saga_b, %EventFilter{
       source_saga_id: launch_test_saga()
     })
 
@@ -94,7 +94,6 @@ defmodule Cizen.EventFilterDispatcherTest do
 
     EventFilterDispatcher.subscribe(
       saga_a,
-      nil,
       EventFilter.new(
         source_saga_module: TestSaga,
         source_saga_filters: [
@@ -105,7 +104,6 @@ defmodule Cizen.EventFilterDispatcherTest do
 
     EventFilterDispatcher.subscribe(
       saga_b,
-      nil,
       EventFilter.new(
         source_saga_module: TestSaga,
         source_saga_filters: [
@@ -139,7 +137,6 @@ defmodule Cizen.EventFilterDispatcherTest do
     subscription_a =
       EventFilterDispatcher.subscribe(
         saga_id,
-        nil,
         %EventFilter{
           source_saga_id: source_saga_id
         },
@@ -149,7 +146,6 @@ defmodule Cizen.EventFilterDispatcherTest do
     subscription_b =
       EventFilterDispatcher.subscribe(
         saga_id,
-        nil,
         %EventFilter{
           source_saga_id: source_saga_id
         },
@@ -181,7 +177,6 @@ defmodule Cizen.EventFilterDispatcherTest do
     EventFilterDispatcher.subscribe_as_proxy(
       proxy_saga_id,
       saga_id,
-      nil,
       %EventFilter{
         source_saga_id: source_saga_id
       }
@@ -201,7 +196,7 @@ defmodule Cizen.EventFilterDispatcherTest do
     saga_id = launch_test_saga(handle_event: fn _id, event, _state -> send(pid, event) end)
     source_saga_id = launch_test_saga()
 
-    EventFilterDispatcher.subscribe(saga_id, nil, %EventFilter{
+    EventFilterDispatcher.subscribe(saga_id, %EventFilter{
       source_saga_id: source_saga_id
     })
 
@@ -227,7 +222,7 @@ defmodule Cizen.EventFilterDispatcherTest do
 
     Dispatcher.listen_event_type(PushEvent)
 
-    EventFilterDispatcher.subscribe(saga_id, nil, %EventFilter{
+    EventFilterDispatcher.subscribe(saga_id, %EventFilter{
       event_type: TestEvent,
       source_saga_id: source_saga_id
     })

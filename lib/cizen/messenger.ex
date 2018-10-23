@@ -3,17 +3,16 @@ defmodule Cizen.Messenger do
   Send messages.
   """
 
-  alias Cizen.Channel
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.EventFilter
   alias Cizen.EventFilterDispatcher
   alias Cizen.EventFilterDispatcher.PushEvent
-  alias Cizen.Message
   alias Cizen.RegisterChannel
   alias Cizen.Saga
   alias Cizen.SagaID
 
+  alias Cizen.Channel.FeedMessage
   alias Cizen.SendMessage
   alias Cizen.SubscribeMessage
 
@@ -22,14 +21,13 @@ defmodule Cizen.Messenger do
   @behaviour Saga
 
   @doc "Subscribe message synchronously"
-  @spec subscribe_message(SagaID.t(), module, EventFilter.t()) :: :ok
-  def subscribe_message(saga_id, saga_module, event_filter) do
+  @spec subscribe_message(SagaID.t(), EventFilter.t()) :: :ok
+  def subscribe_message(saga_id, event_filter) do
     task =
       Task.async(fn ->
         event =
           Event.new(saga_id, %SubscribeMessage{
             subscriber_saga_id: saga_id,
-            subscriber_saga_module: saga_module,
             event_filter: event_filter
           })
 
@@ -48,13 +46,13 @@ defmodule Cizen.Messenger do
   end
 
   @doc "Register channel synchronously"
-  @spec register_channel(Channel.t(), EventFilter.t()) :: :ok
-  def register_channel(channel, event_filter) do
+  @spec register_channel(SagaID.t(), EventFilter.t()) :: :ok
+  def register_channel(channel_id, event_filter) do
     task =
       Task.async(fn ->
         event =
-          Event.new(channel.saga_id, %RegisterChannel{
-            channel: channel,
+          Event.new(channel_id, %RegisterChannel{
+            channel_saga_id: channel_id,
             event_filter: event_filter
           })
 
@@ -82,13 +80,10 @@ defmodule Cizen.Messenger do
   @impl true
   def handle_event(id, %Event{id: event_id, body: %SubscribeMessage{} = body}, state) do
     spawn_link(fn ->
-      %SubscribeMessage{
-        subscriber_saga_id: saga_id,
-        subscriber_saga_module: saga_module
-      } = body
+      %SubscribeMessage{subscriber_saga_id: saga_id} = body
 
-      meta = {saga_id, saga_module}
-      EventFilterDispatcher.subscribe_as_proxy(id, saga_id, saga_module, body.event_filter, meta)
+      meta = :subscriber
+      EventFilterDispatcher.subscribe_as_proxy(id, saga_id, body.event_filter, meta)
 
       Dispatcher.dispatch(
         Event.new(id, %SubscribeMessage.Subscribed{
@@ -103,10 +98,9 @@ defmodule Cizen.Messenger do
   @impl true
   def handle_event(id, %Event{id: event_id, body: %RegisterChannel{} = body}, state) do
     spawn_link(fn ->
-      saga_id = body.channel.saga_id
-      saga_module = body.channel.saga_module
-      meta = body.channel
-      EventFilterDispatcher.subscribe_as_proxy(id, saga_id, saga_module, body.event_filter, meta)
+      saga_id = body.channel_saga_id
+      meta = :channel
+      EventFilterDispatcher.subscribe_as_proxy(id, saga_id, body.event_filter, meta)
 
       Dispatcher.dispatch(
         Event.new(id, %RegisterChannel.Registered{
@@ -133,36 +127,34 @@ defmodule Cizen.Messenger do
       Map.merge(
         %{channels: [], others: []},
         Enum.group_by(subscriptions, fn
-          %EventFilterDispatcher.Subscription{meta: %Channel{}} -> :channels
+          %EventFilterDispatcher.Subscription{meta: :channel} -> :channels
           _ -> :others
         end)
       )
 
-    channels =
-      Enum.map(channels, fn %EventFilterDispatcher.Subscription{meta: channel} -> channel end)
+    subscribers =
+      subscriptions
+      |> Enum.map(fn %EventFilterDispatcher.Subscription{subscriber_saga_id: subscriber} ->
+        subscriber
+      end)
 
-    subscriptions
-    |> Enum.each(fn subscription ->
-      {subscriber_saga_id, subscriber_saga_module} = subscription.meta
-
-      message = %Message{
-        event: event,
-        destination_saga_id: subscriber_saga_id,
-        destination_saga_module: subscriber_saga_module
-      }
-
-      matched_channels =
-        Enum.filter(channels, fn channel ->
-          Channel.match?(channel, message)
-        end)
-
-      Dispatcher.dispatch(
-        Event.new(id, %SendMessage{
-          message: message,
-          channels: matched_channels
-        })
-      )
-    end)
+    if channels == [] do
+      subscribers
+      |> Enum.each(fn subscriber ->
+        Dispatcher.dispatch(Event.new(id, %SendMessage{saga_id: subscriber, event: event}))
+      end)
+    else
+      channels
+      |> Enum.each(fn %EventFilterDispatcher.Subscription{subscriber_saga_id: channel} ->
+        Dispatcher.dispatch(
+          Event.new(id, %FeedMessage{
+            channel_saga_id: channel,
+            event: event,
+            subscribers: subscribers
+          })
+        )
+      end)
+    end
 
     state
   end

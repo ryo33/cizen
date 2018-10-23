@@ -6,12 +6,10 @@ defmodule Cizen.Automaton do
   alias Cizen.Dispatcher
   alias Cizen.EffectHandler
   alias Cizen.Event
-  alias Cizen.Message
   alias Cizen.Saga
   alias Cizen.SagaID
 
   alias Cizen.Automaton.PerformEffect
-  alias Cizen.ReceiveMessage
 
   @finish {__MODULE__, :finish}
 
@@ -126,20 +124,6 @@ defmodule Cizen.Automaton do
 
   def handle_event(_id, %Event{body: %PerformEffect{effect: effect}}, {pid, handler}) do
     handle_result(pid, EffectHandler.perform_effect(handler, effect))
-  end
-
-  def handle_event(
-        _id,
-        %Event{
-          body: %ReceiveMessage{
-            message: %Message{
-              event: event
-            }
-          }
-        },
-        state
-      ) do
-    feed_event(state, event)
   end
 
   def handle_event(_id, event, state) do

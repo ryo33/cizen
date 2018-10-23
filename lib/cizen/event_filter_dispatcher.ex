@@ -28,10 +28,9 @@ defmodule Cizen.EventFilterDispatcher do
   @doc """
   Subscribe event filter synchronously.
   """
-  @spec subscribe(SagaID.t(), module | nil, EventFilter.t(), meta :: term) ::
-          __MODULE__.Subscription.t()
-  def subscribe(id, module, event_filter, meta \\ nil) do
-    subscribe_as_proxy(nil, id, module, event_filter, meta)
+  @spec subscribe(SagaID.t(), EventFilter.t(), meta :: term) :: __MODULE__.Subscription.t()
+  def subscribe(id, event_filter, meta \\ nil) do
+    subscribe_as_proxy(nil, id, event_filter, meta)
   end
 
   @doc """
@@ -40,15 +39,13 @@ defmodule Cizen.EventFilterDispatcher do
   @spec subscribe_as_proxy(
           proxy :: SagaID.t() | nil,
           SagaID.t(),
-          module | nil,
           EventFilter.t(),
           meta :: term
         ) :: __MODULE__.Subscription.t()
-  def subscribe_as_proxy(proxy_id, id, module, event_filter, meta \\ nil) do
+  def subscribe_as_proxy(proxy_id, id, event_filter, meta \\ nil) do
     subscription = %__MODULE__.Subscription{
       proxy_saga_id: proxy_id,
       subscriber_saga_id: id,
-      subscriber_saga_module: module,
       event_filter: event_filter,
       meta: meta
     }

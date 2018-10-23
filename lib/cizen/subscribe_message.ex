@@ -6,7 +6,6 @@ defmodule Cizen.SubscribeMessage do
   @enforce_keys [:subscriber_saga_id, :event_filter]
   defstruct [
     :subscriber_saga_id,
-    :subscriber_saga_module,
     :event_filter
   ]
 

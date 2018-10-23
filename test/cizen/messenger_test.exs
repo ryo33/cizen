@@ -1,18 +1,16 @@
 defmodule Cizen.MenssengerTest do
   use Cizen.SagaCase
-  import Cizen.TestHelper, only: [launch_test_saga: 0]
+  import Cizen.TestHelper, only: [launch_test_saga: 0, launch_test_saga: 1]
 
-  alias Cizen.Channel
+  alias Cizen.Channel.EmitMessage
+  alias Cizen.Channel.FeedMessage
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.EventFilter
   alias Cizen.EventFilterDispatcher
-  alias Cizen.Message
   alias Cizen.Messenger
   alias Cizen.RegisterChannel
-  alias Cizen.Saga
   alias Cizen.SagaID
-  alias Cizen.SendMessage
   alias Cizen.SubscribeMessage
 
   defmodule(TestEvent, do: defstruct([:value]))
@@ -20,7 +18,7 @@ defmodule Cizen.MenssengerTest do
   test "create event filter subscription on SubscribeMessage event" do
     Dispatcher.listen_event_type(EventFilterDispatcher.Subscribe)
 
-    subscriber_saga_id = launch_test_saga()
+    subscriber_id = launch_test_saga()
 
     event_filter = %EventFilter{
       source_saga_id: SagaID.new()
@@ -28,8 +26,7 @@ defmodule Cizen.MenssengerTest do
 
     Dispatcher.dispatch(
       Event.new(nil, %SubscribeMessage{
-        subscriber_saga_id: subscriber_saga_id,
-        subscriber_saga_module: TestSaga,
+        subscriber_saga_id: subscriber_id,
         event_filter: event_filter
       })
     )
@@ -37,10 +34,9 @@ defmodule Cizen.MenssengerTest do
     assert_receive %Event{
       body: %EventFilterDispatcher.Subscribe{
         subscription: %EventFilterDispatcher.Subscription{
-          subscriber_saga_id: ^subscriber_saga_id,
-          subscriber_saga_module: TestSaga,
+          subscriber_saga_id: ^subscriber_id,
           event_filter: ^event_filter,
-          meta: {^subscriber_saga_id, TestSaga}
+          meta: :subscriber
         }
       }
     }
@@ -49,12 +45,7 @@ defmodule Cizen.MenssengerTest do
   test "create event filter subscription on RegisterChannel event" do
     Dispatcher.listen_event_type(EventFilterDispatcher.Subscribe)
 
-    subscriber_saga_id = launch_test_saga()
-
-    channel = %Channel{
-      saga_id: subscriber_saga_id,
-      saga_module: TestSaga
-    }
+    subscriber_id = launch_test_saga()
 
     event_filter = %EventFilter{
       source_saga_id: SagaID.new()
@@ -62,7 +53,7 @@ defmodule Cizen.MenssengerTest do
 
     Dispatcher.dispatch(
       Event.new(nil, %RegisterChannel{
-        channel: channel,
+        channel_saga_id: subscriber_id,
         event_filter: event_filter
       })
     )
@@ -70,165 +61,278 @@ defmodule Cizen.MenssengerTest do
     assert_receive %Event{
       body: %EventFilterDispatcher.Subscribe{
         subscription: %EventFilterDispatcher.Subscription{
-          subscriber_saga_id: ^subscriber_saga_id,
-          subscriber_saga_module: TestSaga,
+          subscriber_saga_id: ^subscriber_id,
           event_filter: ^event_filter,
-          meta: ^channel
+          meta: :channel
         }
       }
     }
   end
 
-  test "dispatches SendMessage event" do
-    Dispatcher.listen_event_type(SendMessage)
+  test "dispatches SendMessage event if no channels" do
+    pid = self()
 
-    source_saga_id = launch_test_saga()
+    source_id = launch_test_saga()
 
-    event_filter = %EventFilter{source_saga_id: source_saga_id}
+    event_filter = %EventFilter{source_saga_id: source_id}
     another_event_filter = %EventFilter{source_saga_id: SagaID.new()}
 
-    subscriber_saga_a = launch_test_saga()
-    subscriber_saga_b = launch_test_saga()
-    subscriber_saga_c = launch_test_saga()
+    subscriber_a = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
+    subscriber_b = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
+    subscriber_c = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
 
-    channel_a = %Channel{saga_id: launch_test_saga(), saga_module: ChannelA}
-    channel_b = %Channel{saga_id: launch_test_saga(), saga_module: ChannelB}
-    channel_c = %Channel{saga_id: launch_test_saga(), saga_module: ChannelC}
+    Messenger.subscribe_message(subscriber_a, event_filter)
+    Messenger.subscribe_message(subscriber_b, event_filter)
+    Messenger.subscribe_message(subscriber_c, another_event_filter)
 
-    Messenger.subscribe_message(subscriber_saga_a, TestSagaA, event_filter)
-    Messenger.subscribe_message(subscriber_saga_b, TestSagaB, event_filter)
-    Messenger.subscribe_message(subscriber_saga_c, TestSagaC, another_event_filter)
+    event = Event.new(source_id, %TestEvent{})
+    Dispatcher.dispatch(event)
+
+    assert_receive {^subscriber_a, ^event}
+
+    assert_receive {^subscriber_b, ^event}
+
+    refute_receive {^subscriber_c, ^event}
+  end
+
+  test "dispatches only FeedMessage event to channels" do
+    pid = self()
+
+    source_id = launch_test_saga()
+
+    event_filter = %EventFilter{source_saga_id: source_id}
+    another_event_filter = %EventFilter{source_saga_id: SagaID.new()}
+
+    subscriber_a = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
+    subscriber_b = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
+    subscriber_c = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
+
+    Messenger.subscribe_message(subscriber_a, event_filter)
+    Messenger.subscribe_message(subscriber_b, event_filter)
+    Messenger.subscribe_message(subscriber_c, another_event_filter)
+
+    channel_a = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
+    channel_b = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
+    channel_c = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
+
     Messenger.register_channel(channel_a, event_filter)
     Messenger.register_channel(channel_b, event_filter)
     Messenger.register_channel(channel_c, another_event_filter)
 
-    event = Event.new(source_saga_id, %TestEvent{})
+    event = Event.new(source_id, %TestEvent{})
     Dispatcher.dispatch(event)
 
-    received_a =
-      assert_receive %Event{
-        body: %SendMessage{
-          message: %Message{
-            event: ^event,
-            destination_saga_id: ^subscriber_saga_a,
-            destination_saga_module: TestSagaA
-          }
-        }
-      }
+    {_, received} =
+      assert_receive {^channel_a,
+                      %Event{
+                        body: %FeedMessage{
+                          event: ^event,
+                          channel_saga_id: ^channel_a
+                        }
+                      }}
 
-    assert MapSet.new([channel_a, channel_b]) == MapSet.new(received_a.body.channels)
+    subscribers = received.body.subscribers
+    assert length(subscribers)
+    assert subscriber_a in subscribers
+    assert subscriber_b in subscribers
 
-    received_b =
-      assert_receive %Event{
-        body: %SendMessage{
-          message: %Message{
-            event: ^event,
-            destination_saga_id: ^subscriber_saga_b,
-            destination_saga_module: TestSagaB
-          }
-        }
-      }
+    {_, received} =
+      assert_receive {^channel_b,
+                      %Event{
+                        body: %FeedMessage{
+                          event: ^event,
+                          channel_saga_id: ^channel_b
+                        }
+                      }}
 
-    assert MapSet.new([channel_a, channel_b]) == MapSet.new(received_b.body.channels)
+    subscribers = received.body.subscribers
+    assert length(subscribers)
+    assert subscriber_a in subscribers
+    assert subscriber_b in subscribers
+
+    refute_receive {^channel_c, %Event{body: %FeedMessage{}}}
+    refute_receive {_, ^event}
   end
 
-  test "dispatches SendMessage event without channels" do
-    Dispatcher.listen_event_type(SendMessage)
+  test "dispatches event on EmitMessage when no channels are subscribing the emit event" do
+    pid = self()
 
-    source_saga_id = launch_test_saga()
+    source_id = launch_test_saga()
 
-    event_filter = %EventFilter{source_saga_id: source_saga_id}
+    subscriber_a = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
+    subscriber_b = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
+    subscribers = [subscriber_a, subscriber_b]
 
-    subscriber_saga_a = launch_test_saga()
-    subscriber_saga_b = launch_test_saga()
+    channel = launch_test_saga()
 
-    Messenger.subscribe_message(subscriber_saga_a, TestSagaA, event_filter)
-    Messenger.subscribe_message(subscriber_saga_b, TestSagaB, event_filter)
+    event = Event.new(source_id, %TestEvent{})
+    emit_event = Event.new(channel, %EmitMessage{event: event, subscribers: subscribers})
+    Dispatcher.dispatch(emit_event)
 
-    event = Event.new(source_saga_id, %TestEvent{})
-    Dispatcher.dispatch(event)
+    assert_receive {^subscriber_a, ^event}
 
-    assert_receive %Event{
-      body: %SendMessage{
-        message: %Message{
-          event: ^event,
-          destination_saga_id: ^subscriber_saga_a,
-          destination_saga_module: TestSagaA
-        },
-        channels: []
-      }
-    }
-
-    assert_receive %Event{
-      body: %SendMessage{
-        message: %Message{
-          event: ^event,
-          destination_saga_id: ^subscriber_saga_b,
-          destination_saga_module: TestSagaB
-        },
-        channels: []
-      }
-    }
+    assert_receive {^subscriber_b, ^event}
   end
 
-  test "filters channels with using Channel.match?/2" do
-    Dispatcher.listen_event_type(SendMessage)
+  test "dispatches only FeedMessage on EmitMessage when some channels are subscribing the emit event" do
+    pid = self()
 
-    source_saga_id = launch_test_saga()
+    source_id = launch_test_saga()
 
-    event_filter = %EventFilter{source_saga_id: source_saga_id}
+    subscriber_a = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
+    subscriber_b = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
+    subscribers = [subscriber_a, subscriber_b]
 
-    subscriber_saga_id = launch_test_saga()
+    channel = launch_test_saga()
 
-    channel_a = %Channel{
-      saga_id: launch_test_saga(),
-      saga_module: ChannelA,
-      destination_saga_id: subscriber_saga_id
+    event_filter = %EventFilter{
+      event_type: EmitMessage,
+      source_saga_id: channel
     }
 
-    channel_b = %Channel{
-      saga_id: launch_test_saga(),
-      saga_module: ChannelB,
-      destination_saga_id: SagaID.new()
+    another_event_filter = %EventFilter{
+      event_type: EmitMessage,
+      source_saga_id: SagaID.new()
     }
 
-    Messenger.subscribe_message(subscriber_saga_id, TestSaga, event_filter)
-    Messenger.register_channel(channel_a, event_filter)
-    Messenger.register_channel(channel_b, event_filter)
-
-    event = Event.new(source_saga_id, %TestEvent{})
-    Dispatcher.dispatch(event)
-
-    received =
-      assert_receive %Event{
-        body: %SendMessage{
-          message: %Message{
-            event: ^event,
-            destination_saga_id: ^subscriber_saga_id,
-            destination_saga_module: TestSaga
-          }
-        }
-      }
-
-    assert MapSet.new([channel_a]) == MapSet.new(received.body.channels)
-  end
-
-  test "doesn't crash if there is no subscribers" do
-    Dispatcher.listen_event_type(Saga.Crashed)
-
-    source_saga_id = launch_test_saga()
-
-    event_filter = %EventFilter{source_saga_id: source_saga_id}
-
-    channel_a = %Channel{saga_id: launch_test_saga(), saga_module: ChannelA}
-    channel_b = %Channel{saga_id: launch_test_saga(), saga_module: ChannelB}
+    channel_a = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
+    channel_b = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
+    channel_c = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
 
     Messenger.register_channel(channel_a, event_filter)
     Messenger.register_channel(channel_b, event_filter)
+    Messenger.register_channel(channel_c, another_event_filter)
 
-    event = Event.new(source_saga_id, %TestEvent{})
+    event = Event.new(source_id, %TestEvent{})
+    emit_event = Event.new(channel, %EmitMessage{event: event, subscribers: subscribers})
+    Dispatcher.dispatch(emit_event)
+
+    assert_receive {^channel_a,
+                    %Event{
+                      body: %FeedMessage{
+                        event: ^emit_event,
+                        channel_saga_id: ^channel_a
+                      }
+                    }}
+
+    assert_receive {^channel_b,
+                    %Event{
+                      body: %FeedMessage{
+                        event: ^emit_event,
+                        channel_saga_id: ^channel_b
+                      }
+                    }}
+
+    refute_receive {^channel_c, %Event{body: %FeedMessage{}}}
+
+    refute_receive {_, ^event}
+  end
+
+  test "supports channel chaining" do
+    pid = self()
+
+    source_id = launch_test_saga()
+
+    subscriber_a = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
+    subscriber_b = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
+
+    channel_a =
+      launch_test_saga(
+        handle_event: fn
+          id, %Event{body: %FeedMessage{event: event, subscribers: subscribers}}, _ ->
+            Dispatcher.dispatch(
+              Event.new(id, %EmitMessage{
+                event: event,
+                subscribers: subscribers
+              })
+            )
+
+          _, _, _ ->
+            :ok
+        end
+      )
+
+    channel_b =
+      launch_test_saga(
+        handle_event: fn
+          id, %Event{body: %FeedMessage{event: event, subscribers: subscribers}}, _ ->
+            Dispatcher.dispatch(
+              Event.new(id, %EmitMessage{
+                event: event,
+                subscribers: subscribers
+              })
+            )
+
+          _, _, _ ->
+            :ok
+        end
+      )
+
+    channel_c = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
+
+    Messenger.subscribe_message(subscriber_a, %EventFilter{
+      event_type: TestEvent,
+      source_saga_id: source_id
+    })
+
+    Messenger.subscribe_message(subscriber_b, %EventFilter{
+      event_type: TestEvent,
+      source_saga_id: source_id
+    })
+
+    Messenger.register_channel(channel_a, %EventFilter{
+      event_type: TestEvent,
+      source_saga_id: source_id
+    })
+
+    Messenger.register_channel(channel_b, %EventFilter{
+      event_type: EmitMessage,
+      source_saga_id: channel_a
+    })
+
+    Messenger.register_channel(channel_c, %EventFilter{
+      event_type: EmitMessage,
+      source_saga_id: channel_b
+    })
+
+    event = Event.new(source_id, %TestEvent{})
     Dispatcher.dispatch(event)
 
-    refute_receive %Event{body: %Saga.Crashed{}}
+    {_, feed_event} =
+      assert_receive {
+        ^channel_c,
+        %Event{
+          body: %FeedMessage{
+            event: %Event{
+              body: %EmitMessage{
+                event: %Event{
+                  body: %EmitMessage{
+                    event: ^event
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+    subscribers = feed_event.body.event.body.event.body.subscribers
+    assert length(subscribers) == 2
+    assert subscriber_a in subscribers
+    assert subscriber_b in subscribers
+
+    refute_receive {_, ^event}
+
+    %Event{body: %FeedMessage{event: fed_event, subscribers: fed_subscribers}} = feed_event
+
+    Dispatcher.dispatch(
+      Event.new(channel_c, %EmitMessage{
+        event: fed_event,
+        subscribers: fed_subscribers
+      })
+    )
+
+    assert_receive {^subscriber_a, ^event}
+    assert_receive {^subscriber_b, ^event}
   end
 end
