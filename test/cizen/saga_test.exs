@@ -170,7 +170,7 @@ defmodule Cizen.SagaTest do
     test "does not dispatch Launched event on lazy launch" do
       Dispatcher.listen_event_type(Saga.Launched)
       id = SagaID.new()
-      Saga.launch(id, %LazyLaunchSaga{})
+      Saga.launch(id, %LazyLaunchSaga{}, nil)
       refute_receive %Event{body: %Saga.Launched{id: ^id}}
       Dispatcher.dispatch(Event.new(nil, %TestEvent{}))
       assert_receive %Event{body: %Saga.Launched{id: ^id}}
@@ -183,18 +183,43 @@ defmodule Cizen.SagaTest do
     end
   end
 
-  describe "Saga.start_link/2" do
+  describe "Saga.fork/2" do
     test "dispatches StartSaga event" do
       Dispatcher.listen_event_type(StartSaga)
-      Saga.start_link(%TestSaga{extra: :some_value})
+      Saga.fork(%TestSaga{extra: :some_value})
       assert_receive %Event{body: %StartSaga{saga: %TestSaga{extra: :some_value}}}
     end
 
-    test "returns {:ok, saga_id}" do
+    test "returns saga_id" do
       Dispatcher.listen_event_type(StartSaga)
-      saga_id = Saga.start_link(%TestSaga{extra: :some_value})
+      saga_id = Saga.fork(%TestSaga{extra: :some_value})
       received = assert_receive %Event{body: %StartSaga{saga: %TestSaga{extra: :some_value}}}
       assert saga_id == received.body.id
+    end
+
+    test "finishes when the given lifetime process exits" do
+      pid = self()
+
+      process =
+        spawn(fn ->
+          saga_id = Saga.fork(%TestSaga{extra: :some_value})
+          send(pid, saga_id)
+
+          receive do
+            :finish -> :ok
+          end
+        end)
+
+      saga_id =
+        receive do
+          saga_id -> saga_id
+        end
+
+      assert {:ok, _} = CizenSagaRegistry.get_pid(saga_id)
+
+      send(process, :finish)
+
+      assert_condition(100, :error == CizenSagaRegistry.get_pid(saga_id))
     end
   end
 end

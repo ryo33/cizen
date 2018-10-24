@@ -83,16 +83,20 @@ defmodule Cizen.Saga do
   end
 
   @doc """
-  Starts a saga linked to the current process.
+  Starts a saga which finishes when the current process exits.
   """
-  @spec start_link(t) :: SagaID.t()
-  def start_link(saga) do
+  @spec fork(t) :: SagaID.t()
+  def fork(saga) do
+    lifetime = self()
     saga_id = SagaID.new()
 
     task =
       Task.async(fn ->
         Dispatcher.listen_event_body(%Saga.Launched{id: saga_id})
-        Dispatcher.dispatch(Event.new(nil, %StartSaga{id: saga_id, saga: saga}))
+
+        Dispatcher.dispatch(
+          Event.new(nil, %StartSaga{id: saga_id, saga: saga, lifetime_pid: lifetime})
+        )
 
         receive do
           %Event{body: %Saga.Launched{id: ^saga_id}} -> :ok
@@ -102,6 +106,7 @@ defmodule Cizen.Saga do
       end)
 
     Task.await(task)
+
     saga_id
   end
 
@@ -117,8 +122,8 @@ defmodule Cizen.Saga do
     saga.__struct__
   end
 
-  def launch(id, saga) do
-    {:ok, _pid} = GenServer.start(__MODULE__, {id, saga})
+  def launch(id, saga, lifetime) do
+    {:ok, _pid} = GenServer.start(__MODULE__, {id, saga, lifetime})
   end
 
   def unlaunch(id) do
@@ -134,7 +139,9 @@ defmodule Cizen.Saga do
   end
 
   @impl true
-  def init({id, saga}) do
+  def init({id, saga, lifetime}) do
+    unless is_nil(lifetime), do: Process.monitor(lifetime)
+
     Registry.register(CizenSagaRegistry, id, saga)
     Dispatcher.listen_event_body(%Finish{id: id})
     module = Saga.module(saga)
@@ -153,8 +160,8 @@ defmodule Cizen.Saga do
   end
 
   @impl true
-  def handle_info(%Event{body: %Finish{id: id}} = event, {id, saga, state}) do
-    {:stop, {:shutdown, event}, {id, saga, state}}
+  def handle_info(%Event{body: %Finish{id: id}}, {id, saga, state}) do
+    {:stop, {:shutdown, :finish}, {id, saga, state}}
   end
 
   @impl true
@@ -167,11 +174,16 @@ defmodule Cizen.Saga do
   end
 
   @impl true
+  def handle_info({:DOWN, _, :process, _, _}, state) do
+    {:stop, {:shutdown, :finish}, state}
+  end
+
+  @impl true
   def terminate(:shutdown, {_id, _saga, _state}) do
     :shutdown
   end
 
-  def terminate({:shutdown, %Event{}}, {id, _saga, _state}) do
+  def terminate({:shutdown, :finish}, {id, _saga, _state}) do
     Dispatcher.dispatch(Event.new(id, %Finished{id: id}))
     :shutdown
   end

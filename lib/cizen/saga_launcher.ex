@@ -14,9 +14,8 @@ defmodule Cizen.SagaLauncher do
     The event to launch an saga.
     """
 
-    @keys [:id, :saga]
-    @enforce_keys @keys
-    defstruct @keys
+    @enforce_keys [:id, :saga]
+    defstruct [:id, :saga, :lifetime_pid]
   end
 
   defmodule UnlaunchSaga do
@@ -74,9 +73,9 @@ defmodule Cizen.SagaLauncher do
     handle_event(body, :ok)
   end
 
-  def handle_event(%LaunchSaga{id: id, saga: saga}, :ok) do
+  def handle_event(%LaunchSaga{id: id, saga: saga, lifetime_pid: lifetime}, :ok) do
     Task.start_link(fn ->
-      Saga.launch(id, saga)
+      Saga.launch(id, saga, lifetime)
     end)
 
     {:noreply, :ok}

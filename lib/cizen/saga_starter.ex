@@ -23,8 +23,15 @@ defmodule Cizen.SagaStarter do
   end
 
   @impl true
-  def handle_event(id, %Event{body: %StartSaga{id: saga_id, saga: saga}}, state) do
-    Dispatcher.dispatch(Event.new(id, %LaunchSaga{id: saga_id, saga: saga}))
+  def handle_event(
+        id,
+        %Event{body: %StartSaga{id: saga_id, saga: saga, lifetime_pid: lifetime}},
+        state
+      ) do
+    Dispatcher.dispatch(
+      Event.new(id, %LaunchSaga{id: saga_id, saga: saga, lifetime_pid: lifetime})
+    )
+
     state
   end
 end

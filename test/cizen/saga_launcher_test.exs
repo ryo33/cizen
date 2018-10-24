@@ -6,6 +6,7 @@ defmodule Cizen.SagaLauncherTest do
   alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.Event
+  alias Cizen.Saga
   alias Cizen.SagaID
   alias Cizen.SagaLauncher
   alias Cizen.TestSaga
@@ -33,5 +34,33 @@ defmodule Cizen.SagaLauncherTest do
     assert {:ok, pid} = CizenSagaRegistry.get_pid(id)
     Dispatcher.dispatch(Event.new(nil, %SagaLauncher.UnlaunchSaga{id: id}))
     assert_condition(100, Process.alive?(pid))
+  end
+
+  test "finishes the saga when the given lifetime process exits" do
+    lifetime =
+      spawn(fn ->
+        receive do
+          :finish -> :ok
+        end
+      end)
+
+    saga_id = SagaID.new()
+
+    Dispatcher.dispatch(
+      Event.new(nil, %SagaLauncher.LaunchSaga{
+        id: saga_id,
+        saga: %TestSaga{},
+        lifetime_pid: lifetime
+      })
+    )
+
+    Dispatcher.listen_event_body(%Saga.Finished{id: saga_id})
+
+    refute_receive %Event{body: %Saga.Finished{}}
+
+    send(lifetime, :finish)
+
+    assert_receive %Event{body: %Saga.Finished{}}
+    assert_condition(100, :error == CizenSagaRegistry.get_pid(saga_id))
   end
 end

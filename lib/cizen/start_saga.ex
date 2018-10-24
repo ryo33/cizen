@@ -3,9 +3,8 @@ defmodule Cizen.StartSaga do
   An event to start a saga.
   """
 
-  @keys [:id, :saga]
-  @enforce_keys @keys
-  defstruct @keys
+  @enforce_keys [:id, :saga]
+  defstruct [:id, :saga, :lifetime_pid]
 
   alias Cizen.Event
   alias Cizen.EventFilter

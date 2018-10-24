@@ -25,7 +25,37 @@ defmodule Cizen.SagaStarterTest do
       assert_receive %Event{
         body: %LaunchSaga{
           id: ^saga_id,
-          saga: %TestSaga{}
+          saga: %TestSaga{},
+          lifetime_pid: nil
+        }
+      }
+    end
+
+    test "dispatches LaunchSaga event on StartSaga event with lifetime" do
+      Dispatcher.listen_event_type(LaunchSaga)
+
+      lifetime =
+        spawn(fn ->
+          receive do
+            _ -> :ok
+          end
+        end)
+
+      saga_id = SagaID.new()
+
+      Dispatcher.dispatch(
+        Event.new(nil, %StartSaga{
+          id: saga_id,
+          saga: %TestSaga{},
+          lifetime_pid: lifetime
+        })
+      )
+
+      assert_receive %Event{
+        body: %LaunchSaga{
+          id: ^saga_id,
+          saga: %TestSaga{},
+          lifetime_pid: ^lifetime
         }
       }
     end
