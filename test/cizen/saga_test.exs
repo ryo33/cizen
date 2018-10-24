@@ -222,4 +222,39 @@ defmodule Cizen.SagaTest do
       assert_condition(100, :error == CizenSagaRegistry.get_pid(saga_id))
     end
   end
+
+  describe "Saga.start_link/2" do
+    test "starts a saga" do
+      Dispatcher.listen_event_type(Saga.Launched)
+      {:ok, pid} = Saga.start_link(%TestSaga{extra: :some_value})
+
+      received =
+        assert_receive %Event{body: %Saga.Launched{}, source_saga: %TestSaga{extra: :some_value}}
+
+      assert {:ok, ^pid} = CizenSagaRegistry.get_pid(received.body.id)
+    end
+
+    test "starts a saga linked to the current process" do
+      test_pid = self()
+
+      current =
+        spawn(fn ->
+          {:ok, pid} = Saga.start_link(%TestSaga{extra: :some_value})
+          send(test_pid, {:started, pid})
+
+          receive do
+            _ -> :ok
+          end
+        end)
+
+      pid =
+        receive do
+          {:started, pid} -> pid
+        end
+
+      Process.exit(current, :kill)
+
+      assert_condition(100, false == Process.alive?(pid))
+    end
+  end
 end

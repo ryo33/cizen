@@ -110,6 +110,15 @@ defmodule Cizen.Saga do
     saga_id
   end
 
+  @doc """
+  Starts a saga linked to the current process
+  """
+  @spec start_link(t) :: GenServer.on_start()
+  def start_link(saga) do
+    id = SagaID.new()
+    GenServer.start_link(__MODULE__, {id, saga, nil})
+  end
+
   @lazy_launch {__MODULE__, :lazy_launch}
 
   def lazy_launch, do: @lazy_launch

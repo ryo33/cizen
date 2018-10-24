@@ -55,13 +55,24 @@ defmodule Cizen.Application do
   end
 
   def start_phase(:start_daemons, _start_type, _args) do
-    alias Cizen.SagaLauncher
-    SagaLauncher.launch_saga(%Cizen.Messenger{})
-    SagaLauncher.launch_saga(%Cizen.Messenger.Transmitter{})
-    SagaLauncher.launch_saga(%Cizen.SagaStarter{})
-    SagaLauncher.launch_saga(%Cizen.SagaEnder{})
-    SagaLauncher.launch_saga(%Cizen.RequestResponseMediator{})
-    SagaLauncher.launch_saga(%Cizen.CrashLogger{})
+    alias Cizen.Saga
+
+    daemon_sagas = [
+      %Cizen.Messenger{},
+      %Cizen.Messenger.Transmitter{},
+      %Cizen.SagaStarter{},
+      %Cizen.SagaEnder{},
+      %Cizen.RequestResponseMediator{},
+      %Cizen.CrashLogger{}
+    ]
+
+    Enum.each(daemon_sagas, fn saga ->
+      Supervisor.start_child(Cizen.Supervisor, %{
+        id: Saga.module(saga),
+        start: {Saga, :start_link, [saga]}
+      })
+    end)
+
     :ok
   end
 end
