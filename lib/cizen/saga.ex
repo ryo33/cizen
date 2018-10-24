@@ -30,6 +30,8 @@ defmodule Cizen.Saga do
   alias Cizen.Saga
   alias Cizen.SagaID
 
+  alias Cizen.StartSaga
+
   @type state :: any
 
   @doc """
@@ -80,10 +82,36 @@ defmodule Cizen.Saga do
     defstruct([:id, :saga, :reason, :stacktrace])
   end
 
+  @doc """
+  Starts a saga linked to the current process.
+  """
+  @spec start_link(t) :: SagaID.t()
+  def start_link(saga) do
+    saga_id = SagaID.new()
+
+    task =
+      Task.async(fn ->
+        Dispatcher.listen_event_body(%Saga.Launched{id: saga_id})
+        Dispatcher.dispatch(Event.new(nil, %StartSaga{id: saga_id, saga: saga}))
+
+        receive do
+          %Event{body: %Saga.Launched{id: ^saga_id}} -> :ok
+        end
+
+        saga_id
+      end)
+
+    Task.await(task)
+    saga_id
+  end
+
   @lazy_launch {__MODULE__, :lazy_launch}
 
   def lazy_launch, do: @lazy_launch
 
+  @doc """
+  Returns the module for a saga.
+  """
   @spec module(t) :: module
   def module(saga) do
     saga.__struct__
@@ -167,6 +195,7 @@ defmodule Cizen.Saga do
     {:reply, result, state}
   end
 
+  @doc false
   def handle_request({:register, registry, saga_id, key, value}) do
     Registry.register(registry, key, {saga_id, value})
   end

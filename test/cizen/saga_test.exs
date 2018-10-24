@@ -18,6 +18,8 @@ defmodule Cizen.SagaTest do
   alias Cizen.SagaID
   alias Cizen.SagaLauncher
 
+  alias Cizen.StartSaga
+
   describe "Saga" do
     test "dispatches Launched event on launch" do
       Dispatcher.listen_event_type(Saga.Launched)
@@ -178,6 +180,21 @@ defmodule Cizen.SagaTest do
   describe "Saga.module/1" do
     test "returns the saga module" do
       assert Saga.module(%TestSaga{}) == TestSaga
+    end
+  end
+
+  describe "Saga.start_link/2" do
+    test "dispatches StartSaga event" do
+      Dispatcher.listen_event_type(StartSaga)
+      Saga.start_link(%TestSaga{extra: :some_value})
+      assert_receive %Event{body: %StartSaga{saga: %TestSaga{extra: :some_value}}}
+    end
+
+    test "returns {:ok, saga_id}" do
+      Dispatcher.listen_event_type(StartSaga)
+      saga_id = Saga.start_link(%TestSaga{extra: :some_value})
+      received = assert_receive %Event{body: %StartSaga{saga: %TestSaga{extra: :some_value}}}
+      assert saga_id == received.body.id
     end
   end
 end
