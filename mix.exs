@@ -4,7 +4,7 @@ defmodule Cizen.MixProject do
   def project do
     [
       app: :cizen,
-      version: "0.6.0",
+      version: "0.7.0",
       package: package(),
       elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -97,6 +97,7 @@ defmodule Cizen.MixProject do
       ],
 
       "Automaton Internal": [
+        Cizen.Automaton.EffectSender,
         Cizen.Automaton.PerformEffect,
         Cizen.Effect,
         Cizen.EffectHandler,
@@ -106,15 +107,11 @@ defmodule Cizen.MixProject do
         Cizen.Channel,
         Cizen.Channel.EmitMessage,
         Cizen.Channel.FeedMessage,
-        Cizen.Channel.RejectMessage,
         Cizen.RegisterChannel,
         Cizen.RegisterChannel.Registered,
       ],
 
       "Channel Internal": [
-        Cizen.Channel.EmitMessage.ConnectionIDFilter,
-        Cizen.Channel.RejectMessage.ConnectionIDFilter,
-        Cizen.Connection,
         Cizen.RegisterChannel.Registered.EventIdFilter,
       ],
 
@@ -160,6 +157,8 @@ defmodule Cizen.MixProject do
         Cizen.EventBodyFilterSet,
         Cizen.EventFilter,
         Cizen.EventID,
+        Cizen.SagaFilter,
+        Cizen.SagaFilterSet,
       ],
 
       "Messaging": [
@@ -172,8 +171,8 @@ defmodule Cizen.MixProject do
 
       "Messaging Internal": [
         Cizen.Messenger,
+        Cizen.Messenger.Transmitter,
         Cizen.SendMessage,
-        Cizen.Transmitter,
       ],
 
       "Requesting": [
@@ -188,6 +187,7 @@ defmodule Cizen.MixProject do
       ],
 
       "Saga": [
+        Cizen.CizenSagaRegistry,
         Cizen.CrashLogger,
         Cizen.EndSaga,
         Cizen.MonitorSaga,
