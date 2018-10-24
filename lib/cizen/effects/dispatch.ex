@@ -10,13 +10,15 @@ defmodule Cizen.Effects.Dispatch do
         }
   """
 
-  defstruct [:body]
+  @keys [:body]
+  @enforce_keys @keys
+  defstruct @keys
 
   alias Cizen.Dispatcher
   alias Cizen.Effect
   alias Cizen.Event
 
-  @behaviour Effect
+  use Effect
 
   @impl true
   def init(handler, %__MODULE__{body: body}) do

@@ -14,7 +14,20 @@ defmodule Cizen.Effects do
       use Cizen.Effects, only: [Subscribe, Receive, Dispatch]
   """
 
-  @effects [All, Chain, Dispatch, End, Map, Monitor, Race, Receive, Request, Start, Subscribe]
+  @effects [
+    All,
+    Chain,
+    Dispatch,
+    End,
+    Fork,
+    Map,
+    Monitor,
+    Race,
+    Receive,
+    Request,
+    Start,
+    Subscribe
+  ]
 
   defmacro __using__(opts) do
     effects = Keyword.get(opts, :only, @effects)
@@ -42,7 +55,7 @@ defmodule Cizen.Effects do
     conflict between `Elixir.Map` and `Cizen.Effects.Map`
     """
     defstruct [:effect, :transform]
-    @behaviour Cizen.Effect
+    use Cizen.Effect
 
     alias Cizen.Effects.Map
 

@@ -23,12 +23,14 @@ defmodule Cizen.Effects.Race do
       # the race returns the {effect2: :somevalue}
   """
 
-  defstruct [:effects]
+  @keys [:effects]
+  @enforce_keys @keys
+  defstruct @keys
 
   alias Cizen.Effect
   alias Cizen.Effects.Map
 
-  @behaviour Effect
+  use Effect
 
   @impl true
   def init(id, %__MODULE__{effects: effects}) do

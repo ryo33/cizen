@@ -11,7 +11,7 @@ defmodule Cizen.EffectHandlerTestHelper do
     defstruct [:value, :resolve_immediately, :reset, :alias_of]
 
     alias Cizen.Effect
-    @behaviour Effect
+    use Effect
 
     @impl true
     def init(_handler, effect) do

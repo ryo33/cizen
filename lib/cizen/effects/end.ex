@@ -10,18 +10,20 @@ defmodule Cizen.Effects.End do
       }
   """
 
-  defstruct [:saga_id]
+  @keys [:saga_id]
+  @enforce_keys @keys
+  defstruct @keys
 
   alias Cizen.Effect
   alias Cizen.Effects.{Dispatch, Map}
 
   alias Cizen.EndSaga
 
-  @behaviour Effect
+  use Effect
 
   @impl true
-  def init(_id, %__MODULE__{saga_id: saga_id}) do
-    effect = %Map{
+  def expand(_id, %__MODULE__{saga_id: saga_id}) do
+    %Map{
       effect: %Dispatch{
         body: %EndSaga{
           id: saga_id
@@ -29,10 +31,5 @@ defmodule Cizen.Effects.End do
       },
       transform: fn _response -> saga_id end
     }
-
-    {:alias_of, effect}
   end
-
-  @impl true
-  def handle_event(_, _, _, _), do: :ok
 end

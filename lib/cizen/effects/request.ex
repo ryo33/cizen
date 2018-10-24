@@ -10,7 +10,9 @@ defmodule Cizen.Effects.Request do
       }
   """
 
-  defstruct [:body]
+  @keys [:body]
+  @enforce_keys @keys
+  defstruct @keys
 
   alias Cizen.Effect
   alias Cizen.Effects.{Chain, Dispatch, Map, Receive}
@@ -18,13 +20,13 @@ defmodule Cizen.Effects.Request do
   alias Cizen.EventFilter
   alias Cizen.Request
 
-  @behaviour Effect
+  use Effect
 
   @impl true
-  def init(id, %__MODULE__{body: body}) do
+  def expand(id, %__MODULE__{body: body}) do
     require EventFilter
 
-    effect = %Map{
+    %Map{
       effect: %Chain{
         effects: [
           %Dispatch{body: %Request{requestor_saga_id: id, body: body}},
@@ -43,10 +45,5 @@ defmodule Cizen.Effects.Request do
       },
       transform: fn [_dispatch, %Event{body: %Request.Response{event: event}}] -> event end
     }
-
-    {:alias_of, effect}
   end
-
-  @impl true
-  def handle_event(_, _, _, _), do: :ok
 end

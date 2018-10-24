@@ -15,7 +15,9 @@ defmodule Cizen.Effects.Monitor do
       }
   """
 
-  defstruct [:saga_id]
+  @keys [:saga_id]
+  @enforce_keys @keys
+  defstruct @keys
 
   alias Cizen.Effect
   alias Cizen.Effects.{Dispatch, Map}
@@ -23,13 +25,13 @@ defmodule Cizen.Effects.Monitor do
 
   alias Cizen.MonitorSaga
 
-  @behaviour Effect
+  use Effect
 
   @impl true
-  def init(id, %__MODULE__{saga_id: saga_id}) do
+  def expand(id, %__MODULE__{saga_id: saga_id}) do
     require Cizen.EventFilter
 
-    effect = %Map{
+    %Map{
       effect: %Dispatch{
         body: %MonitorSaga{
           monitor_saga_id: id,
@@ -45,10 +47,5 @@ defmodule Cizen.Effects.Monitor do
         )
       end
     }
-
-    {:alias_of, effect}
   end
-
-  @impl true
-  def handle_event(_, _, _, _), do: :ok
 end

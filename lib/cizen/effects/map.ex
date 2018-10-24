@@ -11,11 +11,13 @@ defmodule Cizen.Effects.Map do
       }
   """
 
-  defstruct [:effect, :transform]
+  @keys [:effect, :transform]
+  @enforce_keys @keys
+  defstruct @keys
 
   alias Cizen.Effect
 
-  @behaviour Effect
+  use Effect
 
   @impl true
   def init(id, %__MODULE__{effect: effect, transform: transform}) do

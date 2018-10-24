@@ -1,11 +1,11 @@
-defmodule Cizen.Effects.Start do
+defmodule Cizen.Effects.Fork do
   @moduledoc """
   An effect to state an saga.
 
   Returns the started saga ID.
 
   ## Example
-      saga_id = perform id, %Start{
+      saga_id = perform id, %Fork{
         saga: some_saga_struct
       }
   """
@@ -28,7 +28,7 @@ defmodule Cizen.Effects.Start do
 
     %Map{
       effect: %Request{
-        body: %StartSaga{id: saga_id, saga: saga}
+        body: %StartSaga{id: saga_id, saga: saga, lifetime_pid: self()}
       },
       transform: fn _ -> saga_id end
     }

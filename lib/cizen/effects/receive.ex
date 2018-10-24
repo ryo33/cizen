@@ -21,7 +21,7 @@ defmodule Cizen.Effects.Receive do
 
   defstruct event_filter: %EventFilter{}
 
-  @behaviour Effect
+  use Effect
 
   @impl true
   def init(_handler, %__MODULE__{}) do

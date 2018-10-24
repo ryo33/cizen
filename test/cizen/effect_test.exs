@@ -10,7 +10,7 @@ defmodule Cizen.EffectTest do
     defstruct [:init_value, :handle_event_value, :alias_of]
 
     alias Cizen.Effect
-    @behaviour Effect
+    use Effect
 
     @impl true
     def init(_handler, effect) do
@@ -54,6 +54,35 @@ defmodule Cizen.EffectTest do
       effect = %TestEffect{handle_event_value: :a}
       event = Event.new(nil, %TestEvent{})
       assert :a = Effect.handle_event(id, event, effect, :ok)
+    end
+  end
+
+  describe "use Cizen.Effect" do
+    defmodule Repeat do
+      use Cizen.Effect
+      use Cizen.Effects, only: [Chain]
+      defstruct [:count, :effect, :pid]
+      @impl true
+      def expand(id, %__MODULE__{count: count, effect: effect, pid: pid}) do
+        effects =
+          [effect]
+          |> Stream.cycle()
+          |> Enum.take(count)
+
+        send(pid, id)
+
+        %Chain{
+          effects: effects
+        }
+      end
+    end
+
+    test "defines custom effect" do
+      use Cizen.Effects, only: [Chain, Receive]
+      id = SagaID.new()
+      expected = Effect.init(id, %Chain{effects: [%Receive{}, %Receive{}, %Receive{}]})
+      assert expected == Effect.init(id, %Repeat{count: 3, effect: %Receive{}, pid: self()})
+      assert_receive ^id
     end
   end
 end

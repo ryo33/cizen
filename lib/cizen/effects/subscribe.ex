@@ -19,16 +19,16 @@ defmodule Cizen.Effects.Subscribe do
 
   alias Cizen.SubscribeMessage
 
-  @behaviour Effect
+  use Effect
 
   @impl true
-  def init(id, %__MODULE__{} = saga) do
+  def expand(id, %__MODULE__{} = saga) do
     %__MODULE__{
       event_filter: event_filter,
       lifetime_saga_id: lifetime_saga_id
     } = saga
 
-    effect = %Map{
+    %Map{
       effect: %Request{
         body: %SubscribeMessage{
           subscriber_saga_id: id,
@@ -38,10 +38,5 @@ defmodule Cizen.Effects.Subscribe do
       },
       transform: fn _response -> :ok end
     }
-
-    {:alias_of, effect}
   end
-
-  @impl true
-  def handle_event(_, _, _, _), do: :ok
 end

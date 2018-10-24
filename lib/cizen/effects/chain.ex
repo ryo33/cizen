@@ -18,11 +18,13 @@ defmodule Cizen.Effects.Chain do
         }
   """
 
-  defstruct [:effects]
+  @keys [:effects]
+  @enforce_keys @keys
+  defstruct @keys
 
   alias Cizen.Effect
 
-  @behaviour Effect
+  use Effect
 
   @impl true
   def init(id, %__MODULE__{effects: effects}) do
