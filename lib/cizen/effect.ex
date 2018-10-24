@@ -1,6 +1,26 @@
 defmodule Cizen.Effect do
   @moduledoc """
   The effect behaviour.
+
+  ## Example
+      defmodule Repeat do
+        use Cizen.Effect
+        use Cizen.Effects, only: [Chain]
+        defstruct [:count, :effect, :pid]
+        @impl true
+        def expand(id, %__MODULE__{count: count, effect: effect, pid: pid}) do
+          effects =
+            [effect]
+            |> Stream.cycle()
+            |> Enum.take(count)
+
+          send(pid, id)
+
+          %Chain{
+            effects: effects
+          }
+        end
+      end
   """
 
   alias Cizen.Event

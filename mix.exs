@@ -4,7 +4,7 @@ defmodule Cizen.MixProject do
   def project do
     [
       app: :cizen,
-      version: "0.8.0",
+      version: "0.9.0",
       package: package(),
       elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -133,6 +133,7 @@ defmodule Cizen.MixProject do
         Cizen.Effects.All,
         Cizen.Effects.Dispatch,
         Cizen.Effects.End,
+        Cizen.Effects.Fork,
         Cizen.Effects.Chain,
         Cizen.Effects.Map,
         Cizen.Effects.Monitor,
