@@ -82,13 +82,11 @@ defmodule Cizen.Automaton do
 
   Note that `perform/2` does not work only on the current process.
   """
-  defmacro perform(id, effect) do
-    quote bind_quoted: [id: id, effect: effect] do
-      Dispatcher.dispatch(Event.new(id, %PerformEffect{handler: id, effect: effect}))
+  def perform(id, effect) do
+    Dispatcher.dispatch(Event.new(id, %PerformEffect{handler: id, effect: effect}))
 
-      receive do
-        response -> response
-      end
+    receive do
+      response -> response
     end
   end
 
