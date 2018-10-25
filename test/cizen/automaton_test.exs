@@ -3,8 +3,8 @@ defmodule Cizen.AutomatonTest do
   alias Cizen.EffectHandlerTestHelper.{TestEffect, TestEvent}
   alias Cizen.TestHelper
 
-  alias Cizen.CizenSagaRegistry
   alias Cizen.Automaton
+  alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.EventFilter

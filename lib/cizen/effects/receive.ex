@@ -17,7 +17,9 @@ defmodule Cizen.Effects.Receive do
   """
 
   alias Cizen.Effect
+  alias Cizen.Event
   alias Cizen.EventFilter
+  alias Cizen.Request.Response
 
   defstruct event_filter: %EventFilter{}
 
@@ -29,6 +31,8 @@ defmodule Cizen.Effects.Receive do
   end
 
   @impl true
+  def handle_event(_handler, %Event{body: %Response{}}, _, state), do: state
+
   def handle_event(_handler, event, effect, state) do
     if EventFilter.test(effect.event_filter, event) do
       {:resolve, event}

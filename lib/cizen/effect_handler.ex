@@ -5,8 +5,8 @@ defmodule Cizen.EffectHandler do
 
   alias Cizen.Effect
   alias Cizen.Event
-  alias Cizen.SagaID
   alias Cizen.Request.Response
+  alias Cizen.SagaID
 
   @type state :: %{
           handler: SagaID.t(),

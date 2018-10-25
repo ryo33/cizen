@@ -42,6 +42,32 @@ defmodule Cizen.Effects.ReceiveTest do
       assert {:resolve, ^event} = Effect.handle_event(id, event, effect, state)
     end
 
+    test "does not resolve or consume a Response event", %{handler: id} do
+      alias Cizen.EventID
+      alias Cizen.Request
+      alias Cizen.SagaID
+
+      {effect, state} = Effect.init(id, %Receive{})
+
+      response_event = %Request.Response{
+        requestor_saga_id: SagaID.new(),
+        request_event_id: EventID.new(),
+        event: %TestEvent2{}
+      }
+
+      next = Effect.handle_event(id, Event.new(nil, response_event), effect, state)
+
+      refute match?(
+               {:resolve, _},
+               next
+             )
+
+      refute match?(
+               {:consume, _},
+               next
+             )
+    end
+
     test "does not resolve or consume if not matched", %{handler: id, effect: effect} do
       {_, state} = Effect.init(id, effect)
 

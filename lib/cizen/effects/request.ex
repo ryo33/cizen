@@ -15,12 +15,35 @@ defmodule Cizen.Effects.Request do
   defstruct @keys
 
   alias Cizen.Effect
-  alias Cizen.Effects.{Chain, Dispatch, Map, Receive}
+  alias Cizen.Effects.{Chain, Dispatch, Map}
   alias Cizen.Event
   alias Cizen.EventFilter
   alias Cizen.Request
+  alias Cizen.Request.Response
 
   use Effect
+
+  defmodule ReceiveResponse do
+    @moduledoc false
+    use Effect
+    defstruct [:request_event_id]
+
+    @impl true
+    def init(_handler, %__MODULE__{}) do
+      :ok
+    end
+
+    @impl true
+    def handle_event(_handler, %Event{body: %Response{}} = event, effect, state) do
+      if event.body.request_event_id == effect.request_event_id do
+        {:resolve, event}
+      else
+        state
+      end
+    end
+
+    def handle_event(_handler, _event, _effect, state), do: state
+  end
 
   @impl true
   def expand(id, %__MODULE__{body: body}) do
@@ -31,14 +54,8 @@ defmodule Cizen.Effects.Request do
         effects: [
           %Dispatch{body: %Request{requestor_saga_id: id, body: body}},
           fn request_event ->
-            %Receive{
-              event_filter:
-                EventFilter.new(
-                  event_type: Request.Response,
-                  event_body_filters: [
-                    %Request.Response.RequestEventIDFilter{value: request_event.id}
-                  ]
-                )
+            %ReceiveResponse{
+              request_event_id: request_event.id
             }
           end
         ]

@@ -6,6 +6,7 @@ defmodule Cizen.Effects.RequestTest do
   alias Cizen.Dispatcher
   alias Cizen.Effect
   alias Cizen.Effects
+  alias Cizen.Effects.Request.ReceiveResponse
   alias Cizen.Event
   alias Cizen.EventFilter
   alias Cizen.EventID
@@ -90,6 +91,56 @@ defmodule Cizen.Effects.RequestTest do
       )
 
       assert_receive %Event{body: %TestRequest.TestResponse{value: 2}}
+    end
+  end
+
+  defp setup_receive_response(_context) do
+    id = SagaID.new()
+    request_id = EventID.new()
+
+    effect = %ReceiveResponse{
+      request_event_id: request_id
+    }
+
+    %{handler: id, request: request_id, effect: effect}
+  end
+
+  describe "ReceiveResponse" do
+    setup [:setup_receive_response]
+
+    defmodule(TestEvent, do: defstruct([]))
+
+    test "does not resolves on init", %{handler: id, effect: effect} do
+      refute match?({:resolve, _}, Effect.init(id, effect))
+    end
+
+    test "resolves on Response event", %{handler: id, request: request, effect: effect} do
+      {_, state} = Effect.init(id, effect)
+
+      event =
+        Event.new(nil, %Request.Response{
+          requestor_saga_id: SagaID.new(),
+          request_event_id: request,
+          event: %TestEvent{}
+        })
+
+      assert {:resolve, ^event} = Effect.handle_event(id, event, effect, state)
+    end
+
+    test "does not resolve or consume other events", %{handler: id, effect: effect} do
+      {_, state} = Effect.init(id, effect)
+
+      next = Effect.handle_event(id, Event.new(nil, %TestEvent{}), effect, state)
+
+      refute match?(
+               {:resolve, _},
+               next
+             )
+
+      refute match?(
+               {:consume, _},
+               next
+             )
     end
   end
 end
