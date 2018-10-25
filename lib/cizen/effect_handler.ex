@@ -6,6 +6,7 @@ defmodule Cizen.EffectHandler do
   alias Cizen.Effect
   alias Cizen.Event
   alias Cizen.SagaID
+  alias Cizen.Request.Response
 
   @type state :: %{
           handler: SagaID.t(),
@@ -52,6 +53,7 @@ defmodule Cizen.EffectHandler do
             {state, events} -> {false, nil, state, events}
           end
 
+        # length must be 0 or 1
         state =
           if events == [] do
             state
@@ -66,6 +68,8 @@ defmodule Cizen.EffectHandler do
         end
     end
   end
+
+  defp append_to_buffer(state, %Event{body: %Response{}}), do: state
 
   defp append_to_buffer(state, event) do
     event_buffer = state.event_buffer ++ [event]

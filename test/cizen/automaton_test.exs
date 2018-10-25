@@ -3,6 +3,7 @@ defmodule Cizen.AutomatonTest do
   alias Cizen.EffectHandlerTestHelper.{TestEffect, TestEvent}
   alias Cizen.TestHelper
 
+  alias Cizen.CizenSagaRegistry
   alias Cizen.Automaton
   alias Cizen.Dispatcher
   alias Cizen.Event
@@ -355,6 +356,136 @@ defmodule Cizen.AutomatonTest do
           stacktrace: [{TestAutomatonCrash, _, _, _} | _]
         }
       }
+    end
+
+    defmodule TestAutomatonQueue do
+      use Automaton
+      defstruct [:pid, :a, :b, :c]
+
+      @impl true
+      def spawn(id, state) do
+        perform id, %Subscribe{event_filter: EventFilter.new(event_type: TestEvent)}
+        state
+      end
+
+      @impl true
+      def yield(id, %__MODULE__{pid: pid, a: a, b: b, c: c}) do
+        send(pid, perform(id, %Receive{event_filter: EventFilter.new(source_saga_id: a)}))
+        send(pid, perform(id, %Receive{event_filter: EventFilter.new(source_saga_id: c)}))
+        send(pid, perform(id, %Receive{event_filter: EventFilter.new(source_saga_id: b)}))
+        Automaton.finish()
+      end
+    end
+
+    test "stores ignored events in queue" do
+      pid = self()
+      a = TestHelper.launch_test_saga()
+      b = TestHelper.launch_test_saga()
+      c = TestHelper.launch_test_saga()
+
+      assert_handle(fn id ->
+        perform id, %Start{
+          saga: %TestAutomatonQueue{pid: pid, a: a, b: b, c: c}
+        }
+      end)
+
+      Dispatcher.dispatch(Event.new(a, %TestEvent{}))
+      Dispatcher.dispatch(Event.new(b, %TestEvent{extra: :first}))
+      Dispatcher.dispatch(Event.new(b, %TestEvent{extra: :second}))
+      Dispatcher.dispatch(Event.new(c, %TestEvent{}))
+      assert_receive %Event{source_saga_id: ^a, body: %TestEvent{}}
+      assert_receive %Event{source_saga_id: ^b, body: %TestEvent{extra: :first}}
+      assert_receive %Event{source_saga_id: ^c, body: %TestEvent{}}
+    end
+
+    defmodule TestRequest do
+      use Cizen.Request
+      defstruct []
+
+      defresponse Response, :request_id do
+        defstruct [:request_id]
+      end
+    end
+
+    defmodule TestAutomatonDump do
+      use Automaton
+      defstruct [:pid]
+
+      @impl true
+      def spawn(id, state) do
+        perform id, %Subscribe{event_filter: EventFilter.new(event_type: TestEvent)}
+        state
+      end
+
+      @impl true
+      def yield(id, %__MODULE__{pid: pid}) do
+        perform id, %Receive{}
+
+        response =
+          perform id, %Race{
+            effects: [
+              %Request{body: %TestRequest{}},
+              %Request{body: %TestRequest{}}
+            ]
+          }
+
+        send(pid, response.body)
+        perform id, %Receive{event_filter: %EventFilter{event_type: UnknownEvent}}
+        Automaton.finish()
+      end
+    end
+
+    test "dumps ignored Response events in queue" do
+      pid = self()
+
+      spawn_link(fn ->
+        Dispatcher.listen_event_type(TestRequest)
+
+        receive do
+          %Event{id: id} ->
+            Dispatcher.dispatch(Event.new(nil, %TestRequest.Response{request_id: id}))
+        end
+
+        receive do
+          %Event{id: id} ->
+            Dispatcher.dispatch(Event.new(nil, %TestRequest.Response{request_id: id}))
+        end
+
+        send(pid, :responsed)
+      end)
+
+      saga_id =
+        assert_handle(fn id ->
+          perform id, %Start{
+            saga: %TestAutomatonDump{pid: pid}
+          }
+        end)
+
+      {:ok, pid} = CizenSagaRegistry.get_pid(saga_id)
+
+      old =
+        pid
+        |> :sys.get_state()
+        |> elem(2)
+        |> elem(1)
+
+      Dispatcher.dispatch(Event.new(nil, %TestEvent{}))
+
+      receive do
+        :responsed -> :ok
+      end
+
+      assert_receive %TestRequest.Response{}
+
+      :timer.sleep(10)
+
+      new =
+        pid
+        |> :sys.get_state()
+        |> elem(2)
+        |> elem(1)
+
+      assert old.event_buffer == new.event_buffer
     end
   end
 end

@@ -171,5 +171,32 @@ defmodule Cizen.EventHandlerTest do
 
       assert {:resolve, {:b, 2}, %{effect: nil, event_buffer: []}} = result
     end
+
+    test "ignores ignored Response event", %{handler: state} do
+      alias Cizen.EventID
+      alias Cizen.Request.Response
+      alias Cizen.SagaID
+
+      result =
+        state
+        |> do_feed(%Response{
+          requestor_saga_id: SagaID.new(),
+          request_event_id: EventID.new(),
+          event: %TestEvent{}
+        })
+
+      assert %{effect: nil, event_buffer: []} = result
+
+      result =
+        state
+        |> do_perform(%TestEffect{value: :a})
+        |> do_feed(%Response{
+          requestor_saga_id: SagaID.new(),
+          request_event_id: EventID.new(),
+          event: %TestEvent{}
+        })
+
+      assert %{effect: %TestEffect{value: :a}, event_buffer: []} = result
+    end
   end
 end

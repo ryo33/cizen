@@ -3,7 +3,7 @@ defmodule Cizen.EffectHandlerTestHelper do
 
   defmodule TestEvent do
     @moduledoc false
-    defstruct [:value, :count]
+    defstruct [:value, :count, :extra]
   end
 
   defmodule TestEffect do
@@ -11,6 +11,8 @@ defmodule Cizen.EffectHandlerTestHelper do
     defstruct [:value, :resolve_immediately, :reset, :alias_of]
 
     alias Cizen.Effect
+    alias Cizen.Event
+
     use Effect
 
     @impl true
@@ -29,11 +31,11 @@ defmodule Cizen.EffectHandlerTestHelper do
     end
 
     @impl true
-    def handle_event(_handler, event, effect, count) do
-      if event.body.value == effect.value do
+    def handle_event(_handler, %Event{body: %TestEvent{} = body}, effect, count) do
+      if body.value == effect.value do
         count = count + 1
 
-        if event.body.count <= count do
+        if body.count <= count do
           {:resolve, {effect.value, count}}
         else
           {:consume, count}
@@ -46,5 +48,7 @@ defmodule Cizen.EffectHandlerTestHelper do
         end
       end
     end
+
+    def handle_event(_, _, _, count), do: count
   end
 end
