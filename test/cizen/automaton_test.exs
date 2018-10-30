@@ -221,10 +221,10 @@ defmodule Cizen.AutomatonTest do
       assert_receive %Event{body: %Saga.Finish{id: ^saga_id}}
     end
 
-    test "dispatches Saga.Launched event after spawn/2" do
+    test "dispatches Saga.Started event after spawn/2" do
       saga_id = SagaID.new()
       Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
-      Dispatcher.listen_event_body(%Saga.Launched{id: saga_id})
+      Dispatcher.listen_event_body(%Saga.Started{id: saga_id})
 
       Dispatcher.dispatch(
         Event.new(nil, %StartSaga{
@@ -236,7 +236,7 @@ defmodule Cizen.AutomatonTest do
       assert_receive :launched
 
       refute_receive %Event{
-        body: %Saga.Launched{id: ^saga_id}
+        body: %Saga.Started{id: ^saga_id}
       }
 
       Dispatcher.dispatch(
@@ -247,7 +247,7 @@ defmodule Cizen.AutomatonTest do
       )
 
       assert_receive %Event{
-        body: %Saga.Launched{id: ^saga_id}
+        body: %Saga.Started{id: ^saga_id}
       }
     end
 
@@ -267,7 +267,7 @@ defmodule Cizen.AutomatonTest do
     test "works with no spawn/2" do
       saga_id = SagaID.new()
       Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
-      Dispatcher.listen_event_body(%Saga.Launched{id: saga_id})
+      Dispatcher.listen_event_body(%Saga.Started{id: saga_id})
 
       Dispatcher.dispatch(
         Event.new(nil, %StartSaga{
@@ -283,7 +283,7 @@ defmodule Cizen.AutomatonTest do
       assert_receive :called
 
       assert_receive %Event{
-        body: %Saga.Launched{id: ^saga_id}
+        body: %Saga.Started{id: ^saga_id}
       }
     end
 
@@ -303,7 +303,7 @@ defmodule Cizen.AutomatonTest do
     test "works with no yield/2" do
       saga_id = SagaID.new()
       Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
-      Dispatcher.listen_event_body(%Saga.Launched{id: saga_id})
+      Dispatcher.listen_event_body(%Saga.Started{id: saga_id})
 
       Dispatcher.dispatch(
         Event.new(nil, %StartSaga{
@@ -319,7 +319,7 @@ defmodule Cizen.AutomatonTest do
       }
 
       assert_receive %Event{
-        body: %Saga.Launched{id: ^saga_id}
+        body: %Saga.Started{id: ^saga_id}
       }
     end
 

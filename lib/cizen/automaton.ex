@@ -21,7 +21,7 @@ defmodule Cizen.Automaton do
 
   @doc """
   Invoked when the automaton is spawned.
-  Saga.Launched event will be dispatched after this callback.
+  Saga.Started event will be dispatched after this callback.
 
   Returned value will be used as the next state to pass `yield/2` callback.
   Returning Automaton.finish() will cause the automaton to finish.
@@ -112,7 +112,7 @@ defmodule Cizen.Automaton do
       spawn_link(fn ->
         try do
           state = module.spawn(id, saga)
-          Dispatcher.dispatch(Event.new(id, %Saga.Launched{id: id}))
+          Dispatcher.dispatch(Event.new(id, %Saga.Started{id: id}))
           do_yield(module, id, state)
         rescue
           reason -> Saga.exit(id, reason, __STACKTRACE__)

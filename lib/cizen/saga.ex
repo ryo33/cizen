@@ -36,7 +36,7 @@ defmodule Cizen.Saga do
 
   @doc """
   Invoked when the saga is started.
-  Saga.Launched event will be dispatched after this callback.
+  Saga.Started event will be dispatched after this callback.
 
   Returned value will be used as the next state to pass `handle_event/3` callback.
   """
@@ -54,21 +54,21 @@ defmodule Cizen.Saga do
     defstruct([:id])
   end
 
-  defmodule Launched do
-    @moduledoc "A event fired on launch"
+  defmodule Started do
+    @moduledoc "A event fired on start"
     defstruct([:id])
 
     import Cizen.EventBodyFilter
 
     defeventbodyfilter SagaIDFilter, :id do
       @moduledoc """
-      An event body filter to filter Saga.Launced by saga id
+      An event body filter to filter Saga.Started by saga id
       """
     end
   end
 
-  defmodule Unlaunched do
-    @moduledoc "A event fired on unlaunch"
+  defmodule Ended do
+    @moduledoc "A event fired on end"
     defstruct([:id])
   end
 
@@ -92,14 +92,14 @@ defmodule Cizen.Saga do
 
     task =
       Task.async(fn ->
-        Dispatcher.listen_event_body(%Saga.Launched{id: saga_id})
+        Dispatcher.listen_event_body(%Saga.Started{id: saga_id})
 
         Dispatcher.dispatch(
           Event.new(nil, %StartSaga{id: saga_id, saga: saga, lifetime_pid: lifetime})
         )
 
         receive do
-          %Event{body: %Saga.Launched{id: ^saga_id}} -> :ok
+          %Event{body: %Saga.Started{id: ^saga_id}} -> :ok
         end
 
         saga_id
@@ -131,16 +131,16 @@ defmodule Cizen.Saga do
     saga.__struct__
   end
 
-  def launch(id, saga, lifetime) do
+  def start_saga(id, saga, lifetime) do
     {:ok, _pid} = GenServer.start(__MODULE__, {id, saga, lifetime})
   end
 
-  def unlaunch(id) do
+  def end_saga(id) do
     GenServer.stop({:via, Registry, {CizenSagaRegistry, id}}, :shutdown)
   catch
     :exit, _ -> :ok
   after
-    Dispatcher.dispatch(Event.new(nil, %Unlaunched{id: id}))
+    Dispatcher.dispatch(Event.new(nil, %Ended{id: id}))
   end
 
   def exit(id, reason, trace) do
@@ -161,7 +161,7 @@ defmodule Cizen.Saga do
           state
 
         state ->
-          Dispatcher.dispatch(Event.new(id, %Launched{id: id}))
+          Dispatcher.dispatch(Event.new(id, %Started{id: id}))
           state
       end
 

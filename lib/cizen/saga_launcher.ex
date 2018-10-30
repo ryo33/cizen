@@ -41,10 +41,10 @@ defmodule Cizen.SagaLauncher do
 
     task =
       Task.async(fn ->
-        Dispatcher.listen_event_body(%Saga.Launched{id: id})
+        Dispatcher.listen_event_body(%Saga.Started{id: id})
 
         receive do
-          %Event{body: %Saga.Launched{id: ^id}} -> :ok
+          %Event{body: %Saga.Started{id: ^id}} -> :ok
         after
           1000 -> raise "timeout to launch saga"
         end
@@ -75,7 +75,7 @@ defmodule Cizen.SagaLauncher do
 
   def handle_event(%LaunchSaga{id: id, saga: saga, lifetime_pid: lifetime}, :ok) do
     Task.start_link(fn ->
-      Saga.launch(id, saga, lifetime)
+      Saga.start_saga(id, saga, lifetime)
     end)
 
     {:noreply, :ok}
@@ -83,7 +83,7 @@ defmodule Cizen.SagaLauncher do
 
   def handle_event(%UnlaunchSaga{id: id}, :ok) do
     Task.start_link(fn ->
-      Saga.unlaunch(id)
+      Saga.end_saga(id)
     end)
 
     {:noreply, :ok}

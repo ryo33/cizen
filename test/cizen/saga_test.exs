@@ -22,13 +22,13 @@ defmodule Cizen.SagaTest do
 
   describe "Saga" do
     test "dispatches Launched event on launch" do
-      Dispatcher.listen_event_type(Saga.Launched)
+      Dispatcher.listen_event_type(Saga.Started)
       id = launch_test_saga()
-      assert_receive %Event{body: %Saga.Launched{id: ^id}}
+      assert_receive %Event{body: %Saga.Started{id: ^id}}
     end
 
     test "finishes on Finish event" do
-      Dispatcher.listen_event_type(Saga.Launched)
+      Dispatcher.listen_event_type(Saga.Started)
       id = launch_test_saga()
       Dispatcher.dispatch(Event.new(nil, %Saga.Finish{id: id}))
       assert_condition(100, :error == CizenSagaRegistry.get_pid(id))
@@ -42,10 +42,10 @@ defmodule Cizen.SagaTest do
     end
 
     test "dispatches Unlaunched event on unlaunch" do
-      Dispatcher.listen_event_type(Saga.Unlaunched)
+      Dispatcher.listen_event_type(Saga.Ended)
       id = launch_test_saga()
       Dispatcher.dispatch(Event.new(nil, %SagaLauncher.UnlaunchSaga{id: id}))
-      assert_receive %Event{body: %Saga.Unlaunched{id: id}}
+      assert_receive %Event{body: %Saga.Ended{id: id}}
     end
 
     defmodule(CrashTestEvent1, do: defstruct([]))
@@ -162,18 +162,18 @@ defmodule Cizen.SagaTest do
 
       @impl true
       def handle_event(id, %Event{body: %TestEvent{}}, :ok) do
-        Dispatcher.dispatch(Event.new(nil, %Saga.Launched{id: id}))
+        Dispatcher.dispatch(Event.new(nil, %Saga.Started{id: id}))
         :ok
       end
     end
 
     test "does not dispatch Launched event on lazy launch" do
-      Dispatcher.listen_event_type(Saga.Launched)
+      Dispatcher.listen_event_type(Saga.Started)
       id = SagaID.new()
-      Saga.launch(id, %LazyLaunchSaga{}, nil)
-      refute_receive %Event{body: %Saga.Launched{id: ^id}}
+      Saga.start_saga(id, %LazyLaunchSaga{}, nil)
+      refute_receive %Event{body: %Saga.Started{id: ^id}}
       Dispatcher.dispatch(Event.new(nil, %TestEvent{}))
-      assert_receive %Event{body: %Saga.Launched{id: ^id}}
+      assert_receive %Event{body: %Saga.Started{id: ^id}}
     end
   end
 
@@ -225,11 +225,11 @@ defmodule Cizen.SagaTest do
 
   describe "Saga.start_link/2" do
     test "starts a saga" do
-      Dispatcher.listen_event_type(Saga.Launched)
+      Dispatcher.listen_event_type(Saga.Started)
       {:ok, pid} = Saga.start_link(%TestSaga{extra: :some_value})
 
       received =
-        assert_receive %Event{body: %Saga.Launched{}, source_saga: %TestSaga{extra: :some_value}}
+        assert_receive %Event{body: %Saga.Started{}, source_saga: %TestSaga{extra: :some_value}}
 
       assert {:ok, ^pid} = CizenSagaRegistry.get_pid(received.body.id)
     end

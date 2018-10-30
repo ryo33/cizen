@@ -37,9 +37,9 @@ defmodule Cizen.StartSaga do
 
     [
       EventFilter.new(
-        event_type: Saga.Launched,
+        event_type: Saga.Started,
         event_body_filters: [
-          %Saga.Launched.SagaIDFilter{value: id}
+          %Saga.Started.SagaIDFilter{value: id}
         ]
       )
     ]

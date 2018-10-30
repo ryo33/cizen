@@ -13,7 +13,7 @@ defmodule Cizen.TestHelper do
   def ensure_finished(id) do
     case CizenSagaRegistry.get_pid(id) do
       {:ok, _pid} ->
-        Saga.unlaunch(id)
+        Saga.end_saga(id)
 
       _ ->
         :ok
@@ -25,7 +25,7 @@ defmodule Cizen.TestHelper do
 
     task =
       Task.async(fn ->
-        Dispatcher.listen_event_body(%Saga.Launched{id: saga_id})
+        Dispatcher.listen_event_body(%Saga.Started{id: saga_id})
 
         Dispatcher.dispatch(
           Event.new(nil, %SagaLauncher.LaunchSaga{
@@ -43,7 +43,7 @@ defmodule Cizen.TestHelper do
         )
 
         receive do
-          %Event{body: %Saga.Launched{}} -> :ok
+          %Event{body: %Saga.Started{}} -> :ok
         after
           1000 -> flunk()
         end
