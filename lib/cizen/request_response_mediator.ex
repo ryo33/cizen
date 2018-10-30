@@ -11,7 +11,6 @@ defmodule Cizen.RequestResponseMediator do
   alias Cizen.SagaID
   alias Cizen.SagaLauncher
 
-  alias Cizen.EventFilterDispatcher.PushEvent
   alias Cizen.MonitorSaga
   alias Cizen.Request
 
@@ -34,12 +33,7 @@ defmodule Cizen.RequestResponseMediator do
 
       event
       |> module.response_event_filters()
-      |> Enum.map(
-        &Task.async(fn ->
-          EventFilterDispatcher.subscribe(id, &1)
-        end)
-      )
-      |> Enum.each(&Task.await(&1))
+      |> Enum.each(&EventFilterDispatcher.listen(&1))
 
       Dispatcher.dispatch(event)
 
@@ -57,7 +51,13 @@ defmodule Cizen.RequestResponseMediator do
     end
 
     @impl true
-    def handle_event(id, %Event{body: %PushEvent{event: event}}, state) do
+    def handle_event(id, %Event{body: %MonitorSaga.Down{}}, state) do
+      Dispatcher.dispatch(Event.new(id, %Saga.Finish{id: id}))
+      state
+    end
+
+    @impl true
+    def handle_event(id, event, state) do
       {request_event_id, requestor_saga_id} = state
 
       Dispatcher.dispatch(
@@ -71,12 +71,6 @@ defmodule Cizen.RequestResponseMediator do
         )
       )
 
-      Dispatcher.dispatch(Event.new(id, %Saga.Finish{id: id}))
-      state
-    end
-
-    @impl true
-    def handle_event(id, %Event{body: %MonitorSaga.Down{}}, state) do
       Dispatcher.dispatch(Event.new(id, %Saga.Finish{id: id}))
       state
     end

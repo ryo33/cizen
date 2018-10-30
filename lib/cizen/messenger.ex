@@ -3,6 +3,7 @@ defmodule Cizen.Messenger do
   Send messages.
   """
 
+  alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.EventFilter
@@ -79,68 +80,77 @@ defmodule Cizen.Messenger do
 
   @impl true
   def handle_event(id, %Event{id: event_id, body: %SubscribeMessage{} = body}, state) do
-    spawn_link(fn ->
-      %SubscribeMessage{
-        subscriber_saga_id: subscriber,
-        event_filter: event_filter,
-        lifetime_saga_id: lifetime
-      } = body
+    %SubscribeMessage{
+      subscriber_saga_id: subscriber,
+      event_filter: event_filter,
+      lifetime_saga_id: lifetime
+    } = body
 
-      meta = :subscriber
-      EventFilterDispatcher.subscribe_as_proxy(id, subscriber, lifetime, event_filter, meta)
+    meta = {:subscriber, subscriber}
 
-      Dispatcher.dispatch(
-        Event.new(id, %SubscribeMessage.Subscribed{
-          event_id: event_id
-        })
-      )
-    end)
+    if is_nil(lifetime) do
+      case CizenSagaRegistry.get_pid(subscriber) do
+        {:ok, pid} ->
+          lifetimes = [pid]
+          EventFilterDispatcher.listen_with_meta(event_filter, meta, lifetimes)
+
+        _ ->
+          :ok
+      end
+    else
+      with {:ok, s_pid} <- CizenSagaRegistry.get_pid(subscriber),
+           {:ok, l_pid} <- CizenSagaRegistry.get_pid(lifetime) do
+        lifetimes = [s_pid, l_pid]
+        EventFilterDispatcher.listen_with_meta(event_filter, meta, lifetimes)
+      else
+        _ -> :ok
+      end
+    end
+
+    Dispatcher.dispatch(
+      Event.new(id, %SubscribeMessage.Subscribed{
+        event_id: event_id
+      })
+    )
 
     state
   end
 
   @impl true
   def handle_event(id, %Event{id: event_id, body: %RegisterChannel{} = body}, state) do
-    spawn_link(fn ->
-      saga_id = body.channel_saga_id
-      meta = :channel
-      EventFilterDispatcher.subscribe_as_proxy(id, saga_id, nil, body.event_filter, meta)
+    channel = body.channel_saga_id
+    meta = {:channel, channel}
 
-      Dispatcher.dispatch(
-        Event.new(id, %RegisterChannel.Registered{
-          event_id: event_id
-        })
-      )
-    end)
+    case CizenSagaRegistry.get_pid(channel) do
+      {:ok, pid} ->
+        lifetimes = [pid]
+        EventFilterDispatcher.listen_with_meta(body.event_filter, meta, lifetimes)
+
+      _ ->
+        :ok
+    end
+
+    Dispatcher.dispatch(
+      Event.new(id, %RegisterChannel.Registered{
+        event_id: event_id
+      })
+    )
 
     state
   end
 
   @impl true
-  def handle_event(
-        id,
-        %Event{
-          body: %PushEvent{
-            event: event,
-            subscriptions: subscriptions
-          }
-        },
-        state
-      ) do
-    %{channels: channels, others: subscriptions} =
-      Map.merge(
-        %{channels: [], others: []},
-        Enum.group_by(subscriptions, fn
-          %EventFilterDispatcher.Subscription{meta: :channel} -> :channels
+  def handle_event(id, %Event{body: %PushEvent{event: event, metas: metas}}, state) do
+    %{channels: channels, others: subscribers} =
+      metas
+      |> Enum.group_by(
+        fn
+          {:channel, _} -> :channels
           _ -> :others
-        end)
+        end,
+        fn {_, saga_id} -> saga_id end
       )
-
-    subscribers =
-      subscriptions
-      |> Enum.map(fn %EventFilterDispatcher.Subscription{subscriber_saga_id: subscriber} ->
-        subscriber
-      end)
+      |> Enum.into(%{channels: [], others: []})
 
     if channels == [] do
       subscribers
@@ -149,7 +159,7 @@ defmodule Cizen.Messenger do
       end)
     else
       channels
-      |> Enum.each(fn %EventFilterDispatcher.Subscription{subscriber_saga_id: channel} ->
+      |> Enum.each(fn channel ->
         Dispatcher.dispatch(
           Event.new(id, %FeedMessage{
             channel_saga_id: channel,

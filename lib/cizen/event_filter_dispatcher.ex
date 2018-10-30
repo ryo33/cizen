@@ -5,18 +5,16 @@ defmodule Cizen.EventFilterDispatcher do
 
   use GenServer
 
-  alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.EventFilter
-  alias Cizen.SagaID
 
   defmodule PushEvent do
     @moduledoc """
-    An event to push an event from EventFilterDispatcher
+    An event to push an event with meta values.
     """
 
-    @keys [:saga_id, :event, :subscriptions]
+    @keys [:event, :metas]
     @enforce_keys @keys
     defstruct @keys
   end
@@ -26,53 +24,19 @@ defmodule Cizen.EventFilterDispatcher do
   end
 
   @doc """
-  Subscribe event filter synchronously.
+  listen event filter.
   """
-  @spec subscribe(SagaID.t(), EventFilter.t(), meta :: term) :: __MODULE__.Subscription.t()
-  def subscribe(id, event_filter, meta \\ nil) do
-    subscribe_as_proxy(nil, id, nil, event_filter, meta)
+  @spec listen(EventFilter.t(), lifetime_pids :: [pid]) :: :ok
+  def listen(event_filter, lifetime_pids \\ []) do
+    GenServer.cast(__MODULE__, {:listen, self(), event_filter, nil, lifetime_pids})
   end
 
   @doc """
-  Subscribe event filter synchronously as a proxy.
+  listen event filter with meta.
   """
-  @spec subscribe_as_proxy(
-          proxy :: SagaID.t() | nil,
-          SagaID.t(),
-          SagaID.t() | nil,
-          EventFilter.t(),
-          meta :: term
-        ) :: __MODULE__.Subscription.t()
-  def subscribe_as_proxy(proxy_id, id, lifetime_id, event_filter, meta \\ nil) do
-    subscription = %__MODULE__.Subscription{
-      proxy_saga_id: proxy_id,
-      subscriber_saga_id: id,
-      lifetime_saga_id: lifetime_id,
-      event_filter: event_filter,
-      meta: meta
-    }
-
-    event =
-      Event.new(id, %__MODULE__.Subscribe{
-        subscription: subscription
-      })
-
-    task =
-      Task.async(fn ->
-        Dispatcher.listen_event_body(%__MODULE__.Subscribe.Subscribed{
-          subscribe_id: event.id
-        })
-
-        Dispatcher.dispatch(event)
-
-        receive do
-          %Event{body: %__MODULE__.Subscribe.Subscribed{}} -> :ok
-        end
-      end)
-
-    Task.await(task, 100)
-
-    subscription
+  @spec listen_with_meta(EventFilter.t(), meta :: term, lifetime_pids :: [pid]) :: :ok
+  def listen_with_meta(event_filter, meta, lifetime_pids \\ []) do
+    GenServer.cast(__MODULE__, {:listen, self(), event_filter, meta, lifetime_pids})
   end
 
   @impl true
@@ -89,49 +53,26 @@ defmodule Cizen.EventFilterDispatcher do
   end
 
   @impl true
-  def handle_info(%Event{body: %PushEvent{}}, state), do: {:noreply, state}
+  def handle_cast({:listen, pid, event_filter, meta, lifetime_pids}, state) do
+    lifetimes = [pid | lifetime_pids]
 
-  def handle_info(%Event{body: %__MODULE__.Subscribe{subscription: subscription}} = event, state) do
-    lifetimes = [subscription.subscriber_saga_id]
+    refs = Enum.map(lifetimes, &Process.monitor/1)
 
-    lifetimes =
-      if is_nil(subscription.lifetime_saga_id) do
-        lifetimes
-      else
-        [subscription.lifetime_saga_id | lifetimes]
-      end
+    subscription = {pid, event_filter, meta}
 
-    pids =
-      Enum.map(lifetimes, fn lifetime ->
-        case CizenSagaRegistry.get_pid(lifetime) do
-          {:ok, pid} -> pid
-          _ -> nil
-        end
+    subscriptions = Map.put(state.subscriptions, subscription, refs)
+
+    refs =
+      Enum.reduce(refs, state.refs, fn ref, refs ->
+        Map.put(refs, ref, subscription)
       end)
 
-    state =
-      if Enum.all?(pids, &is_pid/1) do
-        refs =
-          pids
-          |> Enum.map(&Process.monitor/1)
-
-        subscriptions = Map.put(state.subscriptions, subscription, refs)
-
-        refs =
-          Enum.reduce(refs, state.refs, fn ref, refs ->
-            Map.put(refs, ref, subscription)
-          end)
-
-        %{state | refs: refs, subscriptions: subscriptions}
-      else
-        state
-      end
-
-    Dispatcher.dispatch(Event.new(nil, %__MODULE__.Subscribe.Subscribed{subscribe_id: event.id}))
+    state = %{state | refs: refs, subscriptions: subscriptions}
 
     {:noreply, state}
   end
 
+  @impl true
   def handle_info({:DOWN, ref, :process, _, _}, state) do
     {subscription, refs} = Map.pop(state.refs, ref)
     {drop, subscriptions} = Map.pop(state.subscriptions, subscription)
@@ -147,23 +88,32 @@ defmodule Cizen.EventFilterDispatcher do
     {:noreply, state}
   end
 
+  @impl true
   def handle_info(%Event{} = event, state) do
     state.subscriptions
     |> Map.keys()
-    |> Enum.filter(fn subscription ->
-      __MODULE__.Subscription.match?(subscription, event)
+    |> Enum.filter(fn {_, filter, _} ->
+      EventFilter.test(filter, event)
     end)
-    |> Enum.group_by(fn subscription ->
-      subscription.proxy_saga_id || subscription.subscriber_saga_id
-    end)
-    |> Enum.each(fn {saga_id, subscriptions} ->
-      Dispatcher.dispatch(
-        Event.new(nil, %PushEvent{
-          saga_id: saga_id,
-          event: event,
-          subscriptions: subscriptions
-        })
-      )
+    |> Enum.group_by(
+      fn {pid, _, meta} -> if is_nil(meta), do: pid, else: {pid, :proxied} end,
+      fn {_, _, meta} -> meta end
+    )
+    |> Enum.each(fn {dest, metas} ->
+      case dest do
+        {pid, :proxied} ->
+          event =
+            Event.new(nil, %PushEvent{
+              event: event,
+              metas: metas
+            })
+
+          Dispatcher.dispatch(event)
+          send(pid, event)
+
+        pid ->
+          send(pid, event)
+      end
     end)
 
     {:noreply, state}

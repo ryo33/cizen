@@ -6,71 +6,15 @@ defmodule Cizen.MenssengerTest do
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.EventFilter
-  alias Cizen.EventFilterDispatcher
   alias Cizen.Messenger
   alias Cizen.SagaID
 
   alias Cizen.Channel.EmitMessage
   alias Cizen.Channel.FeedMessage
-  alias Cizen.RegisterChannel
   alias Cizen.SendMessage
   alias Cizen.SubscribeMessage
 
   defmodule(TestEvent, do: defstruct([:value]))
-
-  test "create event filter subscription on SubscribeMessage event" do
-    Dispatcher.listen_event_type(EventFilterDispatcher.Subscribe)
-
-    subscriber_id = launch_test_saga()
-
-    event_filter = %EventFilter{
-      source_saga_id: SagaID.new()
-    }
-
-    Dispatcher.dispatch(
-      Event.new(nil, %SubscribeMessage{
-        subscriber_saga_id: subscriber_id,
-        event_filter: event_filter
-      })
-    )
-
-    assert_receive %Event{
-      body: %EventFilterDispatcher.Subscribe{
-        subscription: %EventFilterDispatcher.Subscription{
-          subscriber_saga_id: ^subscriber_id,
-          event_filter: ^event_filter,
-          meta: :subscriber
-        }
-      }
-    }
-  end
-
-  test "create event filter subscription on RegisterChannel event" do
-    Dispatcher.listen_event_type(EventFilterDispatcher.Subscribe)
-
-    subscriber_id = launch_test_saga()
-
-    event_filter = %EventFilter{
-      source_saga_id: SagaID.new()
-    }
-
-    Dispatcher.dispatch(
-      Event.new(nil, %RegisterChannel{
-        channel_saga_id: subscriber_id,
-        event_filter: event_filter
-      })
-    )
-
-    assert_receive %Event{
-      body: %EventFilterDispatcher.Subscribe{
-        subscription: %EventFilterDispatcher.Subscription{
-          subscriber_saga_id: ^subscriber_id,
-          event_filter: ^event_filter,
-          meta: :channel
-        }
-      }
-    }
-  end
 
   test "dispatches SendMessage event if no channels" do
     pid = self()

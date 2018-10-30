@@ -3,6 +3,7 @@ defmodule Cizen.DispatcherTest do
 
   alias Cizen.Dispatcher
   alias Cizen.Event
+  alias Cizen.EventFilter
 
   defmodule(TestEvent, do: defstruct([:value]))
 
@@ -96,6 +97,34 @@ defmodule Cizen.DispatcherTest do
     wait_until_receive(:task2)
     Dispatcher.dispatch(Event.new(nil, %TestEvent{value: :a}))
     Dispatcher.dispatch(Event.new(nil, %TestEvent{value: :b}))
+    Task.await(task1)
+    Task.await(task2)
+  end
+
+  test "listen" do
+    pid = self()
+
+    task1 =
+      Task.async(fn ->
+        Dispatcher.listen(%EventFilter{event_type: TestEventA})
+        send(pid, :task1)
+        assert_receive %Event{body: %TestEventA{}}
+        refute_receive %Event{body: %TestEventB{}}
+      end)
+
+    task2 =
+      Task.async(fn ->
+        Dispatcher.listen(%EventFilter{event_type: TestEventA})
+        Dispatcher.listen(%EventFilter{event_type: TestEventB})
+        send(pid, :task2)
+        assert_receive %Event{body: %TestEventA{}}
+        assert_receive %Event{body: %TestEventB{}}
+      end)
+
+    wait_until_receive(:task1)
+    wait_until_receive(:task2)
+    Dispatcher.dispatch(Event.new(nil, %TestEventA{}))
+    Dispatcher.dispatch(Event.new(nil, %TestEventB{}))
     Task.await(task1)
     Task.await(task2)
   end

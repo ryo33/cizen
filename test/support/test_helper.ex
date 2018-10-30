@@ -21,30 +21,35 @@ defmodule Cizen.TestHelper do
   end
 
   def launch_test_saga(opts \\ []) do
-    pid = self()
     saga_id = SagaID.new()
 
-    Dispatcher.dispatch(
-      Event.new(nil, %SagaLauncher.LaunchSaga{
-        id: saga_id,
-        saga: %TestSaga{
-          launch: fn id, state ->
-            send(pid, {:ok, id})
-            launch = Keyword.get(opts, :launch, fn _id, state -> state end)
-            state = launch.(id, state)
-            state
-          end,
-          handle_event: Keyword.get(opts, :handle_event, fn _id, _event, state -> state end),
-          extra: Keyword.get(opts, :extra, nil)
-        }
-      })
-    )
+    task =
+      Task.async(fn ->
+        Dispatcher.listen_event_body(%Saga.Launched{id: saga_id})
 
-    receive do
-      {:ok, ^saga_id} -> :ok
-    after
-      1000 -> flunk()
-    end
+        Dispatcher.dispatch(
+          Event.new(nil, %SagaLauncher.LaunchSaga{
+            id: saga_id,
+            saga: %TestSaga{
+              launch: fn id, state ->
+                launch = Keyword.get(opts, :launch, fn _id, state -> state end)
+                state = launch.(id, state)
+                state
+              end,
+              handle_event: Keyword.get(opts, :handle_event, fn _id, _event, state -> state end),
+              extra: Keyword.get(opts, :extra, nil)
+            }
+          })
+        )
+
+        receive do
+          %Event{body: %Saga.Launched{}} -> :ok
+        after
+          1000 -> flunk()
+        end
+      end)
+
+    Task.await(task)
 
     saga_id
   end

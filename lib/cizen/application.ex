@@ -32,11 +32,6 @@ defmodule Cizen.Application do
     })
 
     Supervisor.start_child(Cizen.Supervisor, %{
-      id: Cizen.EventFilterDispatcher.EventPusher,
-      start: {Cizen.EventFilterDispatcher.EventPusher, :start_link, []}
-    })
-
-    Supervisor.start_child(Cizen.Supervisor, %{
       id: Cizen.EventFilterDispatcher,
       start: {Cizen.EventFilterDispatcher, :start_link, []}
     })

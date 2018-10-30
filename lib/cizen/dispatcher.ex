@@ -56,4 +56,9 @@ defmodule Cizen.Dispatcher do
     {:ok, _} = Registry.register(__MODULE__, event_body, :ok)
     :ok
   end
+
+  @doc """
+  Listen events with the given event filter.
+  """
+  defdelegate listen(event_filter), to: Cizen.EventFilterDispatcher
 end
