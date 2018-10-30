@@ -41,11 +41,6 @@ defmodule Cizen.Application do
       start: {Cizen.SagaMonitor, :start_link, []}
     })
 
-    Supervisor.start_child(Cizen.Supervisor, %{
-      id: Cizen.Automaton.EffectSender,
-      start: {Cizen.Automaton.EffectSender, :start_link, []}
-    })
-
     :ok
   end
 

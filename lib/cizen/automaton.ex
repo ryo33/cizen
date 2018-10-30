@@ -3,6 +3,7 @@ defmodule Cizen.Automaton do
   A saga framework to create an automaton.
   """
 
+  alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.EffectHandler
   alias Cizen.Event
@@ -83,7 +84,10 @@ defmodule Cizen.Automaton do
   Note that `perform/2` does not work only on the current process.
   """
   def perform(id, effect) do
-    Dispatcher.dispatch(Event.new(id, %PerformEffect{handler: id, effect: effect}))
+    event = Event.new(id, %PerformEffect{handler: id, effect: effect})
+    Dispatcher.dispatch(event)
+    {:ok, pid} = CizenSagaRegistry.get_pid(id)
+    send(pid, event)
 
     receive do
       response -> response

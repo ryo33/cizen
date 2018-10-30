@@ -20,7 +20,6 @@ defmodule Cizen.SagaMonitor do
   @impl true
   def init(_args) do
     Dispatcher.listen_event_type(MonitorSaga)
-    Dispatcher.listen_event_type(MonitorSaga.Down)
     {:ok, %{refs: %{}, target_monitors: %{}}}
   end
 
@@ -57,24 +56,18 @@ defmodule Cizen.SagaMonitor do
     {:noreply, state}
   end
 
-  def handle_info(%Event{body: %MonitorSaga.Down{monitor_saga_id: monitor}} = event, state) do
-    case CizenSagaRegistry.get_pid(monitor) do
-      {:ok, pid} ->
-        send(pid, event)
-
-      _ ->
-        :ok
-    end
-
-    {:noreply, state}
-  end
-
   defp down(monitor, target) do
-    Dispatcher.dispatch(
+    event =
       Event.new(nil, %MonitorSaga.Down{
         monitor_saga_id: monitor,
         target_saga_id: target
       })
-    )
+
+    Dispatcher.dispatch(event)
+
+    case CizenSagaRegistry.get_pid(monitor) do
+      {:ok, pid} -> send(pid, event)
+      _ -> :ok
+    end
   end
 end

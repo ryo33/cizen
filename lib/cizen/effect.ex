@@ -14,8 +14,6 @@ defmodule Cizen.Effect do
             |> Stream.cycle()
             |> Enum.take(count)
 
-          send(pid, id)
-
           %Chain{
             effects: effects
           }
