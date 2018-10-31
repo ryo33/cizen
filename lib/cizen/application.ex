@@ -15,6 +15,10 @@ defmodule Cizen.Application do
       %{
         id: Cizen.CizenSagaRegistry,
         start: {Cizen.CizenSagaRegistry, :start_link, []}
+      },
+      %{
+        id: Cizen.EventRouter,
+        start: {Application.get_env(:cizen, :event_router), :start_link, []}
       }
     ]
 

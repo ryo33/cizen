@@ -1,6 +1,12 @@
 defmodule Cizen.EventFilterDispatcher do
   @moduledoc """
   A dispatcher based on subscription with filter set.
+
+  `Cizen.DefaultEventRouter` is used for event routing.
+  You can customize this in a config:
+
+      use Mix.Config
+      config :cizen, event_router: YourEventRouter
   """
 
   use GenServer
@@ -58,7 +64,8 @@ defmodule Cizen.EventFilterDispatcher do
 
     refs = Enum.map(lifetimes, &Process.monitor/1)
 
-    subscription = {pid, event_filter, meta}
+    subscription = {event_filter, {pid, meta}}
+    Application.get_env(:cizen, :event_router).put(subscription)
 
     subscriptions = Map.put(state.subscriptions, subscription, refs)
 
@@ -75,29 +82,32 @@ defmodule Cizen.EventFilterDispatcher do
   @impl true
   def handle_info({:DOWN, ref, :process, _, _}, state) do
     {subscription, refs} = Map.pop(state.refs, ref)
-    {drop, subscriptions} = Map.pop(state.subscriptions, subscription)
 
-    refs =
-      if not is_nil(drop) and length(drop) > 1 do
-        Map.drop(refs, drop)
-      else
-        refs
-      end
+    if is_nil(subscription) do
+      {:noreply, state}
+    else
+      Application.get_env(:cizen, :event_router).delete(subscription)
+      {drop, subscriptions} = Map.pop(state.subscriptions, subscription)
 
-    state = %{state | refs: refs, subscriptions: subscriptions}
-    {:noreply, state}
+      refs =
+        if not is_nil(drop) and length(drop) > 1 do
+          Map.drop(refs, drop)
+        else
+          refs
+        end
+
+      state = %{state | refs: refs, subscriptions: subscriptions}
+      {:noreply, state}
+    end
   end
 
   @impl true
   def handle_info(%Event{} = event, state) do
-    state.subscriptions
-    |> Map.keys()
-    |> Enum.filter(fn {_, filter, _} ->
-      EventFilter.test(filter, event)
-    end)
+    event
+    |> Application.get_env(:cizen, :event_router).routes()
     |> Enum.group_by(
-      fn {pid, _, meta} -> if is_nil(meta), do: pid, else: {pid, :proxied} end,
-      fn {_, _, meta} -> meta end
+      fn {_, {pid, meta}} -> if is_nil(meta), do: pid, else: {pid, :proxied} end,
+      fn {_, {_, meta}} -> meta end
     )
     |> Enum.each(fn {dest, metas} ->
       case dest do
