@@ -2,7 +2,7 @@ defmodule Cizen.EventRouter do
   @moduledoc """
   The event router behaviour.
 
-  See `Cizen.EventFilterDispatcher`.
+  See `Cizen.FilterDispatcher`.
   """
 
   alias Cizen.Event

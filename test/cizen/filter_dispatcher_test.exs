@@ -1,4 +1,4 @@
-defmodule Cizen.EventFilterDispatcherTest do
+defmodule Cizen.FilterDispatcherTest do
   use Cizen.SagaCase
 
   alias Cizen.TestHelper
@@ -7,9 +7,9 @@ defmodule Cizen.EventFilterDispatcherTest do
   alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.Event
-  alias Cizen.EventFilterDispatcher
-  alias Cizen.EventFilterDispatcher.PushEvent
   alias Cizen.Filter
+  alias Cizen.FilterDispatcher
+  alias Cizen.FilterDispatcher.PushEvent
   alias Cizen.SagaID
 
   defmodule(TestEvent, do: defstruct([:value]))
@@ -22,7 +22,7 @@ defmodule Cizen.EventFilterDispatcherTest do
 
     launch_test_saga(
       launch: fn _, _ ->
-        EventFilterDispatcher.listen(event_filter)
+        FilterDispatcher.listen(event_filter)
       end,
       handle_event: fn _id, event, _state -> send(pid, event) end
     )
@@ -40,7 +40,7 @@ defmodule Cizen.EventFilterDispatcherTest do
 
     launch_test_saga(
       launch: fn _, _ ->
-        EventFilterDispatcher.listen(
+        FilterDispatcher.listen(
           Filter.new(fn %Event{source_saga_id: value} -> value == source_saga_id end)
         )
       end,
@@ -49,7 +49,7 @@ defmodule Cizen.EventFilterDispatcherTest do
 
     launch_test_saga(
       launch: fn _, _ ->
-        EventFilterDispatcher.listen(
+        FilterDispatcher.listen(
           Filter.new(fn %Event{source_saga_id: value} -> value == SagaID.new() end)
         )
       end,
@@ -74,11 +74,11 @@ defmodule Cizen.EventFilterDispatcherTest do
 
     launch_test_saga(
       launch: fn _, _ ->
-        EventFilterDispatcher.listen(
+        FilterDispatcher.listen(
           Filter.new(fn %Event{source_saga_id: value} -> value == source_saga_id end)
         )
 
-        EventFilterDispatcher.listen(
+        FilterDispatcher.listen(
           Filter.new(fn %Event{source_saga_id: value} -> value == source_saga_id end)
         )
       end,
@@ -97,12 +97,12 @@ defmodule Cizen.EventFilterDispatcherTest do
 
     launch_test_saga(
       launch: fn _, _ ->
-        EventFilterDispatcher.listen_with_meta(
+        FilterDispatcher.listen_with_meta(
           Filter.new(fn %Event{source_saga_id: value} -> value == source_saga_id end),
           :a
         )
 
-        EventFilterDispatcher.listen_with_meta(
+        FilterDispatcher.listen_with_meta(
           Filter.new(fn %Event{source_saga_id: value} -> value == source_saga_id end),
           :b
         )
@@ -125,12 +125,12 @@ defmodule Cizen.EventFilterDispatcherTest do
 
     launch_test_saga(
       launch: fn _, _ ->
-        EventFilterDispatcher.listen_with_meta(
+        FilterDispatcher.listen_with_meta(
           Filter.new(fn %Event{source_saga_id: value} -> value == source_saga_id end),
           :a
         )
 
-        EventFilterDispatcher.listen_with_meta(
+        FilterDispatcher.listen_with_meta(
           Filter.new(fn %Event{source_saga_id: value} -> value == source_saga_id end),
           :b
         )
@@ -150,7 +150,7 @@ defmodule Cizen.EventFilterDispatcherTest do
   end
 
   test "remove the subscription when the saga finishes" do
-    old_state = :sys.get_state(EventFilterDispatcher)
+    old_state = :sys.get_state(FilterDispatcher)
 
     pid = self()
     source_saga_id = launch_test_saga()
@@ -158,7 +158,7 @@ defmodule Cizen.EventFilterDispatcherTest do
     saga_id =
       launch_test_saga(
         launch: fn _, _ ->
-          EventFilterDispatcher.listen(
+          FilterDispatcher.listen(
             Filter.new(fn %Event{source_saga_id: value, body: %TestEvent{}} ->
               value == source_saga_id
             end)
@@ -169,7 +169,7 @@ defmodule Cizen.EventFilterDispatcherTest do
 
     TestHelper.ensure_finished(saga_id)
 
-    assert_condition(100, :sys.get_state(EventFilterDispatcher) == old_state)
+    assert_condition(100, :sys.get_state(FilterDispatcher) == old_state)
 
     Dispatcher.dispatch(Event.new(source_saga_id, %TestEvent{value: :a}))
 
@@ -177,7 +177,7 @@ defmodule Cizen.EventFilterDispatcherTest do
   end
 
   test "removes the subscription when the lifetime saga finishes" do
-    old_state = :sys.get_state(EventFilterDispatcher)
+    old_state = :sys.get_state(FilterDispatcher)
 
     pid = self()
     source_saga_id = launch_test_saga()
@@ -188,7 +188,7 @@ defmodule Cizen.EventFilterDispatcherTest do
 
     launch_test_saga(
       launch: fn _, _ ->
-        EventFilterDispatcher.listen(
+        FilterDispatcher.listen(
           Filter.new(fn %Event{source_saga_id: value, body: %TestEvent{}} ->
             value == source_saga_id
           end),
@@ -200,7 +200,7 @@ defmodule Cizen.EventFilterDispatcherTest do
 
     TestHelper.ensure_finished(lifetime_saga)
 
-    assert_condition(1000, :sys.get_state(EventFilterDispatcher) == old_state)
+    assert_condition(1000, :sys.get_state(FilterDispatcher) == old_state)
 
     Dispatcher.dispatch(Event.new(source_saga_id, %TestEvent{value: :a}))
 

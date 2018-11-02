@@ -60,5 +60,5 @@ defmodule Cizen.Dispatcher do
   @doc """
   Listen events with the given event filter.
   """
-  defdelegate listen(event_filter), to: Cizen.EventFilterDispatcher
+  defdelegate listen(event_filter), to: Cizen.FilterDispatcher
 end

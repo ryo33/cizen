@@ -1,4 +1,4 @@
-defmodule Cizen.EventFilterDispatcher do
+defmodule Cizen.FilterDispatcher do
   @moduledoc """
   A dispatcher based on subscription with filter set.
 
