@@ -9,7 +9,7 @@ defmodule Cizen.Messenger.Transmitter do
   alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.Event
-  alias Cizen.EventFilter
+  alias Cizen.Filter
   alias Cizen.Messenger
 
   alias Cizen.Channel.EmitMessage
@@ -20,8 +20,8 @@ defmodule Cizen.Messenger.Transmitter do
   def init(id, %__MODULE__{}) do
     Dispatcher.listen_event_type(SendMessage)
     Dispatcher.listen_event_type(FeedMessage)
-    require EventFilter
-    Messenger.subscribe_message(id, EventFilter.new(event_type: EmitMessage))
+    require Filter
+    Messenger.subscribe_message(id, Filter.new(fn %Event{body: %EmitMessage{}} -> true end))
     :ok
   end
 

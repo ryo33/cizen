@@ -7,7 +7,7 @@ defmodule Cizen.SagaEnder do
 
   alias Cizen.Dispatcher
   alias Cizen.Event
-  alias Cizen.EventFilter
+  alias Cizen.Filter
   alias Cizen.Messenger
   alias Cizen.Saga
 
@@ -17,7 +17,8 @@ defmodule Cizen.SagaEnder do
 
   @impl true
   def init(id, _struct) do
-    Messenger.subscribe_message(id, %EventFilter{event_type: EndSaga})
+    require Filter
+    Messenger.subscribe_message(id, Filter.new(fn %Event{body: %EndSaga{}} -> true end))
     :ok
   end
 

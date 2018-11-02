@@ -6,9 +6,9 @@ defmodule Cizen.Messenger do
   alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.Event
-  alias Cizen.EventFilter
   alias Cizen.EventFilterDispatcher
   alias Cizen.EventFilterDispatcher.PushEvent
+  alias Cizen.Filter
   alias Cizen.RegisterChannel
   alias Cizen.Saga
   alias Cizen.SagaID
@@ -22,7 +22,7 @@ defmodule Cizen.Messenger do
   @behaviour Saga
 
   @doc "Subscribe message synchronously"
-  @spec subscribe_message(SagaID.t(), EventFilter.t()) :: :ok
+  @spec subscribe_message(SagaID.t(), Filter.t()) :: :ok
   def subscribe_message(saga_id, event_filter) do
     task =
       Task.async(fn ->
@@ -47,7 +47,7 @@ defmodule Cizen.Messenger do
   end
 
   @doc "Register channel synchronously"
-  @spec register_channel(SagaID.t(), EventFilter.t()) :: :ok
+  @spec register_channel(SagaID.t(), Filter.t()) :: :ok
   def register_channel(channel_id, event_filter) do
     task =
       Task.async(fn ->

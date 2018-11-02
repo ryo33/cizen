@@ -17,7 +17,4 @@ defmodule Cizen.TestSaga do
     state = handle_event.(id, event, state)
     %__MODULE__{struct | state: state}
   end
-
-  import Cizen.SagaFilter
-  defsagafilter ExtraFilter, :extra
 end

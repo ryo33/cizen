@@ -5,7 +5,7 @@ defmodule Cizen.Effects.ForkTest do
   alias Cizen.Dispatcher
   alias Cizen.Effects.Fork
   alias Cizen.Event
-  alias Cizen.EventFilter
+  alias Cizen.Filter
   alias Cizen.Saga
 
   defmodule(TestEvent, do: defstruct([]))
@@ -19,7 +19,9 @@ defmodule Cizen.Effects.ForkTest do
 
     @impl true
     def spawn(id, %__MODULE__{pid: pid}) do
-      perform id, %Subscribe{event_filter: EventFilter.new(event_type: TestEvent)}
+      perform id, %Subscribe{
+        event_filter: Filter.new(fn %Event{body: %TestEvent{}} -> true end)
+      }
 
       forked =
         perform id, %Fork{

@@ -3,8 +3,8 @@ defmodule Cizen.DefaultEventRouterTest do
 
   alias Cizen.DefaultEventRouter
   alias Cizen.Event
-  alias Cizen.EventFilter
-  require EventFilter
+  alias Cizen.Filter
+  require Filter
 
   defmodule(TestEventA, do: defstruct([]))
   defmodule(TestEventB, do: defstruct([]))
@@ -23,8 +23,8 @@ defmodule Cizen.DefaultEventRouterTest do
   end
 
   test "returns matched routes" do
-    subscription_a = {EventFilter.new(event_type: TestEventA), 1}
-    subscription_b = {EventFilter.new(event_type: TestEventB), 2}
+    subscription_a = {Filter.new(fn %Event{body: %TestEventA{}} -> true end), 1}
+    subscription_b = {Filter.new(fn %Event{body: %TestEventB{}} -> true end), 2}
     put(subscription_a)
     put(subscription_b)
     assert [subscription_a] == DefaultEventRouter.routes(Event.new(nil, %TestEventA{}))
@@ -33,9 +33,9 @@ defmodule Cizen.DefaultEventRouterTest do
   end
 
   test "returns multiple matched routes" do
-    subscription_1 = {EventFilter.new(event_type: TestEventA), 1}
-    subscription_2 = {EventFilter.new(event_type: TestEventA), 2}
-    subscription_3 = {EventFilter.new(event_type: TestEventB), 3}
+    subscription_1 = {Filter.new(fn %Event{body: %TestEventA{}} -> true end), 1}
+    subscription_2 = {Filter.new(fn %Event{body: %TestEventA{}} -> true end), 2}
+    subscription_3 = {Filter.new(fn %Event{body: %TestEventB{}} -> true end), 3}
     put(subscription_1)
     put(subscription_2)
     put(subscription_3)
@@ -44,9 +44,9 @@ defmodule Cizen.DefaultEventRouterTest do
   end
 
   test "deletes subscription" do
-    subscription_1 = {EventFilter.new(event_type: TestEventA), 1}
-    subscription_2 = {EventFilter.new(event_type: TestEventA), 2}
-    subscription_3 = {EventFilter.new(event_type: TestEventB), 3}
+    subscription_1 = {Filter.new(fn %Event{body: %TestEventA{}} -> true end), 1}
+    subscription_2 = {Filter.new(fn %Event{body: %TestEventA{}} -> true end), 2}
+    subscription_3 = {Filter.new(fn %Event{body: %TestEventB{}} -> true end), 3}
     put(subscription_1)
     put(subscription_2)
     put(subscription_3)

@@ -6,7 +6,7 @@ defmodule Cizen.DefaultEventRouter do
   use GenServer
   @behaviour Cizen.EventRouter
 
-  alias Cizen.EventFilter
+  alias Cizen.Filter
 
   @impl Cizen.EventRouter
   def start_link do
@@ -47,7 +47,7 @@ defmodule Cizen.DefaultEventRouter do
   def handle_call({:routes, event}, _from, state) do
     routes =
       Enum.filter(state, fn {event_filter, _meta} ->
-        EventFilter.test(event_filter, event)
+        Filter.match?(event_filter, event)
       end)
 
     {:reply, routes, state}

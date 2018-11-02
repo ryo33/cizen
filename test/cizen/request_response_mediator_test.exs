@@ -10,7 +10,7 @@ defmodule Cizen.RequestResponseMediatorTest do
   alias Cizen.SagaLauncher
 
   defmodule TestRequest do
-    alias Cizen.EventFilter
+    alias Cizen.Filter
 
     defstruct []
 
@@ -25,11 +25,11 @@ defmodule Cizen.RequestResponseMediatorTest do
     @behaviour Request
 
     @impl true
-    def response_event_filters(%Event{}) do
-      [
-        %EventFilter{event_type: TestResponseA},
-        %EventFilter{event_type: TestResponseB}
-      ]
+    def response_event_filter(_event) do
+      Filter.new(fn %Event{body: body} ->
+        Filter.match?(Filter.new(fn %TestResponseA{} -> true end), body) or
+          Filter.match?(Filter.new(fn %TestResponseB{} -> true end), body)
+      end)
     end
   end
 

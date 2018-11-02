@@ -7,13 +7,15 @@ defmodule Cizen.AutomatonTest do
   alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.Event
-  alias Cizen.EventFilter
+  alias Cizen.Filter
   alias Cizen.Messenger
   alias Cizen.Saga
   alias Cizen.SagaID
 
   alias Cizen.Automaton.PerformEffect
   alias Cizen.StartSaga
+
+  defmodule(UnknownEvent, do: defstruct([]))
 
   describe "perform/2" do
     test "dispatches PerformEffect event" do
@@ -143,9 +145,10 @@ defmodule Cizen.AutomatonTest do
 
       @impl true
       def spawn(id, %__MODULE__{pid: pid}) do
-        Messenger.subscribe_message(id, %EventFilter{
-          event_type: TestEvent
-        })
+        Messenger.subscribe_message(
+          id,
+          Filter.new(fn %Event{body: %TestEvent{}} -> true end)
+        )
 
         send(pid, :launched)
         send(pid, perform(id, %TestEffect{value: :a}))
@@ -364,15 +367,36 @@ defmodule Cizen.AutomatonTest do
 
       @impl true
       def spawn(id, state) do
-        perform id, %Subscribe{event_filter: EventFilter.new(event_type: TestEvent)}
+        perform id, %Subscribe{
+          event_filter: Filter.new(fn %Event{body: %TestEvent{}} -> true end)
+        }
+
         state
       end
 
       @impl true
       def yield(id, %__MODULE__{pid: pid, a: a, b: b, c: c}) do
-        send(pid, perform(id, %Receive{event_filter: EventFilter.new(source_saga_id: a)}))
-        send(pid, perform(id, %Receive{event_filter: EventFilter.new(source_saga_id: c)}))
-        send(pid, perform(id, %Receive{event_filter: EventFilter.new(source_saga_id: b)}))
+        send(
+          pid,
+          perform(id, %Receive{
+            event_filter: Filter.new(fn %Event{source_saga_id: value} -> value == a end)
+          })
+        )
+
+        send(
+          pid,
+          perform(id, %Receive{
+            event_filter: Filter.new(fn %Event{source_saga_id: value} -> value == c end)
+          })
+        )
+
+        send(
+          pid,
+          perform(id, %Receive{
+            event_filter: Filter.new(fn %Event{source_saga_id: value} -> value == b end)
+          })
+        )
+
         Automaton.finish()
       end
     end
@@ -413,7 +437,10 @@ defmodule Cizen.AutomatonTest do
 
       @impl true
       def spawn(id, state) do
-        perform id, %Subscribe{event_filter: EventFilter.new(event_type: TestEvent)}
+        perform id, %Subscribe{
+          event_filter: Filter.new(fn %Event{body: %TestEvent{}} -> true end)
+        }
+
         state
       end
 
@@ -430,7 +457,11 @@ defmodule Cizen.AutomatonTest do
           }
 
         send(pid, response.body)
-        perform id, %Receive{event_filter: %EventFilter{event_type: UnknownEvent}}
+
+        perform id, %Receive{
+          event_filter: Filter.new(fn %Event{body: %UnknownEvent{}} -> true end)
+        }
+
         Automaton.finish()
       end
     end

@@ -8,15 +8,15 @@ defmodule Cizen.Effects.RequestTest do
   alias Cizen.Effects
   alias Cizen.Effects.Request.ReceiveResponse
   alias Cizen.Event
-  alias Cizen.EventFilter
   alias Cizen.EventID
+  alias Cizen.Filter
   alias Cizen.SagaID
 
   alias Cizen.Request
   alias Cizen.StartSaga
 
   defmodule TestRequest do
-    alias Cizen.EventFilter
+    alias Cizen.Filter
 
     defstruct [:value]
 
@@ -27,10 +27,8 @@ defmodule Cizen.Effects.RequestTest do
     @behaviour Request
 
     @impl true
-    def response_event_filters(%Event{}) do
-      [
-        %EventFilter{event_type: TestResponse}
-      ]
+    def response_event_filter(%Event{}) do
+      Filter.new(fn %Event{body: %TestResponse{}} -> true end)
     end
   end
 

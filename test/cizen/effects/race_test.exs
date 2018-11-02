@@ -6,7 +6,7 @@ defmodule Cizen.Effects.RaceTest do
   alias Cizen.Effect
   alias Cizen.Effects.{Dispatch, Monitor, Race, Receive, Start, Subscribe}
   alias Cizen.Event
-  alias Cizen.EventFilter
+  alias Cizen.Filter
   alias Cizen.SagaID
 
   describe "Race" do
@@ -139,9 +139,7 @@ defmodule Cizen.Effects.RaceTest do
       @impl true
       def spawn(id, struct) do
         perform(id, %Subscribe{
-          event_filter: %EventFilter{
-            event_type: TestEvent
-          }
+          event_filter: Filter.new(fn %Event{body: %TestEvent{}} -> true end)
         })
 
         struct

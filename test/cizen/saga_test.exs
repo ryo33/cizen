@@ -213,6 +213,8 @@ defmodule Cizen.SagaTest do
       saga_id =
         receive do
           saga_id -> saga_id
+        after
+          1000 -> flunk("timeout")
         end
 
       assert {:ok, _} = CizenSagaRegistry.get_pid(saga_id)
@@ -250,6 +252,8 @@ defmodule Cizen.SagaTest do
       pid =
         receive do
           {:started, pid} -> pid
+        after
+          1000 -> flunk("timeout")
         end
 
       Process.exit(current, :kill)

@@ -46,7 +46,7 @@ defmodule Cizen.Automaton do
     quote do
       alias Cizen.Automaton
       import Cizen.Automaton, only: [perform: 2, finish: 0]
-      require Cizen.EventFilter
+      require Cizen.Filter
 
       @behaviour Saga
       @behaviour Automaton

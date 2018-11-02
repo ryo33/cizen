@@ -6,7 +6,7 @@ defmodule Cizen.Effects.MapTest do
   alias Cizen.Dispatcher
   alias Cizen.Effect
   alias Cizen.Event
-  alias Cizen.EventFilter
+  alias Cizen.Filter
   alias Cizen.Messenger
   alias Cizen.Saga
   alias Cizen.SagaID
@@ -101,9 +101,10 @@ defmodule Cizen.Effects.MapTest do
 
       @impl true
       def yield(id, %__MODULE__{pid: pid}) do
-        Messenger.subscribe_message(id, %EventFilter{
-          event_type: TestEvent
-        })
+        Messenger.subscribe_message(
+          id,
+          Filter.new(fn %Event{body: %TestEvent{}} -> true end)
+        )
 
         send(pid, :launched)
 

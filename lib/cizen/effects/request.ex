@@ -17,7 +17,7 @@ defmodule Cizen.Effects.Request do
   alias Cizen.Effect
   alias Cizen.Effects.{Chain, Dispatch, Map}
   alias Cizen.Event
-  alias Cizen.EventFilter
+  alias Cizen.Filter
   alias Cizen.Request
   alias Cizen.Request.Response
 
@@ -47,7 +47,7 @@ defmodule Cizen.Effects.Request do
 
   @impl true
   def expand(id, %__MODULE__{body: body}) do
-    require EventFilter
+    require Filter
 
     %Map{
       effect: %Chain{

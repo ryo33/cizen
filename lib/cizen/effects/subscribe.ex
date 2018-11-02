@@ -6,7 +6,7 @@ defmodule Cizen.Effects.Subscribe do
 
   ## Example
       perform id, %Subscribe{
-        event_filter: EventFilter.new(event_type: some_event_type),
+        event_filter: Filter.new(fn %Event{body: %SomeEvent{}} -> true end),
         lifetime_saga_id: some_saga_id
       }
   """

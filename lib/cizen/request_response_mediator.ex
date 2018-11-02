@@ -32,8 +32,8 @@ defmodule Cizen.RequestResponseMediator do
       module = Event.type(event)
 
       event
-      |> module.response_event_filters()
-      |> Enum.each(&EventFilterDispatcher.listen(&1))
+      |> module.response_event_filter()
+      |> EventFilterDispatcher.listen()
 
       Dispatcher.dispatch(event)
 

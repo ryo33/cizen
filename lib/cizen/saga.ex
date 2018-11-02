@@ -57,14 +57,6 @@ defmodule Cizen.Saga do
   defmodule Started do
     @moduledoc "A event fired on start"
     defstruct([:id])
-
-    import Cizen.EventBodyFilter
-
-    defeventbodyfilter SagaIDFilter, :id do
-      @moduledoc """
-      An event body filter to filter Saga.Started by saga id
-      """
-    end
   end
 
   defmodule Ended do

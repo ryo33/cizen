@@ -6,7 +6,7 @@ defmodule Cizen.Effects.ReceiveTest do
   alias Cizen.Effect
   alias Cizen.Effects.Receive
   alias Cizen.Event
-  alias Cizen.EventFilter
+  alias Cizen.Filter
   alias Cizen.Messenger
   alias Cizen.Saga
   alias Cizen.SagaID
@@ -20,9 +20,7 @@ defmodule Cizen.Effects.ReceiveTest do
     id = SagaID.new()
 
     effect = %Receive{
-      event_filter: %EventFilter{
-        event_type: TestEvent1
-      }
+      event_filter: Filter.new(fn %Event{body: %TestEvent1{}} -> true end)
     }
 
     %{handler: id, effect: effect}
@@ -85,7 +83,7 @@ defmodule Cizen.Effects.ReceiveTest do
     end
 
     test "uses the default event filter" do
-      assert %Receive{} == %Receive{event_filter: %EventFilter{}}
+      assert %Receive{} == %Receive{event_filter: %Filter{}}
     end
 
     defmodule TestAutomaton do
@@ -95,13 +93,9 @@ defmodule Cizen.Effects.ReceiveTest do
 
       @impl true
       def yield(id, %__MODULE__{pid: pid}) do
-        test_event1_filter = %EventFilter{
-          event_type: TestEvent1
-        }
+        test_event1_filter = Filter.new(fn %Event{body: %TestEvent1{}} -> true end)
 
-        test_event2_filter = %EventFilter{
-          event_type: TestEvent2
-        }
+        test_event2_filter = Filter.new(fn %Event{body: %TestEvent2{}} -> true end)
 
         Messenger.subscribe_message(id, test_event1_filter)
         Messenger.subscribe_message(id, test_event2_filter)

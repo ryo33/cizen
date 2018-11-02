@@ -4,7 +4,7 @@ defmodule Cizen.Effects.MonitorTest do
 
   alias Cizen.Effects.{Monitor, Receive}
   alias Cizen.Event
-  alias Cizen.EventFilter
+  alias Cizen.Filter
   alias Cizen.MonitorSaga
 
   defmodule(TestEvent, do: defstruct([:value]))
@@ -20,7 +20,10 @@ defmodule Cizen.Effects.MonitorTest do
 
         event =
           perform(id, %Receive{
-            event_filter: EventFilter.new()
+            event_filter:
+              Filter.new(fn %Event{body: %MonitorSaga.Down{target_saga_id: value}} ->
+                value == saga_id
+              end)
           })
 
         assert %Event{body: %MonitorSaga.Down{target_saga_id: ^saga_id}} = event
@@ -34,12 +37,9 @@ defmodule Cizen.Effects.MonitorTest do
         event_filter = perform(id, %Monitor{saga_id: saga_id})
 
         assert event_filter ==
-                 EventFilter.new(
-                   event_type: MonitorSaga.Down,
-                   event_body_filters: [
-                     %MonitorSaga.Down.TargetSagaIDFilter{value: saga_id}
-                   ]
-                 )
+                 Filter.new(fn %Event{body: %MonitorSaga.Down{target_saga_id: value}} ->
+                   value == saga_id
+                 end)
 
         TestHelper.ensure_finished(saga_id)
 

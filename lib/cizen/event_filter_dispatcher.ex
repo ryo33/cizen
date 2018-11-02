@@ -13,7 +13,7 @@ defmodule Cizen.EventFilterDispatcher do
 
   alias Cizen.Dispatcher
   alias Cizen.Event
-  alias Cizen.EventFilter
+  alias Cizen.Filter
 
   defmodule PushEvent do
     @moduledoc """
@@ -32,7 +32,7 @@ defmodule Cizen.EventFilterDispatcher do
   @doc """
   listen event filter.
   """
-  @spec listen(EventFilter.t(), lifetime_pids :: [pid]) :: :ok
+  @spec listen(Filter.t(), lifetime_pids :: [pid]) :: :ok
   def listen(event_filter, lifetime_pids \\ []) do
     GenServer.cast(__MODULE__, {:listen, self(), event_filter, nil, lifetime_pids})
   end
@@ -40,7 +40,7 @@ defmodule Cizen.EventFilterDispatcher do
   @doc """
   listen event filter with meta.
   """
-  @spec listen_with_meta(EventFilter.t(), meta :: term, lifetime_pids :: [pid]) :: :ok
+  @spec listen_with_meta(Filter.t(), meta :: term, lifetime_pids :: [pid]) :: :ok
   def listen_with_meta(event_filter, meta, lifetime_pids \\ []) do
     GenServer.cast(__MODULE__, {:listen, self(), event_filter, meta, lifetime_pids})
   end

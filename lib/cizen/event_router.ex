@@ -6,9 +6,9 @@ defmodule Cizen.EventRouter do
   """
 
   alias Cizen.Event
-  alias Cizen.EventFilter
+  alias Cizen.Filter
 
-  @type subscription :: {EventFilter.t(), term}
+  @type subscription :: {Filter.t(), term}
 
   @callback start_link :: GenServer.on_start()
   @callback put(subscription) :: term

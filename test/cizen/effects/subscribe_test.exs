@@ -6,7 +6,7 @@ defmodule Cizen.Effects.SubscribeTest do
   alias Cizen.Dispatcher
   alias Cizen.Effects.{Receive, Subscribe}
   alias Cizen.Event
-  alias Cizen.EventFilter
+  alias Cizen.Filter
   alias Cizen.SagaID
 
   alias Cizen.StartSaga
@@ -18,7 +18,7 @@ defmodule Cizen.Effects.SubscribeTest do
     test "dispatches Subscribe event" do
       Dispatcher.listen_event_type(SubscribeMessage)
 
-      event_filter = %EventFilter{event_type: TestEvent}
+      event_filter = Filter.new(fn %Event{body: %TestEvent{}} -> true end)
 
       id =
         assert_handle(fn id ->
@@ -41,7 +41,7 @@ defmodule Cizen.Effects.SubscribeTest do
     test "dispatches Subscribe event with lifetime" do
       Dispatcher.listen_event_type(SubscribeMessage)
 
-      event_filter = %EventFilter{event_type: TestEvent}
+      event_filter = Filter.new(fn %Event{body: %TestEvent{}} -> true end)
 
       lifetime = TestHelper.launch_test_saga()
 
@@ -74,14 +74,14 @@ defmodule Cizen.Effects.SubscribeTest do
         send(
           pid,
           perform(id, %Subscribe{
-            event_filter: EventFilter.new(event_type: TestEvent)
+            event_filter: Filter.new(fn %Event{body: %TestEvent{}} -> true end)
           })
         )
 
         send(
           pid,
           perform(id, %Receive{
-            event_filter: EventFilter.new(event_type: TestEvent)
+            event_filter: Filter.new(fn %Event{body: %TestEvent{}} -> true end)
           })
         )
 

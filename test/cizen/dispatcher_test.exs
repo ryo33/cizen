@@ -3,7 +3,8 @@ defmodule Cizen.DispatcherTest do
 
   alias Cizen.Dispatcher
   alias Cizen.Event
-  alias Cizen.EventFilter
+  alias Cizen.Filter
+  require Cizen.Filter
 
   defmodule(TestEvent, do: defstruct([:value]))
 
@@ -106,7 +107,7 @@ defmodule Cizen.DispatcherTest do
 
     task1 =
       Task.async(fn ->
-        Dispatcher.listen(%EventFilter{event_type: TestEventA})
+        Dispatcher.listen(Filter.new(fn %Event{body: %TestEventA{}} -> true end))
         send(pid, :task1)
         assert_receive %Event{body: %TestEventA{}}
         refute_receive %Event{body: %TestEventB{}}
@@ -114,8 +115,8 @@ defmodule Cizen.DispatcherTest do
 
     task2 =
       Task.async(fn ->
-        Dispatcher.listen(%EventFilter{event_type: TestEventA})
-        Dispatcher.listen(%EventFilter{event_type: TestEventB})
+        Dispatcher.listen(Filter.new(fn %Event{body: %TestEventA{}} -> true end))
+        Dispatcher.listen(Filter.new(fn %Event{body: %TestEventB{}} -> true end))
         send(pid, :task2)
         assert_receive %Event{body: %TestEventA{}}
         assert_receive %Event{body: %TestEventB{}}

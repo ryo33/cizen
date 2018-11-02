@@ -4,13 +4,12 @@ defmodule Cizen.Request do
   """
 
   alias Cizen.Event
-  alias Cizen.EventBodyFilterSet
-  alias Cizen.EventFilter
+  alias Cizen.Filter
 
   @doc """
   Returns event filters to subscribe the response of the given event.
   """
-  @callback response_event_filters(Event.t()) :: list(EventFilter.t())
+  @callback response_event_filter(Event.t()) :: Filter.t()
 
   @keys [:requestor_saga_id, :body]
   @enforce_keys @keys
@@ -23,20 +22,6 @@ defmodule Cizen.Request do
     @keys [:requestor_saga_id, :request_event_id, :event]
     @enforce_keys @keys
     defstruct @keys
-
-    defmodule RequestEventIDFilter do
-      @moduledoc """
-      An event body filter to filter Response by the request event id
-      """
-      alias Cizen.EventBodyFilter
-      @enforce_keys [:value]
-      defstruct [:value]
-      @behaviour EventBodyFilter
-      @impl true
-      def test(%__MODULE__{value: request_event_id}, event_body) do
-        event_body.request_event_id == request_event_id
-      end
-    end
   end
 
   defmacro __using__(_opts) do
@@ -48,30 +33,20 @@ defmodule Cizen.Request do
   end
 
   @doc false
-  defmacro __before_compile__(env) do
-    alias Cizen.EventBodyFilterSet
-    alias Cizen.EventFilter
-    responses = Module.get_attribute(env.module, :responses)
-
-    filters =
-      Enum.map(responses, fn {module, filter} ->
-        quote do
-          %EventFilter{
-            event_type: unquote(module),
-            event_body_filter_set:
-              EventBodyFilterSet.new([
-                %unquote(filter){value: var!(id)}
-              ])
-          }
-        end
-      end)
-
+  defmacro __before_compile__(_env) do
     quote do
       @behaviour Cizen.Request
       @impl true
-      def response_event_filters(event) do
-        var!(id) = event.id
-        unquote(filters)
+      def response_event_filter(event) do
+        require Filter
+
+        @responses
+        |> Enum.map(fn {module, key} ->
+          Filter.new(fn %Event{body: body} ->
+            body.__struct__ == module and body[key] == event.id
+          end)
+        end)
+        |> Filter.any()
       end
     end
   end
@@ -92,32 +67,10 @@ defmodule Cizen.Request do
       end
   """
   defmacro defresponse(module, key, do: block) do
-    filter_name =
-      key
-      |> Atom.to_string()
-      |> Kernel.<>("_filter")
-      |> Macro.camelize()
-      |> String.to_atom()
-
-    caller = List.last(Module.split(__CALLER__.module))
-
     quote do
-      @responses {
-        Module.concat(__MODULE__, unquote(module)),
-        Module.concat([__MODULE__, unquote(module), unquote(filter_name)])
-      }
+      @responses {Module.concat(__MODULE__, unquote(module)), unquote(key)}
       defmodule unquote(module) do
         unquote(block)
-
-        import Cizen.EventBodyFilter
-
-        defeventbodyfilter alias!(unquote(filter_name)), unquote(key) do
-          @moduledoc """
-          An event body filter to filter #{unquote(caller)}.#{
-            List.last(Module.split(unquote(module)))
-          } by #{unquote(key)}
-          """
-        end
       end
     end
   end

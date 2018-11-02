@@ -8,20 +8,20 @@ defmodule Cizen.Effects.Receive do
 
   ## Example
       perform id, %Subscribe{
-        event_filter: EventFilter.new(event_type: some_event_type)
+        event_filter: Filter.new(fn %Event{body: %SomeEvent{}} -> true end)
       }
 
       perform id, %Receive{
-        event_filter: EventFilter.new(event_type: some_event_type)
+        event_filter: Filter.new(fn %Event{body: %SomeEvent{}} -> true end)
       }
   """
 
   alias Cizen.Effect
   alias Cizen.Event
-  alias Cizen.EventFilter
+  alias Cizen.Filter
   alias Cizen.Request.Response
 
-  defstruct event_filter: %EventFilter{}
+  defstruct event_filter: %Filter{}
 
   use Effect
 
@@ -34,7 +34,7 @@ defmodule Cizen.Effects.Receive do
   def handle_event(_handler, %Event{body: %Response{}}, _, state), do: state
 
   def handle_event(_handler, event, effect, state) do
-    if EventFilter.test(effect.event_filter, event) do
+    if Filter.match?(effect.event_filter, event) do
       {:resolve, event}
     else
       state

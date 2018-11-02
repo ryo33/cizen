@@ -5,7 +5,7 @@ defmodule Cizen.MenssengerTest do
 
   alias Cizen.Dispatcher
   alias Cizen.Event
-  alias Cizen.EventFilter
+  alias Cizen.Filter
   alias Cizen.Messenger
   alias Cizen.SagaID
 
@@ -21,8 +21,10 @@ defmodule Cizen.MenssengerTest do
 
     source_id = launch_test_saga()
 
-    event_filter = %EventFilter{source_saga_id: source_id}
-    another_event_filter = %EventFilter{source_saga_id: SagaID.new()}
+    event_filter = Filter.new(fn %Event{source_saga_id: value} -> value == source_id end)
+
+    another_event_filter =
+      Filter.new(fn %Event{source_saga_id: value} -> value == SagaID.new() end)
 
     subscriber_a = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
     subscriber_b = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
@@ -47,8 +49,10 @@ defmodule Cizen.MenssengerTest do
 
     source_id = launch_test_saga()
 
-    event_filter = %EventFilter{source_saga_id: source_id}
-    another_event_filter = %EventFilter{source_saga_id: SagaID.new()}
+    event_filter = Filter.new(fn %Event{source_saga_id: value} -> value == source_id end)
+
+    another_event_filter =
+      Filter.new(fn %Event{source_saga_id: value} -> value == SagaID.new() end)
 
     subscriber_a = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
     subscriber_b = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
@@ -132,15 +136,15 @@ defmodule Cizen.MenssengerTest do
 
     channel = launch_test_saga()
 
-    event_filter = %EventFilter{
-      event_type: EmitMessage,
-      source_saga_id: channel
-    }
+    event_filter =
+      Filter.new(fn %Event{source_saga_id: value, body: %EmitMessage{}} ->
+        value == channel
+      end)
 
-    another_event_filter = %EventFilter{
-      event_type: EmitMessage,
-      source_saga_id: SagaID.new()
-    }
+    another_event_filter =
+      Filter.new(fn %Event{source_saga_id: value, body: %EmitMessage{}} ->
+        value == SagaID.new()
+      end)
 
     channel_a = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
     channel_b = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
@@ -217,30 +221,40 @@ defmodule Cizen.MenssengerTest do
 
     channel_c = launch_test_saga(handle_event: fn id, event, _ -> send(pid, {id, event}) end)
 
-    Messenger.subscribe_message(subscriber_a, %EventFilter{
-      event_type: TestEvent,
-      source_saga_id: source_id
-    })
+    Messenger.subscribe_message(
+      subscriber_a,
+      Filter.new(fn %Event{source_saga_id: value, body: %TestEvent{}} ->
+        value == source_id
+      end)
+    )
 
-    Messenger.subscribe_message(subscriber_b, %EventFilter{
-      event_type: TestEvent,
-      source_saga_id: source_id
-    })
+    Messenger.subscribe_message(
+      subscriber_b,
+      Filter.new(fn %Event{source_saga_id: value, body: %TestEvent{}} ->
+        value == source_id
+      end)
+    )
 
-    Messenger.register_channel(channel_a, %EventFilter{
-      event_type: TestEvent,
-      source_saga_id: source_id
-    })
+    Messenger.register_channel(
+      channel_a,
+      Filter.new(fn %Event{source_saga_id: value, body: %TestEvent{}} ->
+        value == source_id
+      end)
+    )
 
-    Messenger.register_channel(channel_b, %EventFilter{
-      event_type: EmitMessage,
-      source_saga_id: channel_a
-    })
+    Messenger.register_channel(
+      channel_b,
+      Filter.new(fn %Event{source_saga_id: value, body: %EmitMessage{}} ->
+        value == channel_a
+      end)
+    )
 
-    Messenger.register_channel(channel_c, %EventFilter{
-      event_type: EmitMessage,
-      source_saga_id: channel_b
-    })
+    Messenger.register_channel(
+      channel_c,
+      Filter.new(fn %Event{source_saga_id: value, body: %EmitMessage{}} ->
+        value == channel_b
+      end)
+    )
 
     event = Event.new(source_id, %TestEvent{})
     Dispatcher.dispatch(event)
@@ -295,7 +309,7 @@ defmodule Cizen.MenssengerTest do
       perform id, %Request{
         body: %SubscribeMessage{
           subscriber_saga_id: subscriber,
-          event_filter: %EventFilter{source_saga_id: source_id},
+          event_filter: Filter.new(fn %Event{source_saga_id: value} -> value == source_id end),
           lifetime_saga_id: lifetime_saga
         }
       }
@@ -324,7 +338,7 @@ defmodule Cizen.MenssengerTest do
       perform id, %Request{
         body: %SubscribeMessage{
           subscriber_saga_id: subscriber,
-          event_filter: %EventFilter{source_saga_id: source_id},
+          event_filter: Filter.new(fn %Event{source_saga_id: value} -> value == source_id end),
           lifetime_saga_id: lifetime_saga
         }
       }

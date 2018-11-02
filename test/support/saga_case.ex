@@ -76,7 +76,7 @@ defmodule Cizen.SagaCase do
     use Cizen.Automaton
 
     alias Cizen.Effects.{Receive, Request}
-    alias Cizen.EventFilter
+    alias Cizen.Filter
     alias Cizen.RegisterChannel
     alias Cizen.Saga
 
@@ -86,7 +86,7 @@ defmodule Cizen.SagaCase do
       perform(id, %Request{
         body: %RegisterChannel{
           channel_saga_id: id,
-          event_filter: EventFilter.new(event_type: Saga.Crashed)
+          event_filter: Filter.new(fn %Event{body: %Saga.Crashed{}} -> true end)
         }
       })
 

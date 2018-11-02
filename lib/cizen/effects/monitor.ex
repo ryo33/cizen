@@ -21,7 +21,8 @@ defmodule Cizen.Effects.Monitor do
 
   alias Cizen.Effect
   alias Cizen.Effects.{Dispatch, Map}
-  alias Cizen.EventFilter
+  alias Cizen.Event
+  alias Cizen.Filter
 
   alias Cizen.MonitorSaga
 
@@ -29,7 +30,7 @@ defmodule Cizen.Effects.Monitor do
 
   @impl true
   def expand(id, %__MODULE__{saga_id: saga_id}) do
-    require Cizen.EventFilter
+    require Cizen.Filter
 
     %Map{
       effect: %Dispatch{
@@ -39,12 +40,9 @@ defmodule Cizen.Effects.Monitor do
         }
       },
       transform: fn _response ->
-        EventFilter.new(
-          event_type: MonitorSaga.Down,
-          event_body_filters: [
-            %MonitorSaga.Down.TargetSagaIDFilter{value: saga_id}
-          ]
-        )
+        Filter.new(fn %Event{body: %MonitorSaga.Down{target_saga_id: value}} ->
+          value == saga_id
+        end)
       end
     }
   end
