@@ -18,8 +18,6 @@ defmodule Cizen.SagaTest do
   alias Cizen.SagaID
   alias Cizen.SagaLauncher
 
-  alias Cizen.StartSaga
-
   describe "Saga" do
     test "dispatches Launched event on launch" do
       Dispatcher.listen_event_type(Saga.Started)
@@ -184,16 +182,16 @@ defmodule Cizen.SagaTest do
   end
 
   describe "Saga.fork/2" do
-    test "dispatches StartSaga event" do
-      Dispatcher.listen_event_type(StartSaga)
+    test "starts a saga" do
+      Dispatcher.listen_event_type(Saga.Started)
       Saga.fork(%TestSaga{extra: :some_value})
-      assert_receive %Event{body: %StartSaga{saga: %TestSaga{extra: :some_value}}}
+      assert_receive %Event{body: %Saga.Started{}}
     end
 
     test "returns saga_id" do
-      Dispatcher.listen_event_type(StartSaga)
+      Dispatcher.listen_event_type(Saga.Started)
       saga_id = Saga.fork(%TestSaga{extra: :some_value})
-      received = assert_receive %Event{body: %StartSaga{saga: %TestSaga{extra: :some_value}}}
+      received = assert_receive %Event{body: %Saga.Started{}}
       assert saga_id == received.body.id
     end
 

@@ -18,17 +18,17 @@ defmodule Cizen.Effects.Fork do
   alias Cizen.Effects.{Map, Request}
   alias Cizen.SagaID
 
-  alias Cizen.StartSaga
+  alias Cizen.ForkSaga
 
   use Effect
 
   @impl true
-  def expand(_id, %__MODULE__{saga: saga}) do
+  def expand(id, %__MODULE__{saga: saga}) do
     saga_id = SagaID.new()
 
     %Map{
       effect: %Request{
-        body: %StartSaga{id: saga_id, saga: saga, lifetime_pid: self()}
+        body: %ForkSaga{id: saga_id, saga: saga, lifetime_saga_id: id}
       },
       transform: fn _ -> saga_id end
     }

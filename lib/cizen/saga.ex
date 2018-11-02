@@ -30,8 +30,6 @@ defmodule Cizen.Saga do
   alias Cizen.Saga
   alias Cizen.SagaID
 
-  alias Cizen.StartSaga
-
   @type state :: any
 
   @doc """
@@ -80,26 +78,11 @@ defmodule Cizen.Saga do
   @spec fork(t) :: SagaID.t()
   def fork(saga) do
     lifetime = self()
-    saga_id = SagaID.new()
+    id = SagaID.new()
 
-    task =
-      Task.async(fn ->
-        Dispatcher.listen_event_body(%Saga.Started{id: saga_id})
+    {:ok, _pid} = GenServer.start_link(__MODULE__, {id, saga, lifetime})
 
-        Dispatcher.dispatch(
-          Event.new(nil, %StartSaga{id: saga_id, saga: saga, lifetime_pid: lifetime})
-        )
-
-        receive do
-          %Event{body: %Saga.Started{id: ^saga_id}} -> :ok
-        end
-
-        saga_id
-      end)
-
-    Task.await(task)
-
-    saga_id
+    id
   end
 
   @doc """

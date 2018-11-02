@@ -1,10 +1,10 @@
-defmodule Cizen.StartSaga do
+defmodule Cizen.ForkSaga do
   @moduledoc """
-  An event to start a saga.
+  An event to start a saga with lifetime.
   """
 
   @enforce_keys [:id, :saga]
-  defstruct [:id, :saga]
+  defstruct [:id, :saga, :lifetime_saga_id]
 
   alias Cizen.Event
   alias Cizen.Filter
