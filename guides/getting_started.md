@@ -71,13 +71,18 @@ Next, we define an automaton which handles the `Push` and `Pop`.
       defstruct [:stack]
 
       use Cizen.Effects # to use All, Subscribe, Receive, and Dispatch
-      alias Cizen.EventFilter
+      alias Cizen.Event
+      alias Cizen.Filter
 
       @impl true
       def spawn(id, %__MODULE__{stack: stack}) do
         perform id, %All{effects: [
-          %Subscribe{event_filter: EventFilter.new(event_type: Push)},
-          %Subscribe{event_filter: EventFilter.new(event_type: Pop)}
+          %Subscribe{event_filter: Filter.new(
+            fn %Event{body: %Push{}} -> true end
+          )},
+          %Subscribe{event_filter: Filter.new(
+            fn %Event{body: %Pop{}} -> true end
+          )}
         ]}
 
         stack # next state
@@ -118,15 +123,19 @@ and they'll called with the following lifecycle:
 The following code in `spawn/2` subscribes two event types `Push` and `Pop`:
 
     perform id, %All{effects: [
-      %Subscribe{event_filter: EventFilter.new(event_type: Push)},
-      %Subscribe{event_filter: EventFilter.new(event_type: Pop)}
+      %Subscribe{event_filter: Filter.new(
+        fn %Event{body: %Push{}} -> true end
+      )},
+      %Subscribe{event_filter: Filter.new(
+        fn %Event{body: %Pop{}} -> true end
+      )}
     ]}
 
 Based on the subscriptions, events are stored in a event queue, which all automata have,
 and `Receive` effect dequeues the first event from the queue.
 
-> `%Receive{}` is the same as `%Receive{event_filter: EventFilter.new()}`,
-> and `EventFilter.new()` returns an event filter that matches all events.
+> `%Receive{}` is the same as `%Receive{event_filter: Filter.new(fn _ -> true end)}`,
+> and `Filter.new(fn _ -> true end)` returns an filter that matches with all events.
 > Actually, `Receive` effect dequeues the first event **which matches with the given filter** from the queue.
 
 In the following code in `yield/2`, we assign `event.id` to `:pop_event_id`
@@ -193,9 +202,6 @@ First, add `:stack_id` and definitions of event body filters in the events:
 
     defmodule Push do
       defstruct [:stack_id, :item]
-
-      import Cizen.EventBodyFilter # to use defeventbodyfilter
-      defeventbodyfilter StackIDFilter, :stack_id
     end
 
     defmodule Pop do
@@ -205,27 +211,22 @@ First, add `:stack_id` and definitions of event body filters in the events:
       defresponse Item, :pop_event_id do
         defstruct [:item, :pop_event_id]
       end
-
-      import Cizen.EventBodyFilter
-      defeventbodyfilter StackIDFilter, :stack_id
     end
 
 Next, use the filters on subscribe in `Stack.spawn/2`:
 
     def spawn(id, %__MODULE__{stack: stack}) do
       perform id, %All{effects: [
-        %Subscribe{event_filter: EventFilter.new(
-          event_type: Push,
-          event_body_filters: [
-            %Push.StackIDFilter{value: id}
-          ]
+        %Subscribe{event_filter: Filter.new(
+          fn %Event{body: %Push{stack_id: stack_id}} ->
+            stack_id == id
+          end
         )},
-        %Subscribe{event_filter: EventFilter.new(
-          event_type: Pop,
-          event_body_filters: [
-            %Pop.StackIDFilter{value: id}
-          ]
-        )}
+        %Subscribe{event_filter: Filter.new(
+          fn %Event{body: %Pop{stack_id: stack_id}} ->
+            stack_id == id
+          end
+        )},
       ]}
 
       stack # next state

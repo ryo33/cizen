@@ -1,10 +1,28 @@
 defmodule Cizen.Filter do
   @moduledoc """
-  Creates a struct filter.
+  Creates a filter.
 
-  ## Example
+  ## Basic
 
-  TODO example code
+      Filter.new(
+        fn %Event{body: %SomeEvent{field: value}} ->
+          value == :a
+        end
+      )
+
+  ## Matches specific struct
+
+      Filter.new(
+        fn %Event{body: %SomeEvent{}} -> true end
+      )
+
+  ## Uses other filter
+
+      Filter.new(
+        fn %Event{body: %SomeEvent{field: value}} ->
+          Filter.match?(other_filter, value)
+        end
+      )
   """
 
   @type t :: %__MODULE__{}

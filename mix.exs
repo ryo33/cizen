@@ -4,7 +4,7 @@ defmodule Cizen.MixProject do
   def project do
     [
       app: :cizen,
-      version: "0.10.0",
+      version: "0.11.0",
       package: package(),
       elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -97,7 +97,6 @@ defmodule Cizen.MixProject do
       ],
 
       "Automaton Internal": [
-        Cizen.Automaton.EffectSender,
         Cizen.Automaton.PerformEffect,
         Cizen.Effect,
         Cizen.EffectHandler,
@@ -111,21 +110,15 @@ defmodule Cizen.MixProject do
         Cizen.RegisterChannel.Registered,
       ],
 
-      "Channel Internal": [
-        Cizen.RegisterChannel.Registered.EventIdFilter,
-      ],
-
       "Dispatchers": [
         Cizen.Dispatcher,
-        Cizen.EventFilterDispatcher,
-        Cizen.EventFilterDispatcher.Subscribe,
-        Cizen.EventFilterDispatcher.Subscribe.Subscribed,
-        Cizen.EventFilterDispatcher.Subscription,
+        Cizen.FilterDispatcher,
       ],
 
       "Dispatcher Internal": [
-        Cizen.EventFilterDispatcher.EventPusher,
-        Cizen.EventFilterDispatcher.PushEvent,
+        Cizen.DefaultEventRouter,
+        Cizen.EventRouter,
+        Cizen.FilterDispatcher.PushEvent,
       ],
 
       "Effects": [
@@ -154,20 +147,13 @@ defmodule Cizen.MixProject do
 
       "Event": [
         Cizen.Event,
-        Cizen.EventBodyFilter,
-        Cizen.EventBodyFilterSet,
-        Cizen.EventFilter,
+        Cizen.Filter,
         Cizen.EventID,
-        Cizen.SagaFilter,
-        Cizen.SagaFilterSet,
       ],
 
       "Messaging": [
-        Cizen.Message,
-        Cizen.ReceiveMessage,
         Cizen.SubscribeMessage,
         Cizen.SubscribeMessage.Subscribed,
-        Cizen.SubscribeMessage.Subscribed.EventIdFilter,
       ],
 
       "Messaging Internal": [
@@ -182,7 +168,6 @@ defmodule Cizen.MixProject do
       ],
 
       "Requesting Internal": [
-        Cizen.Request.Response.RequestEventIDFilter,
         Cizen.RequestResponseMediator,
         Cizen.RequestResponseMediator.Worker,
       ],
@@ -197,19 +182,15 @@ defmodule Cizen.MixProject do
         Cizen.Saga.Crashed,
         Cizen.Saga.Finish,
         Cizen.Saga.Finished,
-        Cizen.Saga.Launched,
-        Cizen.Saga.Launched.SagaIDFilter,
-        Cizen.Saga.Unlaunched,
+        Cizen.Saga.Ended,
+        Cizen.Saga.Started,
         Cizen.SagaID,
         Cizen.SagaMonitor,
         Cizen.SagaRegistry,
         Cizen.StartSaga,
-        Cizen.StartSaga.SagaFilter,
-        Cizen.StartSaga.SagaModuleFilter,
       ],
 
       "Saga Internal": [
-        Cizen.MonitorSaga.Down.TargetSagaIDFilter,
         Cizen.SagaEnder,
         Cizen.SagaLauncher,
         Cizen.SagaLauncher.LaunchSaga,
