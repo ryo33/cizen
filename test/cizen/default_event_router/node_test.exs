@@ -85,6 +85,39 @@ defmodule Cizen.DefaultEventRouter.NodeTest do
     assert expected == actual
   end
 
+  test "put not operator", %{node: node} do
+    actual =
+      node
+      |> Node.put({:access, [:key1]}, "1")
+      |> Node.put({:not, [{:access, [:key1]}]}, "2")
+      |> Node.put({:not, [{:access, [:key2]}]}, "3")
+
+    expected = %Node{
+      node
+      | operations:
+          Map.merge(
+            node.operations,
+            %{
+              {:access, [:key1]} => %{
+                true => %Node{
+                  subscriptions: MapSet.new(["1"])
+                },
+                false => %Node{
+                  subscriptions: MapSet.new(["2"])
+                }
+              },
+              {:access, [:key2]} => %{
+                false => %Node{
+                  subscriptions: MapSet.new(["3"])
+                }
+              }
+            }
+          )
+    }
+
+    assert expected == actual
+  end
+
   test "put and operator", %{node: node} do
     code =
       {:and,

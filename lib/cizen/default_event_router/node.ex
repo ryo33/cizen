@@ -40,6 +40,10 @@ defmodule Cizen.DefaultEventRouter.Node do
     put_operation(node, operation, value, next)
   end
 
+  defp run(node, {:update, {:not, [operation]}, next}) do
+    put_operation(node, operation, false, next)
+  end
+
   defp run(node, {:update, {:and, [left, right]}, next}) do
     run(node, {:update, left, {:update, right, next}})
   end
