@@ -80,8 +80,13 @@ defmodule Cizen.Filter.Code do
   defp walk({:., _, _} = node, _keys, _env), do: node
 
   # Additional operators
-  defp walk({op, _, args}, _keys, _env) when op in @additional_operators do
-    {op, args}
+  defp walk({op, _, args} = node, _keys, _env) when op in @additional_operators do
+    if Enum.any?(args, &has_access?(&1)) do
+      # literal tuple
+      {op, args}
+    else
+      node
+    end
   end
 
   # Field access
@@ -133,11 +138,15 @@ defmodule Cizen.Filter.Code do
     cond do
       Macro.operator?(first, length(third)) ->
         # Operator
-        op = first
-        args = third
+        if Enum.any?(third, &has_access?(&1)) do
+          op = first
+          args = third
 
-        # literal tuple
-        {op, args}
+          # literal tuple
+          {op, args}
+        else
+          node
+        end
 
       third != [] ->
         # Function calls

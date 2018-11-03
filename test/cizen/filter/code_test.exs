@@ -318,4 +318,19 @@ defmodule Cizen.Filter.CodeTest do
               {:not, [{:access, [:key1]}]}
             ]} == filter.code
   end
+
+  test "inline operators" do
+    value = "a"
+
+    filter =
+      Filter.new(fn %A{key1: a} ->
+        is_nil(value) or true
+      end)
+
+    assert {:and,
+            [
+              {:==, [{:access, [:__struct__]}, A]},
+              true
+            ]} == filter.code
+  end
 end
