@@ -4,7 +4,7 @@ defmodule Cizen.MixProject do
   def project do
     [
       app: :cizen,
-      version: "0.11.0",
+      version: "0.11.1",
       package: package(),
       elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -31,7 +31,8 @@ defmodule Cizen.MixProject do
     [
       start_phases: [start_children: [], start_daemons: []],
       extra_applications: [:logger],
-      mod: {Cizen.Application, []}
+      mod: {Cizen.Application, []},
+      env: [event_router: Cizen.DefaultEventRouter]
     ]
   end
 
