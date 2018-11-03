@@ -6,7 +6,7 @@ defmodule Cizen.DefaultEventRouter do
   use GenServer
   @behaviour Cizen.EventRouter
 
-  alias Cizen.Filter
+  alias Cizen.DefaultEventRouter.Node
 
   @impl Cizen.EventRouter
   def start_link do
@@ -30,27 +30,25 @@ defmodule Cizen.DefaultEventRouter do
 
   @impl GenServer
   def init(_) do
-    {:ok, MapSet.new([])}
+    {:ok, Node.new()}
   end
 
   @impl GenServer
   def handle_cast({:put, filter, ref}, state) do
-    {:noreply, MapSet.put(state, {filter, ref})}
+    {:noreply, Node.put(state, filter.code, ref)}
   end
 
   @impl GenServer
   def handle_cast({:delete, filter, ref}, state) do
-    {:noreply, MapSet.delete(state, {filter, ref})}
+    {:noreply, Node.delete(state, filter.code, ref)}
   end
 
   @impl GenServer
   def handle_call({:routes, event}, _from, state) do
     routes =
       state
-      |> Enum.filter(fn {filter, _ref} ->
-        Filter.match?(filter, event)
-      end)
-      |> Enum.map(fn {_filter, ref} -> ref end)
+      |> Node.get(event)
+      |> MapSet.to_list()
 
     {:reply, routes, state}
   end
