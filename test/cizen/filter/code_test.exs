@@ -8,20 +8,42 @@ defmodule Cizen.Filter.CodeTest do
   defmodule(B, do: defstruct([:key1, :key2, :a]))
   defmodule(C, do: defstruct([:key1, :key2, :b]))
 
-  test "creates a filter" do
+  test "creates a filter with is_nil" do
     filter =
-      Filter.new(fn %A{key1: a, key2: b} ->
-        a == "value1" and is_nil(b)
+      Filter.new(fn %A{key1: a} ->
+        is_nil(a)
       end)
 
     assert {:and,
             [
               {:==, [{:access, [:__struct__]}, A]},
-              {:and,
-               [
-                 {:==, [{:access, [:key1]}, "value1"]},
-                 {:is_nil, [{:access, [:key2]}]}
-               ]}
+              {:is_nil, [{:access, [:key1]}]}
+            ]} == filter.code
+  end
+
+  test "creates a filter with to_string" do
+    filter =
+      Filter.new(fn %A{key1: a} ->
+        to_string(a)
+      end)
+
+    assert {:and,
+            [
+              {:==, [{:access, [:__struct__]}, A]},
+              {:to_string, [{:access, [:key1]}]}
+            ]} == filter.code
+  end
+
+  test "creates a filter with to_charlist" do
+    filter =
+      Filter.new(fn %A{key1: a} ->
+        to_charlist(a)
+      end)
+
+    assert {:and,
+            [
+              {:==, [{:access, [:__struct__]}, A]},
+              {:to_charlist, [{:access, [:key1]}]}
             ]} == filter.code
   end
 
@@ -281,6 +303,19 @@ defmodule Cizen.Filter.CodeTest do
             [
               {:access, [:key1, :key2, :key3]},
               {:access, [:key1, :key2, :key3]}
+            ]} == filter.code
+  end
+
+  test "create filter without :__block__" do
+    filter =
+      Filter.new(fn %A{key1: a} ->
+        not a
+      end)
+
+    assert {:and,
+            [
+              {:==, [{:access, [:__struct__]}, A]},
+              {:not, [{:access, [:key1]}]}
             ]} == filter.code
   end
 end

@@ -100,6 +100,44 @@ defmodule Cizen.FilterTest do
     assert Filter.eval(filter.code, %A{key1: nil}) == true
   end
 
+  test "eval to_string" do
+    filter =
+      Filter.new(fn %A{key1: a} ->
+        to_string(a)
+      end)
+
+    assert Filter.eval(filter.code, %A{key1: :atom}) == "atom"
+  end
+
+  test "eval to_charlist" do
+    filter =
+      Filter.new(fn %A{key1: a} ->
+        to_charlist(a)
+      end)
+
+    assert Filter.eval(filter.code, %A{key1: :atom}) == 'atom'
+  end
+
+  test "eval not" do
+    filter =
+      Filter.new(fn %A{key1: a} ->
+        not a
+      end)
+
+    assert Filter.eval(filter.code, %A{key1: true}) == false
+    assert Filter.eval(filter.code, %A{key1: false}) == true
+  end
+
+  test "eval !" do
+    filter =
+      Filter.new(fn %A{key1: a} ->
+        !a
+      end)
+
+    assert Filter.eval(filter.code, %A{key1: "a"}) == false
+    assert Filter.eval(filter.code, %A{key1: nil}) == true
+  end
+
   test "eval and" do
     filter =
       Filter.new(fn %A{key1: a, key2: b} ->
@@ -110,6 +148,16 @@ defmodule Cizen.FilterTest do
     assert Filter.eval(filter.code, %A{key1: true, key2: false}) == false
     assert Filter.eval(filter.code, %A{key1: false, key2: true}) == false
     assert Filter.eval(filter.code, %A{key1: false, key2: false}) == false
+  end
+
+  test "eval &&" do
+    filter =
+      Filter.new(fn %A{key1: a, key2: b} ->
+        a && b
+      end)
+
+    assert Filter.eval(filter.code, %A{key1: "a", key2: "b"}) == "b"
+    assert Filter.eval(filter.code, %A{key1: nil, key2: "b"}) == nil
   end
 
   test "eval or" do
@@ -124,6 +172,44 @@ defmodule Cizen.FilterTest do
     assert Filter.eval(filter.code, %A{key1: false, key2: false}) == false
   end
 
+  test "eval ||" do
+    filter =
+      Filter.new(fn %A{key1: a, key2: b} ->
+        a || b
+      end)
+
+    assert Filter.eval(filter.code, %A{key1: "a", key2: "b"}) == "a"
+    assert Filter.eval(filter.code, %A{key1: nil, key2: "b"}) == "b"
+  end
+
+  test "eval in" do
+    filter =
+      Filter.new(fn %A{key1: a, key2: b} ->
+        a in b
+      end)
+
+    assert Filter.eval(filter.code, %A{key1: 1, key2: [1, 2]}) == true
+    assert Filter.eval(filter.code, %A{key1: 3, key2: [1, 2]}) == false
+  end
+
+  test "eval .." do
+    filter =
+      Filter.new(fn %A{key1: a, key2: b} ->
+        a..b
+      end)
+
+    assert Filter.eval(filter.code, %A{key1: 1, key2: 10}) == 1..10
+  end
+
+  test "eval <>" do
+    filter =
+      Filter.new(fn %A{key1: a, key2: b} ->
+        a <> b
+      end)
+
+    assert Filter.eval(filter.code, %A{key1: "a", key2: "b"}) == "ab"
+  end
+
   test "eval operators" do
     filter =
       Filter.new(fn %A{key1: a} ->
@@ -132,5 +218,19 @@ defmodule Cizen.FilterTest do
 
     assert Filter.eval(filter.code, %A{key1: 21}) == true
     assert Filter.eval(filter.code, %A{key1: 1}) == false
+
+    filter =
+      Filter.new(fn %A{key1: a} ->
+        -a
+      end)
+
+    assert Filter.eval(filter.code, %A{key1: 3}) == -3
+
+    filter =
+      Filter.new(fn %A{key1: a, key2: b} ->
+        a && b
+      end)
+
+    assert Filter.eval(filter.code, %A{key1: "a", key2: "b"}) == "b"
   end
 end

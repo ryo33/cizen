@@ -13,7 +13,7 @@ First, add Cizen to your list of dependencies in `mix.exs`:
 ```elixir
 defp deps do
   [
-    {:cizen, "~> 0.11.1"}
+    {:cizen, "~> 0.11.2"}
   ]
 end
 ```

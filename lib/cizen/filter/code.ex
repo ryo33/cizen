@@ -2,7 +2,7 @@ defmodule Cizen.Filter.Code do
   alias Cizen.Filter
   @moduledoc false
 
-  @additional_operators [:is_nil]
+  @additional_operators [:is_nil, :to_string, :to_charlist]
 
   def with_prefix({:access, keys}, prefix) do
     {:access, prefix ++ keys}
@@ -45,7 +45,15 @@ defmodule Cizen.Filter.Code do
 
   defp get_keys({value, _, _}, prefix), do: {[{value, prefix}], []}
 
+  def generate({:fn, _, [{:->, _, [[arg], {:__block__, _, [expression]}]}]}, env) do
+    do_generate(arg, expression, env)
+  end
+
   def generate({:fn, _, [{:->, _, [[arg], expression]}]}, env) do
+    do_generate(arg, expression, env)
+  end
+
+  defp do_generate(arg, expression, env) do
     {keys, types} = get_keys(arg, [])
 
     keys =

@@ -91,18 +91,18 @@ defmodule Cizen.Filter do
     apply(module, fun, args)
   end
 
-  def eval({:is_nil, [arg]}, struct) do
-    arg
-    |> eval(struct)
-    |> is_nil()
+  @macro_unary_operators [:is_nil, :to_string, :to_charlist, :not, :!]
+  for operator <- @macro_unary_operators do
+    def eval({unquote(operator), [arg]}, struct) do
+      Kernel.unquote(operator)(eval(arg, struct))
+    end
   end
 
-  def eval({:and, [arg1, arg2]}, struct) do
-    eval(arg1, struct) and eval(arg2, struct)
-  end
-
-  def eval({:or, [arg1, arg2]}, struct) do
-    eval(arg1, struct) or eval(arg2, struct)
+  @macro_binary_operators [:and, :&&, :or, :||, :in, :.., :<>]
+  for operator <- @macro_binary_operators do
+    def eval({unquote(operator), [arg1, arg2]}, struct) do
+      Kernel.unquote(operator)(eval(arg1, struct), eval(arg2, struct))
+    end
   end
 
   def eval({operator, args}, struct) do
