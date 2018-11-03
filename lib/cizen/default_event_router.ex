@@ -14,13 +14,13 @@ defmodule Cizen.DefaultEventRouter do
   end
 
   @impl Cizen.EventRouter
-  def put(subscription) do
-    GenServer.cast(__MODULE__, {:put, subscription})
+  def put(filter, ref) do
+    GenServer.cast(__MODULE__, {:put, filter, ref})
   end
 
   @impl Cizen.EventRouter
-  def delete(subscription) do
-    GenServer.cast(__MODULE__, {:delete, subscription})
+  def delete(filter, ref) do
+    GenServer.cast(__MODULE__, {:delete, filter, ref})
   end
 
   @impl Cizen.EventRouter
@@ -34,21 +34,23 @@ defmodule Cizen.DefaultEventRouter do
   end
 
   @impl GenServer
-  def handle_cast({:put, subscription}, state) do
-    {:noreply, MapSet.put(state, subscription)}
+  def handle_cast({:put, filter, ref}, state) do
+    {:noreply, MapSet.put(state, {filter, ref})}
   end
 
   @impl GenServer
-  def handle_cast({:delete, subscription}, state) do
-    {:noreply, MapSet.delete(state, subscription)}
+  def handle_cast({:delete, filter, ref}, state) do
+    {:noreply, MapSet.delete(state, {filter, ref})}
   end
 
   @impl GenServer
   def handle_call({:routes, event}, _from, state) do
     routes =
-      Enum.filter(state, fn {event_filter, _meta} ->
-        Filter.match?(event_filter, event)
+      state
+      |> Enum.filter(fn {filter, _ref} ->
+        Filter.match?(filter, event)
       end)
+      |> Enum.map(fn {_filter, ref} -> ref end)
 
     {:reply, routes, state}
   end

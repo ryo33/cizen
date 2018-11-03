@@ -10,11 +10,11 @@ defmodule Cizen.DefaultEventRouterTest do
   defmodule(TestEventB, do: defstruct([]))
   defmodule(TestEventC, do: defstruct([]))
 
-  defp put(subscription) do
-    DefaultEventRouter.put(subscription)
+  defp put(filter, ref) do
+    DefaultEventRouter.put(filter, ref)
 
     on_exit(fn ->
-      DefaultEventRouter.delete(subscription)
+      DefaultEventRouter.delete(filter, ref)
     end)
   end
 
@@ -23,36 +23,31 @@ defmodule Cizen.DefaultEventRouterTest do
   end
 
   test "returns matched routes" do
-    subscription_a = {Filter.new(fn %Event{body: %TestEventA{}} -> true end), 1}
-    subscription_b = {Filter.new(fn %Event{body: %TestEventB{}} -> true end), 2}
-    put(subscription_a)
-    put(subscription_b)
-    assert [subscription_a] == DefaultEventRouter.routes(Event.new(nil, %TestEventA{}))
-    assert [subscription_b] == DefaultEventRouter.routes(Event.new(nil, %TestEventB{}))
+    put(Filter.new(fn %Event{body: %TestEventA{}} -> true end), 1)
+    put(Filter.new(fn %Event{body: %TestEventB{}} -> true end), 2)
+    assert [1] == DefaultEventRouter.routes(Event.new(nil, %TestEventA{}))
+    assert [2] == DefaultEventRouter.routes(Event.new(nil, %TestEventB{}))
     assert [] == DefaultEventRouter.routes(Event.new(nil, %TestEventC{}))
   end
 
   test "returns multiple matched routes" do
-    subscription_1 = {Filter.new(fn %Event{body: %TestEventA{}} -> true end), 1}
-    subscription_2 = {Filter.new(fn %Event{body: %TestEventA{}} -> true end), 2}
-    subscription_3 = {Filter.new(fn %Event{body: %TestEventB{}} -> true end), 3}
-    put(subscription_1)
-    put(subscription_2)
-    put(subscription_3)
+    put(Filter.new(fn %Event{body: %TestEventA{}} -> true end), 1)
+    put(Filter.new(fn %Event{body: %TestEventA{}} -> true end), 2)
+    put(Filter.new(fn %Event{body: %TestEventB{}} -> true end), 3)
     routes = DefaultEventRouter.routes(Event.new(nil, %TestEventA{}))
-    assert MapSet.new([subscription_1, subscription_2]) == MapSet.new(routes)
+    assert MapSet.new([1, 2]) == MapSet.new(routes)
   end
 
   test "deletes subscription" do
-    subscription_1 = {Filter.new(fn %Event{body: %TestEventA{}} -> true end), 1}
-    subscription_2 = {Filter.new(fn %Event{body: %TestEventA{}} -> true end), 2}
-    subscription_3 = {Filter.new(fn %Event{body: %TestEventB{}} -> true end), 3}
-    put(subscription_1)
-    put(subscription_2)
-    put(subscription_3)
-    DefaultEventRouter.delete(subscription_2)
-    DefaultEventRouter.delete(subscription_3)
-    assert [subscription_1] == DefaultEventRouter.routes(Event.new(nil, %TestEventA{}))
+    filter_1 = Filter.new(fn %Event{body: %TestEventA{}} -> true end)
+    filter_2 = Filter.new(fn %Event{body: %TestEventA{}} -> true end)
+    filter_3 = Filter.new(fn %Event{body: %TestEventB{}} -> true end)
+    put(filter_1, 1)
+    put(filter_2, 2)
+    put(filter_3, 3)
+    DefaultEventRouter.delete(filter_2, 2)
+    DefaultEventRouter.delete(filter_3, 3)
+    assert [1] == DefaultEventRouter.routes(Event.new(nil, %TestEventA{}))
     assert [] == DefaultEventRouter.routes(Event.new(nil, %TestEventB{}))
   end
 end

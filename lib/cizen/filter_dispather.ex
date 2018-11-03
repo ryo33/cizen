@@ -51,10 +51,12 @@ defmodule Cizen.FilterDispatcher do
 
     {:ok,
      %{
-       # ref => subscription
-       refs: %{},
-       # subscription => refs
-       subscriptions: %{}
+       # ref => {filter, meta}
+       subscriptions: %{},
+       # ref => monitor_refs
+       monitors: %{},
+       # monitor_refs => ref
+       lifetimes: %{}
      }}
   end
 
@@ -62,41 +64,39 @@ defmodule Cizen.FilterDispatcher do
   def handle_cast({:listen, pid, event_filter, meta, lifetime_pids}, state) do
     lifetimes = [pid | lifetime_pids]
 
-    refs = Enum.map(lifetimes, &Process.monitor/1)
+    monitor_refs = Enum.map(lifetimes, &Process.monitor/1)
 
-    subscription = {event_filter, {pid, meta}}
-    Application.get_env(:cizen, :event_router).put(subscription)
+    ref = make_ref()
+    Application.get_env(:cizen, :event_router).put(event_filter, ref)
 
-    subscriptions = Map.put(state.subscriptions, subscription, refs)
+    subscriptions = Map.put(state.subscriptions, ref, {event_filter, {pid, meta}})
 
-    refs =
-      Enum.reduce(refs, state.refs, fn ref, refs ->
-        Map.put(refs, ref, subscription)
+    monitors = Map.put(state.monitors, ref, monitor_refs)
+
+    lifetimes =
+      Enum.reduce(monitor_refs, state.lifetimes, fn monitor_ref, lifetimes ->
+        Map.put(lifetimes, monitor_ref, ref)
       end)
 
-    state = %{state | refs: refs, subscriptions: subscriptions}
+    state = %{state | subscriptions: subscriptions, monitors: monitors, lifetimes: lifetimes}
 
     {:noreply, state}
   end
 
   @impl true
-  def handle_info({:DOWN, ref, :process, _, _}, state) do
-    {subscription, refs} = Map.pop(state.refs, ref)
+  def handle_info({:DOWN, monitor_ref, :process, _, _}, state) do
+    {ref, lifetimes} = Map.pop(state.lifetimes, monitor_ref)
 
-    if is_nil(subscription) do
+    if is_nil(ref) do
       {:noreply, state}
     else
-      Application.get_env(:cizen, :event_router).delete(subscription)
-      {drop, subscriptions} = Map.pop(state.subscriptions, subscription)
+      {filter, _meta} = state.subscriptions[ref]
+      Application.get_env(:cizen, :event_router).delete(filter, ref)
+      subscriptions = Map.delete(state.subscriptions, ref)
+      {drops, monitors} = Map.pop(state.monitors, ref, [])
+      lifetimes = Map.drop(lifetimes, drops)
 
-      refs =
-        if not is_nil(drop) and length(drop) > 1 do
-          Map.drop(refs, drop)
-        else
-          refs
-        end
-
-      state = %{state | refs: refs, subscriptions: subscriptions}
+      state = %{state | subscriptions: subscriptions, monitors: monitors, lifetimes: lifetimes}
       {:noreply, state}
     end
   end
@@ -105,9 +105,10 @@ defmodule Cizen.FilterDispatcher do
   def handle_info(%Event{} = event, state) do
     event
     |> Application.get_env(:cizen, :event_router).routes()
+    |> Enum.map(fn ref -> state.subscriptions[ref] |> elem(1) end)
     |> Enum.group_by(
-      fn {_, {pid, meta}} -> if is_nil(meta), do: pid, else: {pid, :proxied} end,
-      fn {_, {_, meta}} -> meta end
+      fn {pid, meta} -> if is_nil(meta), do: pid, else: {pid, :proxied} end,
+      fn {_, meta} -> meta end
     )
     |> Enum.each(fn {dest, metas} ->
       case dest do

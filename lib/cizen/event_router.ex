@@ -8,10 +8,8 @@ defmodule Cizen.EventRouter do
   alias Cizen.Event
   alias Cizen.Filter
 
-  @type subscription :: {Filter.t(), term}
-
   @callback start_link :: GenServer.on_start()
-  @callback put(subscription) :: term
-  @callback delete(subscription) :: term
+  @callback put(Filter.t(), term) :: term
+  @callback delete(Filter.t(), term) :: term
   @callback routes(Event.t()) :: term
 end
