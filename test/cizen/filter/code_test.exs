@@ -121,6 +121,41 @@ defmodule Cizen.Filter.CodeTest do
             ]} == filter.code
   end
 
+  test "embedded Filter.new" do
+    filter =
+      Filter.new(fn %C{key1: a, b: b} ->
+        a == "a" and
+          Filter.match?(
+            Filter.new(fn %B{key1: a, a: %A{key2: b}} ->
+              a == "b" and b == "c"
+            end),
+            b
+          )
+      end)
+
+    assert {:and,
+            [
+              {:==, [{:access, [:__struct__]}, C]},
+              {:and,
+               [
+                 {:==, [{:access, [:key1]}, "a"]},
+                 {:and,
+                  [
+                    {:==, [{:access, [:b, :__struct__]}, B]},
+                    {:and,
+                     [
+                       {:==, [{:access, [:b, :a, :__struct__]}, A]},
+                       {:and,
+                        [
+                          {:==, [{:access, [:b, :key1]}, "b"]},
+                          {:==, [{:access, [:b, :a, :key2]}, "c"]}
+                        ]}
+                     ]}
+                  ]}
+               ]}
+            ]} == filter.code
+  end
+
   defmodule TestModule do
     def func(a, b), do: {a, b}
   end

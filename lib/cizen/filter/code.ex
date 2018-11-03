@@ -62,6 +62,7 @@ defmodule Cizen.Filter.Code do
 
     code =
       expression
+      |> Macro.prewalk(&expand_embedded(&1, env))
       |> Macro.postwalk(&walk(&1, keys, env))
 
     types
@@ -74,6 +75,20 @@ defmodule Cizen.Filter.Code do
       keys = List.insert_at(keys, -1, :__struct__)
       {:and, [{:==, [{:access, keys}, module]}, rest]}
     end)
+  end
+
+  defp expand_embedded(node, env) do
+    case node do
+      {{:., _, [{:__aliases__, _, [:Filter]}, :new]}, _, _} ->
+        {filter, _} =
+          node
+          |> Code.eval_quoted([], env)
+
+        filter
+
+      node ->
+        node
+    end
   end
 
   # Skip . operator
@@ -100,16 +115,23 @@ defmodule Cizen.Filter.Code do
     {:access, List.insert_at(keys, -1, key)}
   end
 
+  # Function call
   defp walk({{:., _, [module, function]}, _, args} = node, _keys, env) do
     expanded_module = Macro.expand(module, env)
 
     cond do
       expanded_module == Filter and function == :match? ->
         # Embedded filter
-        [filter, {:access, keys}] = args
+        case args do
+          [%Filter{code: code}, {:access, keys}] ->
+            quote do
+              unquote(__MODULE__).with_prefix(unquote(code), unquote(keys))
+            end
 
-        quote do
-          unquote(__MODULE__).with_prefix(unquote(filter).code, unquote(keys))
+          [filter, {:access, keys}] ->
+            quote do
+              unquote(__MODULE__).with_prefix(unquote(filter).code, unquote(keys))
+            end
         end
 
       Enum.any?(args, &has_access?(&1)) ->
