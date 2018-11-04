@@ -4,7 +4,7 @@ defmodule Cizen.MixProject do
   def project do
     [
       app: :cizen,
-      version: "0.11.4",
+      version: "0.12.0",
       package: package(),
       elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -177,6 +177,7 @@ defmodule Cizen.MixProject do
         Cizen.CizenSagaRegistry,
         Cizen.CrashLogger,
         Cizen.EndSaga,
+        Cizen.ForkSaga,
         Cizen.MonitorSaga,
         Cizen.MonitorSaga.Down,
         Cizen.Saga,
