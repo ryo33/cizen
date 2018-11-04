@@ -9,7 +9,7 @@ defmodule Cizen.Saga do
         defstruct []
 
         @impl true
-        def init(_id, saga) do
+        def init(_id, %__MODULE__{}) do
           saga
         end
 

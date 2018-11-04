@@ -4,7 +4,7 @@ defmodule Cizen.MixProject do
   def project do
     [
       app: :cizen,
-      version: "0.12.0",
+      version: "0.12.1",
       package: package(),
       elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -72,11 +72,10 @@ defmodule Cizen.MixProject do
       {"README.md", [filename: "readme", title: "Read Me"]},
       "guides/getting_started.md",
 
-      "guides/basic_concepts/saga.md",
       "guides/basic_concepts/event.md",
-      "guides/basic_concepts/automaton.md",
+      "guides/basic_concepts/filter.md",
+      "guides/basic_concepts/saga.md",
       "guides/basic_concepts/effect.md",
-      "guides/basic_concepts/requestive_event.md",
 
       "guides/advanced_concepts/channel.md",
     ]

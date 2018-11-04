@@ -31,6 +31,9 @@ defmodule Cizen.Filter do
 
   alias Cizen.Filter.Code
 
+  @doc """
+  Creates a filter with the given anonymous function.
+  """
   defmacro new(filter) do
     filter
     |> Macro.prewalk(fn
@@ -55,7 +58,7 @@ defmodule Cizen.Filter do
   end
 
   @doc """
-  Checks whether the given struct matches or not
+  Checks whether the given struct matches or not.
   """
   @spec match?(t, term) :: boolean
   def match?(%__MODULE__{code: code}, struct) do
