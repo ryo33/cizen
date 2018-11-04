@@ -32,16 +32,16 @@ defmodule Cizen.DefaultEventRouter.Node do
 
   defp run(node, {:update, {:==, [operation, value]}, next})
        when not is_tuple(value) or tuple_size(value) != 2 do
-    put_operation(node, operation, value, next)
+    update_operation(node, operation, value, next)
   end
 
   defp run(node, {:update, {:==, [value, operation]}, next})
        when not is_tuple(value) or tuple_size(value) != 2 do
-    put_operation(node, operation, value, next)
+    update_operation(node, operation, value, next)
   end
 
   defp run(node, {:update, {:not, [operation]}, next}) do
-    put_operation(node, operation, false, next)
+    update_operation(node, operation, false, next)
   end
 
   defp run(node, {:update, {:and, [left, right]}, next}) do
@@ -55,7 +55,7 @@ defmodule Cizen.DefaultEventRouter.Node do
   end
 
   defp run(node, {:update, operation, next}) do
-    put_operation(node, operation, true, next)
+    update_operation(node, operation, true, next)
   end
 
   defp run(node, {:put_subscription, subscription}) do
@@ -66,7 +66,7 @@ defmodule Cizen.DefaultEventRouter.Node do
     update_in(node.subscriptions, &MapSet.delete(&1, subscription))
   end
 
-  defp put_operation(node, operation, value, next) do
+  defp update_operation(node, operation, value, next) do
     values = Map.get(node.operations, operation, %{})
 
     next_node =
