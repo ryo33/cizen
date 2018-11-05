@@ -93,7 +93,6 @@ defmodule Cizen.MixProject do
     [
       "Automaton": [
         Cizen.Automaton,
-        Cizen.Effectful,
       ],
 
       "Automaton Internal": [
@@ -124,10 +123,10 @@ defmodule Cizen.MixProject do
       "Effects": [
         Cizen.Effects,
         Cizen.Effects.All,
+        Cizen.Effects.Chain,
         Cizen.Effects.Dispatch,
         Cizen.Effects.End,
         Cizen.Effects.Fork,
-        Cizen.Effects.Chain,
         Cizen.Effects.Map,
         Cizen.Effects.Monitor,
         Cizen.Effects.Race,

@@ -28,7 +28,7 @@ or only specified effects:
 - `Cizen.Effects.Subscribe` subscribes events by the given filter.
 - `Cizen.Effects.Receive` receives an event which fulfills the given filter.
 - `Cizen.Effects.Dispatch` dispatches an event with the given body.
-- `Cizen.Effects.Request` dispatches a [requestive event](/requestive_event.html) and wait the response.
+- `Cizen.Effects.Request` dispatches a [requestive event](event.html#requestive-event) and wait the response.
 
 ### Effects for Saga
 - `Cizen.Effects.Start` starts a saga by the given saga struct.
