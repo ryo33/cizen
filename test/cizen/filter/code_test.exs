@@ -4,7 +4,7 @@ defmodule Cizen.Filter.CodeTest do
   alias Cizen.Filter
   require Cizen.Filter
 
-  defmodule(A, do: defstruct([:key1, :key2]))
+  defmodule(A, do: defstruct([:key1, :key2, :b]))
   defmodule(B, do: defstruct([:key1, :key2, :a]))
   defmodule(C, do: defstruct([:key1, :key2, :b]))
 
@@ -367,5 +367,82 @@ defmodule Cizen.Filter.CodeTest do
               {:==, [{:access, [:__struct__]}, A]},
               true
             ]} == filter.code
+  end
+
+  test "value in match" do
+    filter = Filter.new(fn %A{key1: 3, key2: %B{key1: 5}} -> true end)
+
+    expected =
+      {:and,
+       [
+         {:==, [{:access, [:__struct__]}, A]},
+         {:and,
+          [
+            {:==, [{:access, [:key1]}, 3]},
+            {:and,
+             [
+               {:==, [{:access, [:key2, :__struct__]}, B]},
+               {:and,
+                [
+                  {:==, [{:access, [:key2, :key1]}, 5]},
+                  true
+                ]}
+             ]}
+          ]}
+       ]}
+
+    assert expected == filter.code
+  end
+
+  test "match with pin operator" do
+    a = 3
+    b = 5
+    filter = Filter.new(fn %A{key1: ^a, key2: %B{key1: ^b}} -> true end)
+
+    expected =
+      {:and,
+       [
+         {:==, [{:access, [:__struct__]}, A]},
+         {:and,
+          [
+            {:==, [{:access, [:key1]}, 3]},
+            {:and,
+             [
+               {:==, [{:access, [:key2, :__struct__]}, B]},
+               {:and,
+                [
+                  {:==, [{:access, [:key2, :key1]}, 5]},
+                  true
+                ]}
+             ]}
+          ]}
+       ]}
+
+    assert expected == filter.code
+  end
+
+  test "match with same values" do
+    filter = Filter.new(fn %A{key1: a, key2: a, b: %B{key1: a}} -> true end)
+
+    expected =
+      {:and,
+       [
+         {:==, [{:access, [:__struct__]}, A]},
+         {:and,
+          [
+            {:==, [{:access, [:key2]}, {:access, [:key1]}]},
+            {:and,
+             [
+               {:==, [{:access, [:b, :__struct__]}, B]},
+               {:and,
+                [
+                  {:==, [{:access, [:b, :key1]}, {:access, [:key1]}]},
+                  true
+                ]}
+             ]}
+          ]}
+       ]}
+
+    assert expected == filter.code
   end
 end

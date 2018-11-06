@@ -23,27 +23,45 @@ defmodule Cizen.Filter.Code do
   def any([filter]), do: filter
   def any([filter | tail]), do: {:or, [filter, any(tail)]}
 
-  defp get_keys({:=, _, [struct, {key, _, _}]}, prefix) do
-    {keys, types} = get_keys(struct, prefix)
-    {[{key, prefix} | keys], types}
+  defp get_keys(arg, env), do: get_keys(arg, %{}, [], [], env)
+
+  defp get_keys({:%, _, [module, {:%{}, _, pairs}]}, keys, operations, prefix, env) do
+    module = Macro.expand(module, env)
+    access = List.insert_at(prefix, -1, :__struct__)
+    operations = [{:==, [{:access, access}, module]} | operations]
+
+    pairs
+    |> Enum.reduce({keys, operations}, fn {key, value}, {keys, operations} ->
+      get_keys(value, keys, operations, List.insert_at(prefix, -1, key), env)
+    end)
   end
 
-  defp get_keys({:%, _, [module, {:%{}, _, pairs}]}, prefix) do
-    {keys_list, types_list} =
-      pairs
-      |> Enum.reduce({[], []}, fn {key, value}, {keys_acc, types_acc} ->
-        prefix =
-          prefix
-          |> List.insert_at(-1, key)
-
-        {keys, types} = get_keys(value, prefix)
-        {[keys | keys_acc], [types | types_acc]}
-      end)
-
-    {List.flatten(keys_list), [{prefix, module} | List.flatten(types_list)]}
+  defp get_keys({:=, _, [struct, {var, meta, context}]}, keys, operations, prefix, env) do
+    {keys, operations} = get_keys(struct, keys, operations, prefix, env)
+    get_keys({var, meta, context}, keys, operations, prefix, env)
   end
 
-  defp get_keys({value, _, _}, prefix), do: {[{value, prefix}], []}
+  defp get_keys({:^, _, [var]}, keys, operations, prefix, _env) do
+    operations = [{:==, [{:access, prefix}, var]} | operations]
+    {keys, operations}
+  end
+
+  defp get_keys({var, _, _}, keys, operations, prefix, _env) do
+    case Map.get(keys, var) do
+      nil ->
+        keys = Map.put(keys, var, prefix)
+        {keys, operations}
+
+      access ->
+        operations = [{:==, [{:access, prefix}, {:access, access}]} | operations]
+        {keys, operations}
+    end
+  end
+
+  defp get_keys(value, keys, operations, prefix, _env) do
+    operations = [{:==, [{:access, prefix}, value]} | operations]
+    {keys, operations}
+  end
 
   def generate({:fn, _, [{:->, _, [[arg], {:__block__, _, [expression]}]}]}, env) do
     do_generate(arg, expression, env)
@@ -54,26 +72,17 @@ defmodule Cizen.Filter.Code do
   end
 
   defp do_generate(arg, expression, env) do
-    {keys, types} = get_keys(arg, [])
-
-    keys =
-      keys
-      |> Enum.into(%{})
+    {keys, operations} = get_keys(arg, env)
 
     code =
       expression
       |> Macro.prewalk(&expand_embedded(&1, env))
       |> Macro.postwalk(&walk(&1, keys, env))
 
-    types
-    |> Enum.map(fn {prefix, module} ->
-      {prefix, Macro.expand(module, env)}
-    end)
-    |> Enum.reverse()
-    |> Enum.reduce(code, fn {keys, module}, rest ->
+    operations
+    |> Enum.reduce(code, fn operation, rest ->
       # literal tuple
-      keys = List.insert_at(keys, -1, :__struct__)
-      {:and, [{:==, [{:access, keys}, module]}, rest]}
+      {:and, [operation, rest]}
     end)
   end
 

@@ -40,6 +40,9 @@ defmodule Cizen.Filter do
       {:->, meta, [args, _expression]} ->
         {:->, meta, [args, true]}
 
+      {:^, _, [{_var, _, _}]} ->
+        {:_, [], nil}
+
       {_var, _, args} when not is_list(args) ->
         {:_, [], nil}
 
