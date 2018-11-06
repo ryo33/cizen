@@ -71,6 +71,12 @@ defmodule Cizen.Filter.Code do
     do_generate(arg, expression, env)
   end
 
+  # Multiple cases
+  def generate({:fn, _, [fun | tail]}, env) do
+    # literal tuple
+    {:or, [generate({:fn, [], [fun]}, env), generate({:fn, [], tail}, env)]}
+  end
+
   defp do_generate(arg, expression, env) do
     {keys, operations} = get_keys(arg, env)
 

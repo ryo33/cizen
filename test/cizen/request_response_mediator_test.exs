@@ -26,9 +26,9 @@ defmodule Cizen.RequestResponseMediatorTest do
 
     @impl true
     def response_event_filter(_event) do
-      Filter.new(fn %Event{body: body} ->
-        Filter.match?(Filter.new(fn %TestResponseA{} -> true end), body) or
-          Filter.match?(Filter.new(fn %TestResponseB{} -> true end), body)
+      Filter.new(fn
+        %Event{body: %TestResponseA{}} -> true
+        %Event{body: %TestResponseB{}} -> false
       end)
     end
   end

@@ -445,4 +445,43 @@ defmodule Cizen.Filter.CodeTest do
 
     assert expected == filter.code
   end
+
+  test "support multiple cases" do
+    filter =
+      Filter.new(fn
+        %A{key1: a} ->
+          a == "a"
+
+        %B{key1: a} ->
+          a == "b"
+
+        %C{} ->
+          true
+      end)
+
+    expected =
+      {:or,
+       [
+         {:and,
+          [
+            {:==, [{:access, [:__struct__]}, A]},
+            {:==, [{:access, [:key1]}, "a"]}
+          ]},
+         {:or,
+          [
+            {:and,
+             [
+               {:==, [{:access, [:__struct__]}, B]},
+               {:==, [{:access, [:key1]}, "b"]}
+             ]},
+            {:and,
+             [
+               {:==, [{:access, [:__struct__]}, C]},
+               true
+             ]}
+          ]}
+       ]}
+
+    assert expected == filter.code
+  end
 end
