@@ -37,11 +37,18 @@ defmodule Cizen.Filter do
         end
       )
 
+  ## Multiple filters
+
+      Filter.any([
+        Filter.new(fn %Event{body: %Resolve{id: id}} -> id == "some id" end),
+        Filter.new(fn %Event{body: %Reject{id: id}} -> id == "some id" end)
+      ])
+
   ## Multiple cases
 
       Filter.new(fn
-        %Event{body: %Resolve{id: id}} -> id == "some id"
-        %Event{body: %Reject{id: id}} -> id == "some id"
+        %Event{body: %SomeEvent{field: :ignore}} -> false
+        %Event{body: %SomeEvent{field: value}} -> true
       end)
   """
 
