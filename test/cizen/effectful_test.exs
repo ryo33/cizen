@@ -3,6 +3,7 @@ defmodule Cizen.EffectfulTest do
 
   alias Cizen.Dispatcher
   alias Cizen.Event
+  alias Cizen.Filter
 
   alias Cizen.Effects.{Dispatch}
 
@@ -60,6 +61,37 @@ defmodule Cizen.EffectfulTest do
         end)
 
       assert :somevalue == Task.await(task)
+    end
+
+    test "works with other messages" do
+      pid = self()
+      filter = Filter.new(fn %Event{body: %TestEvent{value: a}} -> a == 1 end)
+
+      task =
+        Task.async(fn ->
+          send(
+            pid,
+            handle(fn id ->
+              perform id, %Subscribe{
+                event_filter: filter
+              }
+
+              send(pid, :subscribed)
+
+              perform id, %Receive{
+                event_filter: filter
+              }
+            end)
+          )
+        end)
+
+      receive do
+        :subscribed -> :ok
+      end
+
+      send(task.pid, Event.new(nil, %TestEvent{value: 2}))
+      Dispatcher.dispatch(Event.new(nil, %TestEvent{value: 1}))
+      assert %Event{body: %TestEvent{value: 1}} = Task.await(task)
     end
   end
 end

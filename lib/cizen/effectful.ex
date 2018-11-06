@@ -27,29 +27,6 @@ defmodule Cizen.Effectful do
     end
   end
 
-  defmacro handle(func) do
-    alias __MODULE__.InstantAutomaton
-
-    quote do
-      pid = self()
-
-      Dispatcher.dispatch(
-        Event.new(nil, %StartSaga{
-          id: SagaID.new(),
-          saga: %InstantAutomaton{
-            block: fn id ->
-              send(pid, unquote(func).(id))
-            end
-          }
-        })
-      )
-
-      receive do
-        result -> result
-      end
-    end
-  end
-
   defmodule InstantAutomaton do
     @moduledoc false
     alias Cizen.Automaton
@@ -67,5 +44,29 @@ defmodule Cizen.Effectful do
       block.(id)
       Automaton.finish()
     end
+  end
+
+  def handle(func) do
+    task =
+      Task.async(fn ->
+        pid = self()
+
+        Dispatcher.dispatch(
+          Event.new(nil, %StartSaga{
+            id: SagaID.new(),
+            saga: %InstantAutomaton{
+              block: fn id ->
+                send(pid, func.(id))
+              end
+            }
+          })
+        )
+
+        receive do
+          result -> result
+        end
+      end)
+
+    Task.await(task, :infinity)
   end
 end
