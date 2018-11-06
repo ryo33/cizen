@@ -259,4 +259,17 @@ defmodule Cizen.FilterTest do
     refute Filter.eval(filter.code, %A{key1: 1})
     assert Filter.eval(filter.code, %A{key1: 4})
   end
+
+  test "guard" do
+    filter =
+      Filter.new(fn
+        %A{key1: a, key2: b} when a in [:a, :b, :c] and not is_nil(b) -> false
+        %A{key1: a} when a in [:a, :b, :c] -> true
+      end)
+
+    assert Filter.eval(filter.code, %A{key1: :a, key2: nil})
+    refute Filter.eval(filter.code, %A{key1: :a, key2: :a})
+    assert Filter.eval(filter.code, %A{key1: :a})
+    refute Filter.eval(filter.code, %A{key1: :d})
+  end
 end

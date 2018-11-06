@@ -502,4 +502,57 @@ defmodule Cizen.Filter.CodeTest do
 
     assert expected == filter.code
   end
+
+  test "support when guard" do
+    filter =
+      Filter.new(fn
+        %A{key1: a, key2: b} when is_nil(a) and not is_nil(b) -> "a"
+        %A{key1: a} when a in [:a, :b, :c] -> "b"
+      end)
+
+    expected =
+      {:or,
+       [
+         {:and,
+          [
+            {:and,
+             [
+               {:==, [{:access, [:__struct__]}, A]},
+               {:and,
+                [
+                  {:is_nil, [{:access, [:key1]}]},
+                  {:not, [{:is_nil, [{:access, [:key2]}]}]}
+                ]}
+             ]},
+            "a"
+          ]},
+         {:and,
+          [
+            {:and,
+             [
+               {:==,
+                [
+                  {:and,
+                   [
+                     {:==, [{:access, [:__struct__]}, A]},
+                     {:and,
+                      [
+                        {:is_nil, [{:access, [:key1]}]},
+                        {:not, [{:is_nil, [{:access, [:key2]}]}]}
+                      ]}
+                   ]},
+                  false
+                ]},
+               {:and,
+                [
+                  {:==, [{:access, [:__struct__]}, A]},
+                  {:in, [{:access, [:key1]}, [:a, :b, :c]]}
+                ]}
+             ]},
+            "b"
+          ]}
+       ]}
+
+    assert expected == filter.code
+  end
 end

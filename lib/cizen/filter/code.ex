@@ -23,30 +23,37 @@ defmodule Cizen.Filter.Code do
   def any([filter]), do: filter
   def any([filter | tail]), do: {:or, [filter, any(tail)]}
 
-  defp get_keys(arg, env), do: get_keys(arg, %{}, [], [], env)
+  defp read_header(arg, env), do: read_header(arg, %{}, [], [], env)
 
-  defp get_keys({:%, _, [module, {:%{}, _, pairs}]}, keys, operations, prefix, env) do
+  defp read_header({:when, _, [header, guard]}, keys, operations, prefix, env) do
+    {keys, operations} = read_header(header, keys, operations, prefix, env)
+    code = translate(guard, keys, env)
+    operations = [code | operations]
+    {keys, operations}
+  end
+
+  defp read_header({:%, _, [module, {:%{}, _, pairs}]}, keys, operations, prefix, env) do
     module = Macro.expand(module, env)
     access = List.insert_at(prefix, -1, :__struct__)
     operations = [{:==, [{:access, access}, module]} | operations]
 
     pairs
     |> Enum.reduce({keys, operations}, fn {key, value}, {keys, operations} ->
-      get_keys(value, keys, operations, List.insert_at(prefix, -1, key), env)
+      read_header(value, keys, operations, List.insert_at(prefix, -1, key), env)
     end)
   end
 
-  defp get_keys({:=, _, [struct, {var, meta, context}]}, keys, operations, prefix, env) do
-    {keys, operations} = get_keys(struct, keys, operations, prefix, env)
-    get_keys({var, meta, context}, keys, operations, prefix, env)
+  defp read_header({:=, _, [struct, {var, meta, context}]}, keys, operations, prefix, env) do
+    {keys, operations} = read_header(struct, keys, operations, prefix, env)
+    read_header({var, meta, context}, keys, operations, prefix, env)
   end
 
-  defp get_keys({:^, _, [var]}, keys, operations, prefix, _env) do
+  defp read_header({:^, _, [var]}, keys, operations, prefix, _env) do
     operations = [{:==, [{:access, prefix}, var]} | operations]
     {keys, operations}
   end
 
-  defp get_keys({var, _, _}, keys, operations, prefix, _env) do
+  defp read_header({var, _, _}, keys, operations, prefix, _env) do
     case Map.get(keys, var) do
       nil ->
         keys = Map.put(keys, var, prefix)
@@ -58,7 +65,7 @@ defmodule Cizen.Filter.Code do
     end
   end
 
-  defp get_keys(value, keys, operations, prefix, _env) do
+  defp read_header(value, keys, operations, prefix, _env) do
     operations = [{:==, [{:access, prefix}, value]} | operations]
     {keys, operations}
   end
@@ -100,12 +107,9 @@ defmodule Cizen.Filter.Code do
   end
 
   defp gen({:->, _, [[arg], expression]}, env) do
-    {keys, operations} = get_keys(arg, env)
+    {keys, operations} = read_header(arg, env)
 
-    code =
-      expression
-      |> Macro.prewalk(&expand_embedded(&1, env))
-      |> Macro.postwalk(&walk(&1, keys, env))
+    code = translate(expression, keys, env)
 
     guard =
       operations
@@ -113,6 +117,12 @@ defmodule Cizen.Filter.Code do
       |> all()
 
     {guard, code}
+  end
+
+  defp translate(expression, keys, env) do
+    expression
+    |> Macro.prewalk(&expand_embedded(&1, env))
+    |> Macro.postwalk(&walk(&1, keys, env))
   end
 
   defp expand_embedded(node, env) do

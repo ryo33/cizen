@@ -19,6 +19,12 @@ defmodule Cizen.Filter do
         fn %Event{body: %SomeEvent{field: ^value}} -> true end
       )
 
+  ## With guard
+
+      Filter.new(
+        fn %Event{source_saga_id: source} when not is_nil(source) -> true end
+      )
+
   ## Matches all
 
       Filter.new(fn _ -> true end)
@@ -64,6 +70,9 @@ defmodule Cizen.Filter do
   defmacro new(filter) do
     filter
     |> Macro.prewalk(fn
+      {:when, _, [args, _guard]} ->
+        args
+
       {:->, meta, [args, _expression]} ->
         {:->, meta, [args, true]}
 
