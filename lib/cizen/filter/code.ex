@@ -63,21 +63,43 @@ defmodule Cizen.Filter.Code do
     {keys, operations}
   end
 
-  def generate({:fn, _, [{:->, _, [[arg], {:__block__, _, [expression]}]}]}, env) do
-    do_generate(arg, expression, env)
+  def generate({:fn, _, cases}, env) do
+    do_generate(cases, [], env)
   end
 
-  def generate({:fn, _, [{:->, _, [[arg], expression]}]}, env) do
-    do_generate(arg, expression, env)
+  defp do_generate([fncase], guards, env) do
+    {_, code} = with_guard(fncase, guards, env)
+    code
   end
 
-  # Multiple cases
-  def generate({:fn, _, [fun | tail]}, env) do
+  defp do_generate([fncase | tail], guards, env) do
+    {guard, code} = with_guard(fncase, guards, env)
+
+    guards = List.insert_at(guards, -1, guard)
+    tail_code = do_generate(tail, guards, env)
+
     # literal tuple
-    {:or, [generate({:fn, [], [fun]}, env), generate({:fn, [], tail}, env)]}
+    {:or, [code, tail_code]}
   end
 
-  defp do_generate(arg, expression, env) do
+  defp with_guard(fncase, guards, env) do
+    {guard, code} = gen(fncase, env)
+
+    code =
+      guards
+      |> Enum.map(fn guard -> {:==, [guard, false]} end)
+      |> List.insert_at(-1, guard)
+      |> all()
+      |> gen_and(code)
+
+    {guard, code}
+  end
+
+  defp gen({:->, _, [[arg], {:__block__, _, [expression]}]}, env) do
+    gen({:->, [], [[arg], expression]}, env)
+  end
+
+  defp gen({:->, _, [[arg], expression]}, env) do
     {keys, operations} = get_keys(arg, env)
 
     code =
@@ -85,11 +107,12 @@ defmodule Cizen.Filter.Code do
       |> Macro.prewalk(&expand_embedded(&1, env))
       |> Macro.postwalk(&walk(&1, keys, env))
 
-    operations
-    |> Enum.reduce(code, fn operation, rest ->
-      # literal tuple
-      {:and, [operation, rest]}
-    end)
+    guard =
+      operations
+      |> Enum.reverse()
+      |> all()
+
+    {guard, code}
   end
 
   defp expand_embedded(node, env) do
@@ -235,4 +258,8 @@ defmodule Cizen.Filter.Code do
       node
     end
   end
+
+  defp gen_and(true, arg2), do: arg2
+  defp gen_and(arg1, true), do: arg1
+  defp gen_and(arg1, arg2), do: {:and, [arg1, arg2]}
 end

@@ -64,27 +64,30 @@ defmodule Cizen.Filter.CodeTest do
         a == "a" and b == "b" and c == "c"
       end)
 
-    assert {:and,
-            [
-              {:==, [{:access, [:__struct__]}, C]},
-              {:and,
-               [
-                 {:==, [{:access, [:b, :__struct__]}, B]},
-                 {:and,
-                  [
-                    {:==, [{:access, [:b, :a, :__struct__]}, A]},
-                    {:and,
-                     [
-                       {:and,
-                        [
-                          {:==, [{:access, [:key1]}, "a"]},
-                          {:==, [{:access, [:b, :key1]}, "b"]}
-                        ]},
-                       {:==, [{:access, [:b, :a, :key2]}, "c"]}
-                     ]}
-                  ]}
-               ]}
-            ]} == filter.code
+    expected =
+      {:and,
+       [
+         {:and,
+          [
+            {:==, [{:access, [:__struct__]}, C]},
+            {:and,
+             [
+               {:==, [{:access, [:b, :__struct__]}, B]},
+               {:==, [{:access, [:b, :a, :__struct__]}, A]}
+             ]}
+          ]},
+         {:and,
+          [
+            {:and,
+             [
+               {:==, [{:access, [:key1]}, "a"]},
+               {:==, [{:access, [:b, :key1]}, "b"]}
+             ]},
+            {:==, [{:access, [:b, :a, :key2]}, "c"]}
+          ]}
+       ]}
+
+    assert expected == filter.code
   end
 
   test "embedded filter" do
@@ -106,15 +109,15 @@ defmodule Cizen.Filter.CodeTest do
                  {:==, [{:access, [:key1]}, "a"]},
                  {:and,
                   [
-                    {:==, [{:access, [:b, :__struct__]}, B]},
                     {:and,
                      [
-                       {:==, [{:access, [:b, :a, :__struct__]}, A]},
-                       {:and,
-                        [
-                          {:==, [{:access, [:b, :key1]}, "b"]},
-                          {:==, [{:access, [:b, :a, :key2]}, "c"]}
-                        ]}
+                       {:==, [{:access, [:b, :__struct__]}, B]},
+                       {:==, [{:access, [:b, :a, :__struct__]}, A]}
+                     ]},
+                    {:and,
+                     [
+                       {:==, [{:access, [:b, :key1]}, "b"]},
+                       {:==, [{:access, [:b, :a, :key2]}, "c"]}
                      ]}
                   ]}
                ]}
@@ -141,15 +144,15 @@ defmodule Cizen.Filter.CodeTest do
                  {:==, [{:access, [:key1]}, "a"]},
                  {:and,
                   [
-                    {:==, [{:access, [:b, :__struct__]}, B]},
                     {:and,
                      [
-                       {:==, [{:access, [:b, :a, :__struct__]}, A]},
-                       {:and,
-                        [
-                          {:==, [{:access, [:b, :key1]}, "b"]},
-                          {:==, [{:access, [:b, :a, :key2]}, "c"]}
-                        ]}
+                       {:==, [{:access, [:b, :__struct__]}, B]},
+                       {:==, [{:access, [:b, :a, :__struct__]}, A]}
+                     ]},
+                    {:and,
+                     [
+                       {:==, [{:access, [:b, :key1]}, "b"]},
+                       {:==, [{:access, [:b, :a, :key2]}, "c"]}
                      ]}
                   ]}
                ]}
@@ -247,27 +250,30 @@ defmodule Cizen.Filter.CodeTest do
         test_fun(a, b, c, d, e)
       end)
 
-    assert {:and,
-            [
-              {:==, [{:access, [:__struct__]}, C]},
-              {:and,
-               [
-                 {:==, [{:access, [:b, :__struct__]}, B]},
-                 {:and,
-                  [
-                    {:==, [{:access, [:b, :a, :__struct__]}, A]},
-                    {:call,
-                     [
-                       {__MODULE__, :test_fun},
-                       {:access, [:key1]},
-                       {:access, [:b, :key1]},
-                       {:access, [:b, :a, :key2]},
-                       {:access, [:b, :a]},
-                       {:access, []}
-                     ]}
-                  ]}
-               ]}
-            ]} == filter.code
+    expected =
+      {:and,
+       [
+         {:and,
+          [
+            {:==, [{:access, [:__struct__]}, C]},
+            {:and,
+             [
+               {:==, [{:access, [:b, :__struct__]}, B]},
+               {:==, [{:access, [:b, :a, :__struct__]}, A]}
+             ]}
+          ]},
+         {:call,
+          [
+            {__MODULE__, :test_fun},
+            {:access, [:key1]},
+            {:access, [:b, :key1]},
+            {:access, [:b, :a, :key2]},
+            {:access, [:b, :a]},
+            {:access, []}
+          ]}
+       ]}
+
+    assert expected == filter.code
   end
 
   test "all/1" do
@@ -382,11 +388,7 @@ defmodule Cizen.Filter.CodeTest do
             {:and,
              [
                {:==, [{:access, [:key2, :__struct__]}, B]},
-               {:and,
-                [
-                  {:==, [{:access, [:key2, :key1]}, 5]},
-                  true
-                ]}
+               {:==, [{:access, [:key2, :key1]}, 5]}
              ]}
           ]}
        ]}
@@ -409,11 +411,7 @@ defmodule Cizen.Filter.CodeTest do
             {:and,
              [
                {:==, [{:access, [:key2, :__struct__]}, B]},
-               {:and,
-                [
-                  {:==, [{:access, [:key2, :key1]}, 5]},
-                  true
-                ]}
+               {:==, [{:access, [:key2, :key1]}, 5]}
              ]}
           ]}
        ]}
@@ -434,11 +432,7 @@ defmodule Cizen.Filter.CodeTest do
             {:and,
              [
                {:==, [{:access, [:b, :__struct__]}, B]},
-               {:and,
-                [
-                  {:==, [{:access, [:b, :key1]}, {:access, [:key1]}]},
-                  true
-                ]}
+               {:==, [{:access, [:b, :key1]}, {:access, [:key1]}]}
              ]}
           ]}
        ]}
@@ -452,11 +446,11 @@ defmodule Cizen.Filter.CodeTest do
         %A{key1: a} ->
           a == "a"
 
-        %B{key1: a} ->
-          a == "b"
+        %B{key1: a, key2: "b"} ->
+          call(a)
 
-        %C{} ->
-          true
+        %C{key1: a} ->
+          call(a)
       end)
 
     expected =
@@ -471,13 +465,37 @@ defmodule Cizen.Filter.CodeTest do
           [
             {:and,
              [
-               {:==, [{:access, [:__struct__]}, B]},
-               {:==, [{:access, [:key1]}, "b"]}
+               {:and,
+                [
+                  {:==, [{:==, [{:access, [:__struct__]}, A]}, false]},
+                  {:and,
+                   [
+                     {:==, [{:access, [:__struct__]}, B]},
+                     {:==, [{:access, [:key2]}, "b"]}
+                   ]}
+                ]},
+               {:call, [{__MODULE__, :call}, {:access, [:key1]}]}
              ]},
             {:and,
              [
-               {:==, [{:access, [:__struct__]}, C]},
-               true
+               {:and,
+                [
+                  {:==, [{:==, [{:access, [:__struct__]}, A]}, false]},
+                  {:and,
+                   [
+                     {:==,
+                      [
+                        {:and,
+                         [
+                           {:==, [{:access, [:__struct__]}, B]},
+                           {:==, [{:access, [:key2]}, "b"]}
+                         ]},
+                        false
+                      ]},
+                     {:==, [{:access, [:__struct__]}, C]}
+                   ]}
+                ]},
+               {:call, [{__MODULE__, :call}, {:access, [:key1]}]}
              ]}
           ]}
        ]}

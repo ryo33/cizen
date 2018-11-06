@@ -233,4 +233,30 @@ defmodule Cizen.FilterTest do
 
     assert Filter.eval(filter.code, %A{key1: "a", key2: "b"}) == "b"
   end
+
+  test "multiple cases" do
+    filter =
+      Filter.new(fn
+        %A{key1: a} -> a == "value"
+        %B{key1: b} -> b == "value"
+      end)
+
+    assert Filter.eval(filter.code, %A{key1: "value"}) == true
+    assert Filter.eval(filter.code, %B{key1: "value"}) == true
+    refute Filter.eval(filter.code, %C{key1: "value"}) == true
+    refute Filter.eval(filter.code, %A{key1: "another value"}) == true
+  end
+
+  test "multiple cases with a negative case" do
+    filter =
+      Filter.new(fn
+        %A{key1: 0} -> false
+        %A{key1: value} -> rem(value, 2) == 0
+      end)
+
+    refute Filter.eval(filter.code, %A{key1: 0})
+    assert Filter.eval(filter.code, %A{key1: 2})
+    refute Filter.eval(filter.code, %A{key1: 1})
+    assert Filter.eval(filter.code, %A{key1: 4})
+  end
 end

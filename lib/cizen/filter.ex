@@ -10,19 +10,39 @@ defmodule Cizen.Filter do
         end
       )
 
-  ## Matches specific struct
-
       Filter.new(
-        fn %Event{body: %SomeEvent{}} -> true end
+        fn %Event{body: %SomeEvent{field: :a}} -> true end
       )
 
-  ## Uses other filter
+      value = :a
+      Filter.new(
+        fn %Event{body: %SomeEvent{field: ^value}} -> true end
+      )
+
+  ## Matches all
+
+      Filter.new(fn _ -> true end)
+
+  ## Matches the specific type of struct
+
+      Filter.new(
+        fn %Event{source_saga: %SomeSaga{}} -> true end
+      )
+
+  ## Compose filters
 
       Filter.new(
         fn %Event{body: %SomeEvent{field: value}} ->
           Filter.match?(other_filter, value)
         end
       )
+
+  ## Multiple cases
+
+      Filter.new(fn
+        %Event{body: %Resolve{id: id}} -> id == "some id"
+        %Event{body: %Reject{id: id}} -> id == "some id"
+      end)
   """
 
   @type t :: %__MODULE__{}
