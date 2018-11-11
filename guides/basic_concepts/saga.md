@@ -41,7 +41,7 @@ We call the defined struct "saga struct" and use it for starting sagas and filte
       started_saga_id = perform id, %Start{saga: %SomeSaga{some_field: :some_value}}
     end
 
-## As a Child of a Supervision Tree
+## As a Part of a Supervision Tree
 
     children = [
       %{
