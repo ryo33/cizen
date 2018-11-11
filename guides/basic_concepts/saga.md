@@ -41,6 +41,16 @@ We call the defined struct "saga struct" and use it for starting sagas and filte
       started_saga_id = perform id, %Start{saga: %SomeSaga{some_field: :some_value}}
     end
 
+## As a Child of a Supervision Tree
+
+    children = [
+      %{
+        id: :some_id,
+        start: {Saga, :start_link, [%SomeSaga{some_field: :some_value}]}
+      }
+    ]
+    Supervisor.start_link(children, strategy: :one_for_one)
+
 ## Automaton
 
 `Cizen.Automaton` module is a saga framework that allows you to use effects in callbacks.
