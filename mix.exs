@@ -175,7 +175,6 @@ defmodule Cizen.MixProject do
         Cizen.CizenSagaRegistry,
         Cizen.CrashLogger,
         Cizen.EndSaga,
-        Cizen.ForkSaga,
         Cizen.MonitorSaga,
         Cizen.MonitorSaga.Down,
         Cizen.Saga,

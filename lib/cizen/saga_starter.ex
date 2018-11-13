@@ -14,7 +14,6 @@ defmodule Cizen.SagaStarter do
 
   alias Cizen.SagaLauncher.LaunchSaga
 
-  alias Cizen.ForkSaga
   alias Cizen.StartSaga
 
   @behaviour Saga
@@ -23,7 +22,6 @@ defmodule Cizen.SagaStarter do
   def init(id, _struct) do
     require Filter
     Messenger.subscribe_message(id, Filter.new(fn %Event{body: %StartSaga{}} -> true end))
-    Messenger.subscribe_message(id, Filter.new(fn %Event{body: %ForkSaga{}} -> true end))
     :ok
   end
 
