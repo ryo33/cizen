@@ -4,7 +4,7 @@ defmodule Cizen.StartSaga do
   """
 
   @enforce_keys [:id, :saga]
-  defstruct [:id, :saga]
+  defstruct [:id, :saga, :lifetime_saga_id]
 
   alias Cizen.Event
   alias Cizen.Filter

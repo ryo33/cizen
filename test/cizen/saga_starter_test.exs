@@ -10,7 +10,6 @@ defmodule Cizen.SagaStarterTest do
 
   alias Cizen.SagaLauncher.LaunchSaga
 
-  alias Cizen.ForkSaga
   alias Cizen.StartSaga
 
   describe "SagaStarter" do
@@ -35,7 +34,7 @@ defmodule Cizen.SagaStarterTest do
       }
     end
 
-    test "dispatches LaunchSaga event on ForkSaga event" do
+    test "dispatches LaunchSaga event on StartSaga event with lifetime" do
       Dispatcher.listen_event_type(LaunchSaga)
 
       lifetime = TestHelper.launch_test_saga()
@@ -44,7 +43,7 @@ defmodule Cizen.SagaStarterTest do
       saga_id = SagaID.new()
 
       Dispatcher.dispatch(
-        Event.new(nil, %ForkSaga{
+        Event.new(nil, %StartSaga{
           id: saga_id,
           saga: %TestSaga{},
           lifetime_saga_id: lifetime
@@ -52,6 +51,32 @@ defmodule Cizen.SagaStarterTest do
       )
 
       assert_receive %Event{
+        body: %LaunchSaga{
+          id: ^saga_id,
+          saga: %TestSaga{},
+          lifetime_pid: ^lifetime_pid
+        }
+      }
+    end
+
+    test "does not dispatch LaunchSaga event when lifetime is finished" do
+      Dispatcher.listen_event_type(LaunchSaga)
+
+      lifetime = TestHelper.launch_test_saga()
+      {:ok, lifetime_pid} = CizenSagaRegistry.get_pid(lifetime)
+      TestHelper.ensure_finished(lifetime)
+
+      saga_id = SagaID.new()
+
+      Dispatcher.dispatch(
+        Event.new(nil, %StartSaga{
+          id: saga_id,
+          saga: %TestSaga{},
+          lifetime_saga_id: lifetime
+        })
+      )
+
+      refute_receive %Event{
         body: %LaunchSaga{
           id: ^saga_id,
           saga: %TestSaga{},

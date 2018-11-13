@@ -18,7 +18,7 @@ defmodule Cizen.Effects.Fork do
   alias Cizen.Effects.{Map, Request}
   alias Cizen.SagaID
 
-  alias Cizen.ForkSaga
+  alias Cizen.StartSaga
 
   use Effect
 
@@ -28,7 +28,7 @@ defmodule Cizen.Effects.Fork do
 
     %Map{
       effect: %Request{
-        body: %ForkSaga{id: saga_id, saga: saga, lifetime_saga_id: id}
+        body: %StartSaga{id: saga_id, saga: saga, lifetime_saga_id: id}
       },
       transform: fn _ -> saga_id end
     }

@@ -30,27 +30,19 @@ defmodule Cizen.SagaStarter do
   @impl true
   def handle_event(
         id,
-        %Event{body: %StartSaga{id: saga_id, saga: saga}},
+        %Event{body: %StartSaga{id: saga_id, saga: saga, lifetime_saga_id: lifetime}},
         state
       ) do
-    Dispatcher.dispatch(Event.new(id, %LaunchSaga{id: saga_id, saga: saga}))
+    with false <- is_nil(lifetime),
+         {:ok, lifetime_pid} <- CizenSagaRegistry.get_pid(lifetime) do
+      Dispatcher.dispatch(
+        Event.new(id, %LaunchSaga{id: saga_id, saga: saga, lifetime_pid: lifetime_pid})
+      )
+    else
+      true ->
+        Dispatcher.dispatch(Event.new(id, %LaunchSaga{id: saga_id, saga: saga}))
 
-    state
-  end
-
-  @impl true
-  def handle_event(
-        id,
-        %Event{body: %ForkSaga{id: saga_id, saga: saga, lifetime_saga_id: lifetime}},
-        state
-      ) do
-    case CizenSagaRegistry.get_pid(lifetime) do
-      {:ok, lifetime_pid} ->
-        Dispatcher.dispatch(
-          Event.new(id, %LaunchSaga{id: saga_id, saga: saga, lifetime_pid: lifetime_pid})
-        )
-
-      _ ->
+      :error ->
         :ok
     end
 
