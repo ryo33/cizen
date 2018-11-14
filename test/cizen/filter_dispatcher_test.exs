@@ -1,8 +1,8 @@
 defmodule Cizen.FilterDispatcherTest do
   use Cizen.SagaCase
 
-  alias Cizen.TestHelper
   import Cizen.TestHelper, only: [launch_test_saga: 0, launch_test_saga: 1, assert_condition: 2]
+  alias Cizen.Test
 
   alias Cizen.Dispatcher
   alias Cizen.Event
@@ -167,7 +167,7 @@ defmodule Cizen.FilterDispatcherTest do
         handle_event: fn _id, event, _state -> send(pid, event) end
       )
 
-    TestHelper.ensure_finished(saga_id)
+    Test.ensure_finished(saga_id)
 
     assert_condition(100, :sys.get_state(FilterDispatcher) == old_state)
 
@@ -198,7 +198,7 @@ defmodule Cizen.FilterDispatcherTest do
       handle_event: fn _id, event, _state -> send(pid, event) end
     )
 
-    TestHelper.ensure_finished(lifetime_saga)
+    Test.ensure_finished(lifetime_saga)
 
     assert_condition(1000, :sys.get_state(FilterDispatcher) == old_state)
 

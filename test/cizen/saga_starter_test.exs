@@ -1,5 +1,6 @@
 defmodule Cizen.SagaStarterTest do
   use Cizen.SagaCase
+  alias Cizen.Test
   alias Cizen.TestHelper
   alias Cizen.TestSaga
 
@@ -64,7 +65,7 @@ defmodule Cizen.SagaStarterTest do
 
       lifetime = TestHelper.launch_test_saga()
       {:ok, lifetime_pid} = Saga.get_pid(lifetime)
-      TestHelper.ensure_finished(lifetime)
+      Test.ensure_finished(lifetime)
 
       saga_id = SagaID.new()
 

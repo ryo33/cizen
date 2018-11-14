@@ -1,5 +1,6 @@
 defmodule Cizen.RequestResponseMediatorTest do
   use Cizen.SagaCase
+  alias Cizen.Test
   alias Cizen.TestHelper
 
   alias Cizen.Dispatcher
@@ -140,7 +141,7 @@ defmodule Cizen.RequestResponseMediatorTest do
 
       worker_saga_id = event.body.id
 
-      TestHelper.ensure_finished(requestor_id)
+      Test.ensure_finished(requestor_id)
 
       assert_receive %Event{body: %Saga.Finish{id: ^worker_saga_id}}
     end

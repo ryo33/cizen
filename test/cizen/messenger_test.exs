@@ -1,7 +1,7 @@
 defmodule Cizen.MenssengerTest do
   use Cizen.SagaCase
-  alias Cizen.TestHelper
   import Cizen.TestHelper, only: [launch_test_saga: 0, launch_test_saga: 1]
+  alias Cizen.Test
 
   alias Cizen.Dispatcher
   alias Cizen.Event
@@ -320,7 +320,7 @@ defmodule Cizen.MenssengerTest do
 
     assert_receive {^subscriber, ^event}
 
-    TestHelper.ensure_finished(lifetime_saga)
+    Test.ensure_finished(lifetime_saga)
 
     event = Event.new(source_id, %TestEvent{value: :b})
     Dispatcher.dispatch(event)
@@ -351,7 +351,7 @@ defmodule Cizen.MenssengerTest do
 
     assert_receive %Event{body: %SendMessage{saga_id: ^subscriber, event: ^event}}
 
-    TestHelper.ensure_finished(subscriber)
+    Test.ensure_finished(subscriber)
 
     event = Event.new(source_id, %TestEvent{value: :b})
     Dispatcher.dispatch(event)

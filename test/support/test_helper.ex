@@ -9,16 +9,6 @@ defmodule Cizen.TestHelper do
   alias Cizen.SagaLauncher
   alias Cizen.TestSaga
 
-  def ensure_finished(id) do
-    case Saga.get_pid(id) do
-      {:ok, _pid} ->
-        Saga.end_saga(id)
-
-      _ ->
-        :ok
-    end
-  end
-
   def launch_test_saga(opts \\ []) do
     saga_id = SagaID.new()
 
@@ -68,5 +58,43 @@ defmodule Cizen.TestHelper do
 
       func.(func, unquote(timeout))
     end
+  end
+
+  defmodule CrashLogSurpressor do
+    @moduledoc false
+    use Cizen.Automaton
+
+    alias Cizen.Effects.{Receive, Request}
+    alias Cizen.Filter
+    alias Cizen.RegisterChannel
+    alias Cizen.Saga
+
+    defstruct []
+
+    def spawn(id, %__MODULE__{}) do
+      perform(id, %Request{
+        body: %RegisterChannel{
+          channel_saga_id: id,
+          event_filter: Filter.new(fn %Event{body: %Saga.Crashed{}} -> true end)
+        }
+      })
+
+      :loop
+    end
+
+    def yield(id, :loop) do
+      perform(id, %Receive{})
+
+      :loop
+    end
+  end
+
+  def surpress_crash_log do
+    use Cizen.Effectful
+    alias Cizen.Effects.Start
+
+    handle(fn id ->
+      perform(id, %Start{saga: %CrashLogSurpressor{}})
+    end)
   end
 end

@@ -1,5 +1,6 @@
 defmodule Cizen.SagaRegistryTest do
   use Cizen.SagaCase
+  alias Cizen.Test
   alias Cizen.TestHelper
 
   alias Cizen.Saga
@@ -24,7 +25,7 @@ defmodule Cizen.SagaRegistryTest do
     test "remove the entry on finish" do
       id = TestHelper.launch_test_saga()
       assert {:ok, _} = SagaRegistry.register(__MODULE__, id, :a, :value_a)
-      TestHelper.ensure_finished(id)
+      Test.ensure_finished(id)
       :timer.sleep(1)
       assert [] == Registry.lookup(__MODULE__, :a)
     end

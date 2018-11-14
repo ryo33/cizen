@@ -2,6 +2,7 @@ defmodule Cizen.SagaTest do
   use Cizen.SagaCase
   doctest Cizen.Saga
 
+  alias Cizen.TestHelper
   alias Cizen.TestSaga
 
   import Cizen.TestHelper,
@@ -48,7 +49,7 @@ defmodule Cizen.SagaTest do
     defmodule(CrashTestEvent1, do: defstruct([]))
 
     test "terminated on crash" do
-      surpress_crash_log()
+      TestHelper.surpress_crash_log()
 
       id =
         launch_test_saga(
@@ -73,7 +74,7 @@ defmodule Cizen.SagaTest do
     defmodule(CrashTestEvent2, do: defstruct([]))
 
     test "dispatches Crashed event on crash" do
-      surpress_crash_log()
+      TestHelper.surpress_crash_log()
 
       Dispatcher.listen_event_type(Saga.Crashed)
 

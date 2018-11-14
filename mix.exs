@@ -4,7 +4,7 @@ defmodule Cizen.MixProject do
   def project do
     [
       app: :cizen,
-      version: "0.13.0",
+      version: "0.14.0",
       package: package(),
       elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -76,6 +76,7 @@ defmodule Cizen.MixProject do
       "guides/basic_concepts/filter.md",
       "guides/basic_concepts/saga.md",
       "guides/basic_concepts/effect.md",
+      "guides/basic_concepts/test.md",
 
       "guides/advanced_concepts/channel.md",
     ]
@@ -195,6 +196,10 @@ defmodule Cizen.MixProject do
         Cizen.SagaLauncher.LaunchSaga,
         Cizen.SagaLauncher.UnlaunchSaga,
         Cizen.SagaStarter,
+      ],
+
+      "Test": [
+        Cizen.Test
       ]
     ]
   end

@@ -1,5 +1,6 @@
 defmodule Cizen.Effects.MonitorTest do
   use Cizen.SagaCase
+  alias Cizen.Test
   alias Cizen.TestHelper
 
   alias Cizen.Effects.{Monitor, Receive}
@@ -16,7 +17,7 @@ defmodule Cizen.Effects.MonitorTest do
 
         perform(id, %Monitor{saga_id: saga_id})
 
-        TestHelper.ensure_finished(saga_id)
+        Test.ensure_finished(saga_id)
 
         event =
           perform(id, %Receive{
@@ -41,7 +42,7 @@ defmodule Cizen.Effects.MonitorTest do
                    value == saga_id
                  end)
 
-        TestHelper.ensure_finished(saga_id)
+        Test.ensure_finished(saga_id)
 
         event =
           perform(id, %Receive{
