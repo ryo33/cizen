@@ -11,7 +11,6 @@ defmodule Cizen.SagaTest do
       assert_condition: 2
     ]
 
-  alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.Saga
@@ -29,7 +28,7 @@ defmodule Cizen.SagaTest do
       Dispatcher.listen_event_type(Saga.Started)
       id = launch_test_saga()
       Dispatcher.dispatch(Event.new(nil, %Saga.Finish{id: id}))
-      assert_condition(100, :error == CizenSagaRegistry.get_pid(id))
+      assert_condition(100, :error == Saga.get_pid(id))
     end
 
     test "dispatches Finished event on finish" do
@@ -68,7 +67,7 @@ defmodule Cizen.SagaTest do
         )
 
       Dispatcher.dispatch(Event.new(nil, %CrashTestEvent1{}))
-      assert_condition(100, :error == CizenSagaRegistry.get_pid(id))
+      assert_condition(100, :error == Saga.get_pid(id))
     end
 
     defmodule(CrashTestEvent2, do: defstruct([]))
@@ -144,7 +143,7 @@ defmodule Cizen.SagaTest do
         )
 
       assert_receive %Event{body: %Saga.Finished{id: ^id}}
-      assert_condition(100, :error == CizenSagaRegistry.get_pid(id))
+      assert_condition(100, :error == Saga.get_pid(id))
     end
 
     defmodule LazyLaunchSaga do
@@ -215,11 +214,11 @@ defmodule Cizen.SagaTest do
           1000 -> flunk("timeout")
         end
 
-      assert {:ok, _} = CizenSagaRegistry.get_pid(saga_id)
+      assert {:ok, _} = Saga.get_pid(saga_id)
 
       send(process, :finish)
 
-      assert_condition(100, :error == CizenSagaRegistry.get_pid(saga_id))
+      assert_condition(100, :error == Saga.get_pid(saga_id))
     end
   end
 
@@ -231,7 +230,7 @@ defmodule Cizen.SagaTest do
       received =
         assert_receive %Event{body: %Saga.Started{}, source_saga: %TestSaga{extra: :some_value}}
 
-      assert {:ok, ^pid} = CizenSagaRegistry.get_pid(received.body.id)
+      assert {:ok, ^pid} = Saga.get_pid(received.body.id)
     end
 
     test "starts a saga linked to the current process" do
@@ -257,6 +256,53 @@ defmodule Cizen.SagaTest do
       Process.exit(current, :kill)
 
       assert_condition(100, false == Process.alive?(pid))
+    end
+  end
+
+  describe "Saga.get_pid/1" do
+    test "launched saga is registered" do
+      id = launch_test_saga()
+      assert {:ok, pid} = Saga.get_pid(id)
+    end
+
+    test "killed saga is unregistered" do
+      id = launch_test_saga()
+      assert {:ok, pid} = Saga.get_pid(id)
+      true = Process.exit(pid, :kill)
+      assert_condition(100, :error == Saga.get_pid(id))
+    end
+  end
+
+  defmodule TestSaga do
+    @behaviour Cizen.Saga
+    defstruct [:value]
+    @impl true
+    def init(_id, %__MODULE__{}) do
+      :ok
+    end
+
+    @impl true
+    def handle_event(_id, _event, :ok) do
+      :ok
+    end
+  end
+
+  describe "Saga.get_saga/1" do
+    test "returns a saga struct" do
+      assert_handle(fn id ->
+        use Cizen.Effects
+
+        id =
+          perform id, %Start{
+            saga: %TestSaga{value: :some_value}
+          }
+
+        assert {:ok, %TestSaga{value: :some_value}} = Saga.get_saga(id)
+      end)
+    end
+
+    test "returns error for unregistered saga" do
+      assert :error == Saga.get_saga(SagaID.new())
     end
   end
 end

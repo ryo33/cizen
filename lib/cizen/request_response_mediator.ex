@@ -3,7 +3,6 @@ defmodule Cizen.RequestResponseMediator do
   The request-response mediator saga.
   """
 
-  alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.FilterDispatcher
@@ -102,7 +101,7 @@ defmodule Cizen.RequestResponseMediator do
 
   @impl true
   def handle_event(_id, %Event{body: %Request.Response{}} = response, state) do
-    case CizenSagaRegistry.get_pid(response.body.requestor_saga_id) do
+    case Saga.get_pid(response.body.requestor_saga_id) do
       {:ok, pid} -> send(pid, response)
       _ -> :ok
     end

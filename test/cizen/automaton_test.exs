@@ -4,7 +4,6 @@ defmodule Cizen.AutomatonTest do
   alias Cizen.TestHelper
 
   alias Cizen.Automaton
-  alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.Filter
@@ -492,7 +491,7 @@ defmodule Cizen.AutomatonTest do
           }
         end)
 
-      {:ok, pid} = CizenSagaRegistry.get_pid(saga_id)
+      {:ok, pid} = Saga.get_pid(saga_id)
 
       old =
         pid

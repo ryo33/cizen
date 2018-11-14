@@ -3,7 +3,6 @@ defmodule Cizen.Messenger do
   Send messages.
   """
 
-  alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.Filter
@@ -89,7 +88,7 @@ defmodule Cizen.Messenger do
     meta = {:subscriber, subscriber}
 
     if is_nil(lifetime) do
-      case CizenSagaRegistry.get_pid(subscriber) do
+      case Saga.get_pid(subscriber) do
         {:ok, pid} ->
           lifetimes = [pid]
           FilterDispatcher.listen_with_meta(event_filter, meta, lifetimes)
@@ -98,8 +97,8 @@ defmodule Cizen.Messenger do
           :ok
       end
     else
-      with {:ok, s_pid} <- CizenSagaRegistry.get_pid(subscriber),
-           {:ok, l_pid} <- CizenSagaRegistry.get_pid(lifetime) do
+      with {:ok, s_pid} <- Saga.get_pid(subscriber),
+           {:ok, l_pid} <- Saga.get_pid(lifetime) do
         lifetimes = [s_pid, l_pid]
         FilterDispatcher.listen_with_meta(event_filter, meta, lifetimes)
       else
@@ -121,7 +120,7 @@ defmodule Cizen.Messenger do
     channel = body.channel_saga_id
     meta = {:channel, channel}
 
-    case CizenSagaRegistry.get_pid(channel) do
+    case Saga.get_pid(channel) do
       {:ok, pid} ->
         lifetimes = [pid]
         FilterDispatcher.listen_with_meta(body.event_filter, meta, lifetimes)

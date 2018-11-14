@@ -6,11 +6,11 @@ defmodule Cizen.Messenger.Transmitter do
   @behaviour Cizen.Saga
   defstruct []
 
-  alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.Filter
   alias Cizen.Messenger
+  alias Cizen.Saga
 
   alias Cizen.Channel.EmitMessage
   alias Cizen.Channel.FeedMessage
@@ -27,7 +27,7 @@ defmodule Cizen.Messenger.Transmitter do
 
   @impl true
   def handle_event(_id, %Event{body: %SendMessage{} = body}, state) do
-    case CizenSagaRegistry.get_pid(body.saga_id) do
+    case Saga.get_pid(body.saga_id) do
       {:ok, pid} -> send(pid, body.event)
       _ -> :ok
     end
@@ -37,7 +37,7 @@ defmodule Cizen.Messenger.Transmitter do
 
   @impl true
   def handle_event(_id, %Event{body: %FeedMessage{}} = event, state) do
-    case CizenSagaRegistry.get_pid(event.body.channel_saga_id) do
+    case Saga.get_pid(event.body.channel_saga_id) do
       {:ok, pid} -> send(pid, event)
       _ -> :ok
     end

@@ -2,7 +2,6 @@ defmodule Cizen.TestHelper do
   @moduledoc false
   import ExUnit.Assertions, only: [flunk: 0]
 
-  alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.Saga
@@ -11,7 +10,7 @@ defmodule Cizen.TestHelper do
   alias Cizen.TestSaga
 
   def ensure_finished(id) do
-    case CizenSagaRegistry.get_pid(id) do
+    case Saga.get_pid(id) do
       {:ok, _pid} ->
         Saga.end_saga(id)
 

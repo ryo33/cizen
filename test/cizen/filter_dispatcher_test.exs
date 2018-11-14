@@ -4,12 +4,12 @@ defmodule Cizen.FilterDispatcherTest do
   alias Cizen.TestHelper
   import Cizen.TestHelper, only: [launch_test_saga: 0, launch_test_saga: 1, assert_condition: 2]
 
-  alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.Filter
   alias Cizen.FilterDispatcher
   alias Cizen.FilterDispatcher.PushEvent
+  alias Cizen.Saga
   alias Cizen.SagaID
 
   defmodule(TestEvent, do: defstruct([:value]))
@@ -182,9 +182,9 @@ defmodule Cizen.FilterDispatcherTest do
     pid = self()
     source_saga_id = launch_test_saga()
     lifetime_saga = launch_test_saga()
-    {:ok, lifetime} = CizenSagaRegistry.get_pid(lifetime_saga)
+    {:ok, lifetime} = Saga.get_pid(lifetime_saga)
     lifetime2_saga = launch_test_saga()
-    {:ok, lifetime2} = CizenSagaRegistry.get_pid(lifetime2_saga)
+    {:ok, lifetime2} = Saga.get_pid(lifetime2_saga)
 
     launch_test_saga(
       launch: fn _, _ ->

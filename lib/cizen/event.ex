@@ -3,7 +3,6 @@ defmodule Cizen.Event do
   Helpers to handle events
   """
 
-  alias Cizen.CizenSagaRegistry
   alias Cizen.EventID
   alias Cizen.EventType
   alias Cizen.Saga
@@ -34,7 +33,7 @@ defmodule Cizen.Event do
       if is_nil(saga_id) do
         nil
       else
-        {:ok, saga} = CizenSagaRegistry.get_saga(saga_id)
+        {:ok, saga} = Saga.get_saga(saga_id)
         saga
       end
 

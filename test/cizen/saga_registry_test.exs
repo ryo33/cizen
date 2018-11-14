@@ -2,7 +2,7 @@ defmodule Cizen.SagaRegistryTest do
   use Cizen.SagaCase
   alias Cizen.TestHelper
 
-  alias Cizen.CizenSagaRegistry
+  alias Cizen.Saga
   alias Cizen.SagaID
   alias Cizen.SagaRegistry
 
@@ -17,7 +17,7 @@ defmodule Cizen.SagaRegistryTest do
     test "registers the given key-value" do
       id = TestHelper.launch_test_saga()
       assert {:ok, _} = SagaRegistry.register(__MODULE__, id, :a, :value_a)
-      {:ok, pid} = CizenSagaRegistry.get_pid(id)
+      {:ok, pid} = Saga.get_pid(id)
       assert [{pid, {id, :value_a}}] == Registry.lookup(__MODULE__, :a)
     end
 

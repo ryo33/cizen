@@ -5,7 +5,6 @@ defmodule Cizen.SagaStarter do
 
   defstruct []
 
-  alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.Filter
@@ -32,7 +31,7 @@ defmodule Cizen.SagaStarter do
         state
       ) do
     with false <- is_nil(lifetime),
-         {:ok, lifetime_pid} <- CizenSagaRegistry.get_pid(lifetime) do
+         {:ok, lifetime_pid} <- Saga.get_pid(lifetime) do
       Dispatcher.dispatch(
         Event.new(id, %LaunchSaga{id: saga_id, saga: saga, lifetime_pid: lifetime_pid})
       )

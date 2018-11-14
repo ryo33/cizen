@@ -5,9 +5,9 @@ defmodule Cizen.SagaMonitor do
 
   defstruct []
 
-  alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.Event
+  alias Cizen.Saga
 
   alias Cizen.MonitorSaga
 
@@ -32,7 +32,7 @@ defmodule Cizen.SagaMonitor do
       {:noreply, state}
     else
       state =
-        case CizenSagaRegistry.get_pid(target) do
+        case Saga.get_pid(target) do
           {:ok, pid} ->
             ref = Process.monitor(pid)
             refs = Map.put(state.refs, ref, target)
@@ -65,7 +65,7 @@ defmodule Cizen.SagaMonitor do
 
     Dispatcher.dispatch(event)
 
-    case CizenSagaRegistry.get_pid(monitor) do
+    case Saga.get_pid(monitor) do
       {:ok, pid} -> send(pid, event)
       _ -> :ok
     end

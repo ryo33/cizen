@@ -27,7 +27,6 @@ defmodule Cizen.Saga do
   alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.Event
-  alias Cizen.Saga
   alias Cizen.SagaID
 
   @type state :: any
@@ -38,7 +37,7 @@ defmodule Cizen.Saga do
 
   Returned value will be used as the next state to pass `handle_event/3` callback.
   """
-  @callback init(SagaID.t(), Saga.t()) :: state
+  @callback init(SagaID.t(), t()) :: state
 
   @doc """
   Invoked when the saga receives an event.
@@ -94,6 +93,18 @@ defmodule Cizen.Saga do
     GenServer.start_link(__MODULE__, {id, saga, nil})
   end
 
+  @doc """
+  Returns the pid for the given saga ID.
+  """
+  @spec get_pid(SagaID.t()) :: {:ok, pid} | :error
+  defdelegate get_pid(saga_id), to: CizenSagaRegistry
+
+  @doc """
+  Returns the saga struct for the given saga ID.
+  """
+  @spec get_saga(SagaID.t()) :: {:ok, t()} | :error
+  defdelegate get_saga(saga_id), to: CizenSagaRegistry
+
   @lazy_launch {__MODULE__, :lazy_launch}
 
   def lazy_launch, do: @lazy_launch
@@ -128,7 +139,7 @@ defmodule Cizen.Saga do
 
     Registry.register(CizenSagaRegistry, id, saga)
     Dispatcher.listen_event_body(%Finish{id: id})
-    module = Saga.module(saga)
+    module = module(saga)
 
     state =
       case module.init(id, saga) do
@@ -150,7 +161,7 @@ defmodule Cizen.Saga do
 
   @impl true
   def handle_info(%Event{} = event, {id, saga, state}) do
-    module = Saga.module(saga)
+    module = module(saga)
     state = module.handle_event(id, event, state)
     {:noreply, {id, saga, state}}
   rescue

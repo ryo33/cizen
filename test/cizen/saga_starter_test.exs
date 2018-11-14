@@ -3,9 +3,9 @@ defmodule Cizen.SagaStarterTest do
   alias Cizen.TestHelper
   alias Cizen.TestSaga
 
-  alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.Event
+  alias Cizen.Saga
   alias Cizen.SagaID
 
   alias Cizen.SagaLauncher.LaunchSaga
@@ -38,7 +38,7 @@ defmodule Cizen.SagaStarterTest do
       Dispatcher.listen_event_type(LaunchSaga)
 
       lifetime = TestHelper.launch_test_saga()
-      {:ok, lifetime_pid} = CizenSagaRegistry.get_pid(lifetime)
+      {:ok, lifetime_pid} = Saga.get_pid(lifetime)
 
       saga_id = SagaID.new()
 
@@ -63,7 +63,7 @@ defmodule Cizen.SagaStarterTest do
       Dispatcher.listen_event_type(LaunchSaga)
 
       lifetime = TestHelper.launch_test_saga()
-      {:ok, lifetime_pid} = CizenSagaRegistry.get_pid(lifetime)
+      {:ok, lifetime_pid} = Saga.get_pid(lifetime)
       TestHelper.ensure_finished(lifetime)
 
       saga_id = SagaID.new()

@@ -5,7 +5,6 @@ defmodule Cizen.SagaRegistry do
   It works like `Registry`.
   """
 
-  alias Cizen.CizenSagaRegistry
   alias Cizen.Saga
   alias Cizen.SagaID
 
@@ -41,7 +40,7 @@ defmodule Cizen.SagaRegistry do
 
   @spec keys(registry(), SagaID.t()) :: [value()]
   def keys(registry, saga_id) do
-    case CizenSagaRegistry.get_pid(saga_id) do
+    case Saga.get_pid(saga_id) do
       {:ok, pid} ->
         Registry.keys(registry, pid)
 
@@ -88,7 +87,7 @@ defmodule Cizen.SagaRegistry do
   end
 
   defp call_in_saga(saga_id, request) do
-    case CizenSagaRegistry.get_pid(saga_id) do
+    case Saga.get_pid(saga_id) do
       {:ok, pid} ->
         if pid == self() do
           Saga.handle_request(request)

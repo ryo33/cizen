@@ -3,7 +3,6 @@ defmodule Cizen.SagaLauncherTest do
   doctest Cizen.SagaLauncher
   import Cizen.TestHelper, only: [launch_test_saga: 0, assert_condition: 2]
 
-  alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.Saga
@@ -31,7 +30,7 @@ defmodule Cizen.SagaLauncherTest do
 
   test "SagaLauncher.UnlaunchSaga event" do
     id = launch_test_saga()
-    assert {:ok, pid} = CizenSagaRegistry.get_pid(id)
+    assert {:ok, pid} = Saga.get_pid(id)
     Dispatcher.dispatch(Event.new(nil, %SagaLauncher.UnlaunchSaga{id: id}))
     assert_condition(100, Process.alive?(pid))
   end
@@ -61,6 +60,6 @@ defmodule Cizen.SagaLauncherTest do
     send(lifetime, :finish)
 
     assert_receive %Event{body: %Saga.Finished{}}
-    assert_condition(100, :error == CizenSagaRegistry.get_pid(saga_id))
+    assert_condition(100, :error == Saga.get_pid(saga_id))
   end
 end
