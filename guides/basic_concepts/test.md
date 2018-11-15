@@ -14,7 +14,7 @@ With `use Cizen.Test`, all sagas started in a test are automatically cleaned up 
 
       test "start SomeSaga" do
         handle fn id ->
-          # This saga will after the test exits.
+          # This saga will end after the test exits.
           perform id, %Start{
             saga: %SomeSaga{}
           }
