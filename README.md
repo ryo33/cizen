@@ -13,7 +13,7 @@ First, add Cizen to your list of dependencies in `mix.exs`:
 ```elixir
 defp deps do
   [
-    {:cizen, "~> 0.14.0"}
+    {:cizen, "~> 0.14.1"}
   ]
 end
 ```
@@ -22,7 +22,7 @@ Then, run `mix deps.get`.
 
 ## Documentation
 
-API Reference: [https://hexdocs.pm/cizen/](https://hexdocs.pm/cizen/0.14.0)
+API Reference: [https://hexdocs.pm/cizen/](https://hexdocs.pm/cizen/0.14.1)
 
 ## License
 
