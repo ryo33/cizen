@@ -35,7 +35,11 @@ defmodule Cizen.Filter.Code do
   defp read_header({:%, _, [module, {:%{}, _, pairs}]}, keys, operations, prefix, env) do
     module = Macro.expand(module, env)
     access = List.insert_at(prefix, -1, :__struct__)
-    operations = [{:==, [{:access, access}, module]} | operations]
+
+    operations = [
+      {:and, [{:is_map, [{:access, prefix}]}, {:==, [{:access, access}, module]}]}
+      | operations
+    ]
 
     pairs
     |> Enum.reduce({keys, operations}, fn {key, value}, {keys, operations} ->

@@ -119,7 +119,7 @@ defmodule Cizen.DefaultEventRouter.NodeTest do
   end
 
   test "put and operator", %{node: node} do
-    code =
+    code1 =
       {:and,
        [
          "a",
@@ -130,9 +130,24 @@ defmodule Cizen.DefaultEventRouter.NodeTest do
           ]}
        ]}
 
-    actual =
+    code2 =
+      {:and,
+       [
+         "a",
+         {:and,
+          [
+            {:and, ["b", "c"]},
+            "d"
+          ]}
+       ]}
+
+    actual1 =
       node
-      |> Node.put(code, "1")
+      |> Node.put(code1, "1")
+
+    actual2 =
+      node
+      |> Node.put(code2, "1")
 
     expected = %Node{
       node
@@ -167,7 +182,8 @@ defmodule Cizen.DefaultEventRouter.NodeTest do
           )
     }
 
-    assert expected == actual
+    assert expected == actual1
+    assert expected == actual2
   end
 
   test "put or operator", %{node: node} do

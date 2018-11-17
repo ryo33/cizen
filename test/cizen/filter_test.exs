@@ -72,6 +72,15 @@ defmodule Cizen.FilterTest do
     assert Filter.eval(filter.code, %C{b: %B{a: %A{key2: "a"}}}) == "a"
   end
 
+  test "eval access to nil value" do
+    filter =
+      Filter.new(fn %C{b: %B{a: %A{key2: c}}} ->
+        c == "c"
+      end)
+
+    assert Filter.eval(filter.code, %C{b: %B{a: nil}}) == false
+  end
+
   test "eval root access" do
     filter =
       Filter.new(fn a ->

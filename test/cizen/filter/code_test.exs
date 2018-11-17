@@ -16,7 +16,7 @@ defmodule Cizen.Filter.CodeTest do
 
     assert {:and,
             [
-              {:==, [{:access, [:__struct__]}, A]},
+              {:and, [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, A]}]},
               {:is_nil, [{:access, [:key1]}]}
             ]} == filter.code
   end
@@ -29,7 +29,7 @@ defmodule Cizen.Filter.CodeTest do
 
     assert {:and,
             [
-              {:==, [{:access, [:__struct__]}, A]},
+              {:and, [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, A]}]},
               {:to_string, [{:access, [:key1]}]}
             ]} == filter.code
   end
@@ -42,7 +42,7 @@ defmodule Cizen.Filter.CodeTest do
 
     assert {:and,
             [
-              {:==, [{:access, [:__struct__]}, A]},
+              {:and, [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, A]}]},
               {:to_charlist, [{:access, [:key1]}]}
             ]} == filter.code
   end
@@ -53,7 +53,7 @@ defmodule Cizen.Filter.CodeTest do
 
     assert {:and,
             [
-              {:==, [{:access, [:__struct__]}, A]},
+              {:and, [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, A]}]},
               {:==, [{:access, [:key1]}, "value1"]}
             ]} == filter.code
   end
@@ -69,11 +69,12 @@ defmodule Cizen.Filter.CodeTest do
        [
          {:and,
           [
-            {:==, [{:access, [:__struct__]}, C]},
+            {:and, [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, C]}]},
             {:and,
              [
-               {:==, [{:access, [:b, :__struct__]}, B]},
-               {:==, [{:access, [:b, :a, :__struct__]}, A]}
+               {:and, [{:is_map, [{:access, [:b]}]}, {:==, [{:access, [:b, :__struct__]}, B]}]},
+               {:and,
+                [{:is_map, [{:access, [:b, :a]}]}, {:==, [{:access, [:b, :a, :__struct__]}, A]}]}
              ]}
           ]},
          {:and,
@@ -103,7 +104,7 @@ defmodule Cizen.Filter.CodeTest do
 
     assert {:and,
             [
-              {:==, [{:access, [:__struct__]}, C]},
+              {:and, [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, C]}]},
               {:and,
                [
                  {:==, [{:access, [:key1]}, "a"]},
@@ -111,8 +112,13 @@ defmodule Cizen.Filter.CodeTest do
                   [
                     {:and,
                      [
-                       {:==, [{:access, [:b, :__struct__]}, B]},
-                       {:==, [{:access, [:b, :a, :__struct__]}, A]}
+                       {:and,
+                        [{:is_map, [{:access, [:b]}]}, {:==, [{:access, [:b, :__struct__]}, B]}]},
+                       {:and,
+                        [
+                          {:is_map, [{:access, [:b, :a]}]},
+                          {:==, [{:access, [:b, :a, :__struct__]}, A]}
+                        ]}
                      ]},
                     {:and,
                      [
@@ -138,7 +144,7 @@ defmodule Cizen.Filter.CodeTest do
 
     assert {:and,
             [
-              {:==, [{:access, [:__struct__]}, C]},
+              {:and, [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, C]}]},
               {:and,
                [
                  {:==, [{:access, [:key1]}, "a"]},
@@ -146,8 +152,13 @@ defmodule Cizen.Filter.CodeTest do
                   [
                     {:and,
                      [
-                       {:==, [{:access, [:b, :__struct__]}, B]},
-                       {:==, [{:access, [:b, :a, :__struct__]}, A]}
+                       {:and,
+                        [{:is_map, [{:access, [:b]}]}, {:==, [{:access, [:b, :__struct__]}, B]}]},
+                       {:and,
+                        [
+                          {:is_map, [{:access, [:b, :a]}]},
+                          {:==, [{:access, [:b, :a, :__struct__]}, A]}
+                        ]}
                      ]},
                     {:and,
                      [
@@ -173,7 +184,7 @@ defmodule Cizen.Filter.CodeTest do
 
     assert {:and,
             [
-              {:==, [{:access, [:__struct__]}, A]},
+              {:and, [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, A]}]},
               {
                 :==,
                 [
@@ -199,7 +210,7 @@ defmodule Cizen.Filter.CodeTest do
 
     assert {:and,
             [
-              {:==, [{:access, [:__struct__]}, A]},
+              {:and, [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, A]}]},
               {:==,
                [
                  {:call,
@@ -227,7 +238,7 @@ defmodule Cizen.Filter.CodeTest do
     assert {
              :and,
              [
-               {:==, [{:access, [:__struct__]}, A]},
+               {:and, [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, A]}]},
                {:==,
                 [
                   {:call,
@@ -255,11 +266,12 @@ defmodule Cizen.Filter.CodeTest do
        [
          {:and,
           [
-            {:==, [{:access, [:__struct__]}, C]},
+            {:and, [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, C]}]},
             {:and,
              [
-               {:==, [{:access, [:b, :__struct__]}, B]},
-               {:==, [{:access, [:b, :a, :__struct__]}, A]}
+               {:and, [{:is_map, [{:access, [:b]}]}, {:==, [{:access, [:b, :__struct__]}, B]}]},
+               {:and,
+                [{:is_map, [{:access, [:b, :a]}]}, {:==, [{:access, [:b, :a, :__struct__]}, A]}]}
              ]}
           ]},
          {:call,
@@ -355,7 +367,7 @@ defmodule Cizen.Filter.CodeTest do
 
     assert {:and,
             [
-              {:==, [{:access, [:__struct__]}, A]},
+              {:and, [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, A]}]},
               {:not, [{:access, [:key1]}]}
             ]} == filter.code
   end
@@ -370,7 +382,7 @@ defmodule Cizen.Filter.CodeTest do
 
     assert {:and,
             [
-              {:==, [{:access, [:__struct__]}, A]},
+              {:and, [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, A]}]},
               true
             ]} == filter.code
   end
@@ -381,13 +393,14 @@ defmodule Cizen.Filter.CodeTest do
     expected =
       {:and,
        [
-         {:==, [{:access, [:__struct__]}, A]},
+         {:and, [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, A]}]},
          {:and,
           [
             {:==, [{:access, [:key1]}, 3]},
             {:and,
              [
-               {:==, [{:access, [:key2, :__struct__]}, B]},
+               {:and,
+                [{:is_map, [{:access, [:key2]}]}, {:==, [{:access, [:key2, :__struct__]}, B]}]},
                {:==, [{:access, [:key2, :key1]}, 5]}
              ]}
           ]}
@@ -404,13 +417,14 @@ defmodule Cizen.Filter.CodeTest do
     expected =
       {:and,
        [
-         {:==, [{:access, [:__struct__]}, A]},
+         {:and, [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, A]}]},
          {:and,
           [
             {:==, [{:access, [:key1]}, 3]},
             {:and,
              [
-               {:==, [{:access, [:key2, :__struct__]}, B]},
+               {:and,
+                [{:is_map, [{:access, [:key2]}]}, {:==, [{:access, [:key2, :__struct__]}, B]}]},
                {:==, [{:access, [:key2, :key1]}, 5]}
              ]}
           ]}
@@ -425,13 +439,13 @@ defmodule Cizen.Filter.CodeTest do
     expected =
       {:and,
        [
-         {:==, [{:access, [:__struct__]}, A]},
+         {:and, [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, A]}]},
          {:and,
           [
             {:==, [{:access, [:key2]}, {:access, [:key1]}]},
             {:and,
              [
-               {:==, [{:access, [:b, :__struct__]}, B]},
+               {:and, [{:is_map, [{:access, [:b]}]}, {:==, [{:access, [:b, :__struct__]}, B]}]},
                {:==, [{:access, [:b, :key1]}, {:access, [:key1]}]}
              ]}
           ]}
@@ -458,7 +472,7 @@ defmodule Cizen.Filter.CodeTest do
        [
          {:and,
           [
-            {:==, [{:access, [:__struct__]}, A]},
+            {:and, [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, A]}]},
             {:==, [{:access, [:key1]}, "a"]}
           ]},
          {:or,
@@ -467,10 +481,14 @@ defmodule Cizen.Filter.CodeTest do
              [
                {:and,
                 [
-                  {:==, [{:==, [{:access, [:__struct__]}, A]}, false]},
+                  {:==,
+                   [
+                     {:and, [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, A]}]},
+                     false
+                   ]},
                   {:and,
                    [
-                     {:==, [{:access, [:__struct__]}, B]},
+                     {:and, [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, B]}]},
                      {:==, [{:access, [:key2]}, "b"]}
                    ]}
                 ]},
@@ -480,19 +498,24 @@ defmodule Cizen.Filter.CodeTest do
              [
                {:and,
                 [
-                  {:==, [{:==, [{:access, [:__struct__]}, A]}, false]},
+                  {:==,
+                   [
+                     {:and, [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, A]}]},
+                     false
+                   ]},
                   {:and,
                    [
                      {:==,
                       [
                         {:and,
                          [
-                           {:==, [{:access, [:__struct__]}, B]},
+                           {:and,
+                            [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, B]}]},
                            {:==, [{:access, [:key2]}, "b"]}
                          ]},
                         false
                       ]},
-                     {:==, [{:access, [:__struct__]}, C]}
+                     {:and, [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, C]}]}
                    ]}
                 ]},
                {:call, [{__MODULE__, :call}, {:access, [:key1]}]}
@@ -517,7 +540,7 @@ defmodule Cizen.Filter.CodeTest do
           [
             {:and,
              [
-               {:==, [{:access, [:__struct__]}, A]},
+               {:and, [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, A]}]},
                {:and,
                 [
                   {:is_nil, [{:access, [:key1]}]},
@@ -534,7 +557,7 @@ defmodule Cizen.Filter.CodeTest do
                 [
                   {:and,
                    [
-                     {:==, [{:access, [:__struct__]}, A]},
+                     {:and, [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, A]}]},
                      {:and,
                       [
                         {:is_nil, [{:access, [:key1]}]},
@@ -545,7 +568,7 @@ defmodule Cizen.Filter.CodeTest do
                 ]},
                {:and,
                 [
-                  {:==, [{:access, [:__struct__]}, A]},
+                  {:and, [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, A]}]},
                   {:in, [{:access, [:key1]}, [:a, :b, :c]]}
                 ]}
              ]},
