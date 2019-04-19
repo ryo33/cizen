@@ -68,7 +68,7 @@ defmodule Cizen.Saga do
 
   defmodule Crashed do
     @moduledoc "A event fired on crash"
-    defstruct([:id, :saga, :reason, :stacktrace])
+    defstruct([:id, :reason, :stacktrace])
   end
 
   @doc """
@@ -157,21 +157,20 @@ defmodule Cizen.Saga do
           state
       end
 
-    {:ok, {id, saga, state}}
+    {:ok, {id, module, state}}
   end
 
   @impl true
-  def handle_info(%Event{body: %Finish{id: id}}, {id, saga, state}) do
-    {:stop, {:shutdown, :finish}, {id, saga, state}}
+  def handle_info(%Event{body: %Finish{id: id}}, {id, module, state}) do
+    {:stop, {:shutdown, :finish}, {id, module, state}}
   end
 
   @impl true
-  def handle_info(%Event{} = event, {id, saga, state}) do
-    module = module(saga)
+  def handle_info(%Event{} = event, {id, module, state}) do
     state = module.handle_event(id, event, state)
-    {:noreply, {id, saga, state}}
+    {:noreply, {id, module, state}}
   rescue
-    reason -> {:stop, {:shutdown, {reason, __STACKTRACE__}}, {id, saga, state}}
+    reason -> {:stop, {:shutdown, {reason, __STACKTRACE__}}, {id, module, state}}
   end
 
   @impl true
@@ -180,18 +179,18 @@ defmodule Cizen.Saga do
   end
 
   @impl true
-  def terminate(:shutdown, {_id, _saga, _state}) do
+  def terminate(:shutdown, {_id, _module, _state}) do
     :shutdown
   end
 
-  def terminate({:shutdown, :finish}, {id, _saga, _state}) do
+  def terminate({:shutdown, :finish}, {id, _module, _state}) do
     Dispatcher.dispatch(Event.new(id, %Finished{id: id}))
     :shutdown
   end
 
-  def terminate({:shutdown, {reason, trace}}, {id, saga, _state}) do
+  def terminate({:shutdown, {reason, trace}}, {id, _module, _state}) do
     Dispatcher.dispatch(
-      Event.new(id, %Crashed{id: id, saga: saga, reason: reason, stacktrace: trace})
+      Event.new(id, %Crashed{id: id, reason: reason, stacktrace: trace})
     )
 
     :shutdown

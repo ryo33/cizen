@@ -25,12 +25,14 @@ defmodule Cizen.CrashLogger do
   def yield(id, :loop) do
     crashed_event = perform(id, %Receive{})
 
-    %Saga.Crashed{
-      id: saga_id,
-      saga: saga,
-      reason: reason,
-      stacktrace: stacktrace
-    } = crashed_event.body
+    %Event{
+      body: %Saga.Crashed{
+        id: saga_id,
+        reason: reason,
+        stacktrace: stacktrace
+      },
+      source_saga: saga
+    } = crashed_event
 
     message = """
     saga #{saga_id} is crashed
