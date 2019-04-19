@@ -18,6 +18,8 @@ defmodule Cizen.SagaTest do
   alias Cizen.SagaID
   alias Cizen.SagaLauncher
 
+  defmodule(TestEvent, do: defstruct([:value]))
+
   describe "Saga" do
     test "dispatches Launched event on launch" do
       Dispatcher.listen_event_type(Saga.Started)
@@ -105,7 +107,6 @@ defmodule Cizen.SagaTest do
       }
     end
 
-    defmodule(TestEvent, do: defstruct([:value]))
     defmodule(TestEventReply, do: defstruct([:value]))
 
     test "handles events" do
@@ -304,6 +305,17 @@ defmodule Cizen.SagaTest do
 
     test "returns error for unregistered saga" do
       assert :error == Saga.get_saga(SagaID.new())
+    end
+  end
+
+  describe "Saga.send_to/2" do
+    test "sends an event to a saga" do
+      pid = self()
+      id = launch_test_saga(handle_event: fn id, event, _state ->
+        send pid, {id, event}
+      end)
+      Saga.send_to(id, Event.new(nil, %TestEvent{value: 10}))
+      assert_receive {^id, %Event{body: %TestEvent{value: 10}}}
     end
   end
 end

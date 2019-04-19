@@ -85,8 +85,7 @@ defmodule Cizen.Automaton do
   def perform(id, effect) do
     event = Event.new(id, %PerformEffect{handler: id, effect: effect})
     Dispatcher.dispatch(event)
-    {:ok, pid} = Saga.get_pid(id)
-    send(pid, event)
+    Saga.send_to(id, event)
 
     receive do
       response -> response

@@ -27,20 +27,14 @@ defmodule Cizen.Messenger.Transmitter do
 
   @impl true
   def handle_event(_id, %Event{body: %SendMessage{} = body}, state) do
-    case Saga.get_pid(body.saga_id) do
-      {:ok, pid} -> send(pid, body.event)
-      _ -> :ok
-    end
+    Saga.send_to(body.saga_id, body.event)
 
     state
   end
 
   @impl true
   def handle_event(_id, %Event{body: %FeedMessage{}} = event, state) do
-    case Saga.get_pid(event.body.channel_saga_id) do
-      {:ok, pid} -> send(pid, event)
-      _ -> :ok
-    end
+    Saga.send_to(event.body.channel_saga_id, event)
 
     state
   end

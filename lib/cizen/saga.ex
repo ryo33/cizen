@@ -129,6 +129,12 @@ defmodule Cizen.Saga do
     Dispatcher.dispatch(Event.new(nil, %Ended{id: id}))
   end
 
+  def send_to(id, message) do
+    Registry.dispatch(CizenSagaRegistry, id, fn entries ->
+      for {pid, _} <- entries, do: send(pid, message)
+    end)
+  end
+
   def exit(id, reason, trace) do
     GenServer.stop({:via, Registry, {CizenSagaRegistry, id}}, {:shutdown, {reason, trace}})
   end

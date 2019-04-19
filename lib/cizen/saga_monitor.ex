@@ -64,10 +64,6 @@ defmodule Cizen.SagaMonitor do
       })
 
     Dispatcher.dispatch(event)
-
-    case Saga.get_pid(monitor) do
-      {:ok, pid} -> send(pid, event)
-      _ -> :ok
-    end
+    Saga.send_to(monitor, event)
   end
 end
