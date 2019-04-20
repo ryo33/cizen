@@ -311,9 +311,14 @@ defmodule Cizen.SagaTest do
   describe "Saga.send_to/2" do
     test "sends an event to a saga" do
       pid = self()
-      id = launch_test_saga(handle_event: fn id, event, _state ->
-        send pid, {id, event}
-      end)
+
+      id =
+        launch_test_saga(
+          handle_event: fn id, event, _state ->
+            send(pid, {id, event})
+          end
+        )
+
       Saga.send_to(id, Event.new(nil, %TestEvent{value: 10}))
       assert_receive {^id, %Event{body: %TestEvent{value: 10}}}
     end

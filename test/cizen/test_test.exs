@@ -2,6 +2,7 @@ defmodule Cizen.TestTest do
   use ExUnit.Case
   use Cizen.Test
   alias Cizen.TestHelper
+  import Cizen.TestHelper, only: [assert_condition: 2]
   import ExUnit.Callbacks, only: [setup_all: 1, on_exit: 1]
 
   use Cizen.Effects
@@ -25,7 +26,7 @@ defmodule Cizen.TestTest do
     {:ok, pid} = SagaRegistry.start_link(keys: :duplicate, name: TestSagaRegistry)
 
     on_exit(fn ->
-      assert 0 == SagaRegistry.count(TestSagaRegistry)
+      assert_condition(10, 0 == SagaRegistry.count(TestSagaRegistry))
       Process.exit(pid, :kill)
     end)
   end

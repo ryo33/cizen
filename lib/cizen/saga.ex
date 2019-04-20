@@ -189,9 +189,7 @@ defmodule Cizen.Saga do
   end
 
   def terminate({:shutdown, {reason, trace}}, {id, _module, _state}) do
-    Dispatcher.dispatch(
-      Event.new(id, %Crashed{id: id, reason: reason, stacktrace: trace})
-    )
+    Dispatcher.dispatch(Event.new(id, %Crashed{id: id, reason: reason, stacktrace: trace}))
 
     :shutdown
   end
