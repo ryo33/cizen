@@ -517,5 +517,90 @@ defmodule Cizen.AutomatonTest do
 
       assert old.event_buffer == new.event_buffer
     end
+
+    defmodule TestAutomatonABC do
+      use Automaton
+      defstruct []
+
+      @impl true
+      def spawn(id, %__MODULE__{}) do
+        perform id, %Subscribe{
+          event_filter: Filter.new(fn %Event{body: %TestEvent{}} -> true end)
+        }
+
+        :a
+      end
+
+      @impl true
+      def yield(id, :a) do
+        perform id, %Receive{}
+        :b
+      end
+
+      @impl true
+      def yield(id, :b) do
+        perform id, %Receive{}
+        :c
+      end
+
+      @impl true
+      def yield(id, :c) do
+        perform id, %Receive{}
+        Automaton.finish()
+      end
+    end
+
+    test "dispatches a Yield event on spawn" do
+      saga_id = SagaID.new()
+
+      Dispatcher.listen(
+        Filter.new(fn %Event{source_saga_id: id, body: %Automaton.Yield{}} ->
+          id == saga_id
+        end)
+      )
+
+      Dispatcher.dispatch(
+        Event.new(nil, %StartSaga{
+          id: saga_id,
+          saga: %TestAutomatonABC{}
+        })
+      )
+
+      assert_receive %Event{
+        body: %Automaton.Yield{
+          state: :a
+        }
+      }
+    end
+
+    test "dispatches a Yield event on yield" do
+      saga_id =
+        assert_handle(fn id ->
+          perform id, %Start{
+            saga: %TestAutomatonABC{}
+          }
+        end)
+
+      Dispatcher.listen(
+        Filter.new(fn %Event{source_saga_id: id, body: %Automaton.Yield{}} ->
+          id == saga_id
+        end)
+      )
+
+      Dispatcher.dispatch(
+        Event.new(nil, %StartSaga{
+          id: saga_id,
+          saga: %TestAutomatonABC{}
+        })
+      )
+
+      Dispatcher.dispatch(Event.new(nil, %TestEvent{}))
+
+      assert_receive %Event{
+        body: %Automaton.Yield{
+          state: :b
+        }
+      }
+    end
   end
 end

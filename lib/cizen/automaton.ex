@@ -9,7 +9,7 @@ defmodule Cizen.Automaton do
   alias Cizen.Saga
   alias Cizen.SagaID
 
-  alias Cizen.Automaton.PerformEffect
+  alias Cizen.Automaton.{PerformEffect, Yield}
 
   @finish {__MODULE__, :finish}
 
@@ -93,6 +93,8 @@ defmodule Cizen.Automaton do
   end
 
   defp do_yield(module, id, state) do
+    Dispatcher.dispatch(Event.new(id, %Yield{state: state}))
+
     case state do
       @finish ->
         Dispatcher.dispatch(Event.new(id, %Saga.Finish{id: id}))
