@@ -55,7 +55,7 @@ defmodule Cizen.SagaTest do
 
       id =
         launch_test_saga(
-          launch: fn _id, _state ->
+          init: fn _id, _state ->
             Dispatcher.listen_event_type(CrashTestEvent1)
           end,
           handle_event: fn _id, %Event{body: body}, state ->
@@ -82,7 +82,7 @@ defmodule Cizen.SagaTest do
 
       id =
         launch_test_saga(
-          launch: fn _id, _state ->
+          init: fn _id, _state ->
             Dispatcher.listen_event_type(CrashTestEvent2)
           end,
           handle_event: fn _id, %Event{body: body}, state ->
@@ -114,7 +114,7 @@ defmodule Cizen.SagaTest do
 
       id =
         launch_test_saga(
-          launch: fn _id, _state ->
+          init: fn _id, _state ->
             Dispatcher.listen_event_type(TestEvent)
           end,
           handle_event: fn _id, %Event{body: body}, state ->
@@ -138,7 +138,7 @@ defmodule Cizen.SagaTest do
 
       id =
         launch_test_saga(
-          launch: fn id, state ->
+          init: fn id, state ->
             Dispatcher.dispatch(Event.new(nil, %Saga.Finish{id: id}))
             state
           end
@@ -340,7 +340,7 @@ defmodule Cizen.SagaTest do
         Saga.resume(
           saga_id,
           %TestSaga{
-            launch: fn _id, _saga ->
+            init: fn _id, _saga ->
               send(pid, :called_init)
             end
           },

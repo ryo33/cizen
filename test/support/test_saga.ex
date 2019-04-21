@@ -2,14 +2,14 @@ defmodule Cizen.TestSaga do
   @moduledoc false
   use Cizen.Saga
 
-  defstruct [:launch, :resume, :handle_event, :state, :extra]
+  defstruct [:init, :resume, :handle_event, :state, :extra]
 
   @impl true
-  def init(id, %__MODULE__{launch: launch, handle_event: handle_event, state: state} = struct) do
-    launch = launch || fn _, state -> state end
+  def init(id, %__MODULE__{init: init, handle_event: handle_event, state: state} = struct) do
+    init = init || fn _, state -> state end
     handle_event = handle_event || fn _, _, state -> state end
-    state = launch.(id, state)
-    %__MODULE__{struct | launch: launch, handle_event: handle_event, state: state}
+    state = init.(id, state)
+    %__MODULE__{struct | init: init, handle_event: handle_event, state: state}
   end
 
   @impl true

@@ -14,7 +14,7 @@ defmodule Cizen.Effects.StartTest do
         assert_handle(fn id ->
           perform id, %Start{
             saga: %TestSaga{
-              launch: fn id, _ -> send(pid, {:saga_id, id}) end
+              init: fn id, _ -> send(pid, {:saga_id, id}) end
             }
           }
         end)

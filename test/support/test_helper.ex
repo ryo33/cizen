@@ -20,9 +20,9 @@ defmodule Cizen.TestHelper do
           Event.new(nil, %SagaLauncher.LaunchSaga{
             id: saga_id,
             saga: %TestSaga{
-              launch: fn id, state ->
-                launch = Keyword.get(opts, :launch, fn _id, state -> state end)
-                state = launch.(id, state)
+              init: fn id, state ->
+                init = Keyword.get(opts, :init, fn _id, state -> state end)
+                state = init.(id, state)
                 state
               end,
               handle_event: Keyword.get(opts, :handle_event, fn _id, _event, state -> state end),

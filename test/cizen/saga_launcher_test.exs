@@ -18,7 +18,7 @@ defmodule Cizen.SagaLauncherTest do
       Event.new(nil, %SagaLauncher.LaunchSaga{
         id: saga_id,
         saga: %TestSaga{
-          launch: fn id, _state ->
+          init: fn id, _state ->
             send(pid, {:ok, id})
           end
         }

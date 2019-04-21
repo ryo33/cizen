@@ -11,7 +11,7 @@ defmodule Cizen.CrashLoggerTest do
   test "logs crashes" do
     saga_id =
       TestHelper.launch_test_saga(
-        launch: fn _id, _state ->
+        init: fn _id, _state ->
           Dispatcher.listen_event_type(CrashTestEvent)
         end,
         handle_event: fn _id, %Event{body: body}, state ->

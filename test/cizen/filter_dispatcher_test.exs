@@ -21,7 +21,7 @@ defmodule Cizen.FilterDispatcherTest do
     event_filter = Filter.new(fn %Event{source_saga_id: value} -> value == source_saga_id end)
 
     launch_test_saga(
-      launch: fn _, _ ->
+      init: fn _, _ ->
         FilterDispatcher.listen(event_filter)
       end,
       handle_event: fn _id, event, _state -> send(pid, event) end
@@ -39,7 +39,7 @@ defmodule Cizen.FilterDispatcherTest do
     source_saga_id = launch_test_saga()
 
     launch_test_saga(
-      launch: fn _, _ ->
+      init: fn _, _ ->
         FilterDispatcher.listen(
           Filter.new(fn %Event{source_saga_id: value} -> value == source_saga_id end)
         )
@@ -48,7 +48,7 @@ defmodule Cizen.FilterDispatcherTest do
     )
 
     launch_test_saga(
-      launch: fn _, _ ->
+      init: fn _, _ ->
         FilterDispatcher.listen(
           Filter.new(fn %Event{source_saga_id: value} -> value == SagaID.new() end)
         )
@@ -73,7 +73,7 @@ defmodule Cizen.FilterDispatcherTest do
     source_saga_id = launch_test_saga()
 
     launch_test_saga(
-      launch: fn _, _ ->
+      init: fn _, _ ->
         FilterDispatcher.listen(
           Filter.new(fn %Event{source_saga_id: value} -> value == source_saga_id end)
         )
@@ -96,7 +96,7 @@ defmodule Cizen.FilterDispatcherTest do
     source_saga_id = launch_test_saga()
 
     launch_test_saga(
-      launch: fn _, _ ->
+      init: fn _, _ ->
         FilterDispatcher.listen_with_meta(
           Filter.new(fn %Event{source_saga_id: value} -> value == source_saga_id end),
           :a
@@ -124,7 +124,7 @@ defmodule Cizen.FilterDispatcherTest do
     source_saga_id = launch_test_saga()
 
     launch_test_saga(
-      launch: fn _, _ ->
+      init: fn _, _ ->
         FilterDispatcher.listen_with_meta(
           Filter.new(fn %Event{source_saga_id: value} -> value == source_saga_id end),
           :a
@@ -157,7 +157,7 @@ defmodule Cizen.FilterDispatcherTest do
 
     saga_id =
       launch_test_saga(
-        launch: fn _, _ ->
+        init: fn _, _ ->
           FilterDispatcher.listen(
             Filter.new(fn %Event{source_saga_id: value, body: %TestEvent{}} ->
               value == source_saga_id
@@ -187,7 +187,7 @@ defmodule Cizen.FilterDispatcherTest do
     {:ok, lifetime2} = Saga.get_pid(lifetime2_saga)
 
     launch_test_saga(
-      launch: fn _, _ ->
+      init: fn _, _ ->
         FilterDispatcher.listen(
           Filter.new(fn %Event{source_saga_id: value, body: %TestEvent{}} ->
             value == source_saga_id
