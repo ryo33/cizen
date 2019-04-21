@@ -149,7 +149,7 @@ defmodule Cizen.SagaTest do
     end
 
     defmodule LazyLaunchSaga do
-      @behaviour Cizen.Saga
+      use Cizen.Saga
 
       defstruct []
 
@@ -275,8 +275,8 @@ defmodule Cizen.SagaTest do
     end
   end
 
-  defmodule TestSaga do
-    @behaviour Cizen.Saga
+  defmodule TestSagaState do
+    use Cizen.Saga
     defstruct [:value]
     @impl true
     def init(_id, %__MODULE__{}) do
@@ -296,10 +296,10 @@ defmodule Cizen.SagaTest do
 
         id =
           perform id, %Start{
-            saga: %TestSaga{value: :some_value}
+            saga: %TestSagaState{value: :some_value}
           }
 
-        assert {:ok, %TestSaga{value: :some_value}} = Saga.get_saga(id)
+        assert {:ok, %TestSagaState{value: :some_value}} = Saga.get_saga(id)
       end)
     end
 
@@ -321,6 +321,94 @@ defmodule Cizen.SagaTest do
 
       Saga.send_to(id, Event.new(nil, %TestEvent{value: 10}))
       assert_receive {^id, %Event{body: %TestEvent{value: 10}}}
+    end
+  end
+
+  describe "Saga.resume/3" do
+    test "starts a saga" do
+      saga_id = SagaID.new()
+      {:ok, pid} = Saga.resume(saga_id, %TestSaga{}, nil)
+
+      assert {:ok, ^pid} = Saga.get_pid(saga_id)
+    end
+
+    test "does not invoke init callback" do
+      pid = self()
+      saga_id = SagaID.new()
+
+      {:ok, _pid} =
+        Saga.resume(
+          saga_id,
+          %TestSaga{
+            launch: fn _id, _saga ->
+              send(pid, :called_init)
+            end
+          },
+          nil
+        )
+
+      refute_receive :called_init
+    end
+
+    test "invokes resume callback with arguments" do
+      pid = self()
+      saga_id = SagaID.new()
+
+      {:ok, _pid} =
+        Saga.resume(
+          saga_id,
+          %TestSaga{
+            resume: fn id, saga, state ->
+              send(pid, {id, saga, state})
+            end,
+            extra: 42
+          },
+          :state
+        )
+
+      assert_receive {^saga_id, %TestSaga{extra: 42}, :state}
+    end
+
+    test "uses a resume callback's result as the next state" do
+      pid = self()
+      saga_id = SagaID.new()
+
+      {:ok, _pid} =
+        Saga.resume(
+          saga_id,
+          %TestSaga{
+            resume: fn _id, _saga, _state ->
+              :next_state
+            end,
+            handle_event: fn _id, _event, state ->
+              send(pid, state)
+            end
+          },
+          nil
+        )
+
+      Saga.send_to(saga_id, Event.new(nil, %TestEvent{}))
+
+      assert_receive :next_state
+    end
+
+    defmodule TestSagaCrash do
+      use Saga
+      defstruct []
+
+      @impl true
+      def init(_, _) do
+        nil
+      end
+
+      @impl true
+      def handle_event(_, _, _) do
+        nil
+      end
+    end
+
+    test "crashes the saga when resume callback is not implemented" do
+      refute match?({:ok, _pid}, Saga.resume(SagaID.new(), %TestSagaCrash{}, nil))
     end
   end
 end

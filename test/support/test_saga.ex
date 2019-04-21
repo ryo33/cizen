@@ -1,8 +1,8 @@
 defmodule Cizen.TestSaga do
   @moduledoc false
-  @behaviour Cizen.Saga
+  use Cizen.Saga
 
-  defstruct [:launch, :handle_event, :state, :extra]
+  defstruct [:launch, :resume, :handle_event, :state, :extra]
 
   @impl true
   def init(id, %__MODULE__{launch: launch, handle_event: handle_event, state: state} = struct) do
@@ -10,6 +10,14 @@ defmodule Cizen.TestSaga do
     handle_event = handle_event || fn _, _, state -> state end
     state = launch.(id, state)
     %__MODULE__{struct | launch: launch, handle_event: handle_event, state: state}
+  end
+
+  @impl true
+  def resume(id, %__MODULE__{resume: resume, handle_event: handle_event} = struct, state) do
+    resume = resume || fn _, _, _ -> state end
+    handle_event = handle_event || fn _, _, state -> state end
+    state = resume.(id, struct, state)
+    %__MODULE__{struct | resume: resume, handle_event: handle_event, state: state}
   end
 
   @impl true

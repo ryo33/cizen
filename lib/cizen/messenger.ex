@@ -18,7 +18,7 @@ defmodule Cizen.Messenger do
 
   defstruct []
 
-  @behaviour Saga
+  use Saga
 
   @doc "Subscribe message synchronously"
   @spec subscribe_message(SagaID.t(), Filter.t()) :: :ok

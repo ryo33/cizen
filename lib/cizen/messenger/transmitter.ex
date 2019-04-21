@@ -3,7 +3,7 @@ defmodule Cizen.Messenger.Transmitter do
   Transmitter for messaging.
   """
 
-  @behaviour Cizen.Saga
+  use Cizen.Saga
   defstruct []
 
   alias Cizen.Dispatcher

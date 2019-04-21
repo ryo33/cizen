@@ -5,7 +5,7 @@ defmodule Cizen.Saga do
   ## Example
 
       defmodule SomeSaga do
-        @behaviour Cizen.Saga
+        use Cizen.Saga
         defstruct []
 
         @impl true
@@ -46,6 +46,29 @@ defmodule Cizen.Saga do
   """
   @callback handle_event(SagaID.t(), Event.t(), state) :: state
 
+  @doc """
+  Invoked when the saga is resumed.
+
+  Returned value will be used as the next state to pass `handle_event/3` callback.
+  """
+  @callback resume(SagaID.t(), t(), state) :: state
+
+  defmacro __using__(_opts) do
+    quote do
+      @behaviour Cizen.Saga
+
+      @impl true
+      def resume(_id, saga, _state) do
+        alias Cizen.Saga
+
+        raise UndefinedFunctionError,
+              "function #{Saga.module(saga)}.resume/3 is undefined or private"
+      end
+
+      defoverridable resume: 3
+    end
+  end
+
   defmodule Finish do
     @moduledoc "A event fired to finish"
     defstruct([:id])
@@ -79,7 +102,7 @@ defmodule Cizen.Saga do
     lifetime = self()
     id = SagaID.new()
 
-    {:ok, _pid} = GenServer.start_link(__MODULE__, {id, saga, lifetime})
+    {:ok, _pid} = GenServer.start_link(__MODULE__, {:start, id, saga, lifetime})
 
     id
   end
@@ -90,7 +113,7 @@ defmodule Cizen.Saga do
   @spec start_link(t) :: GenServer.on_start()
   def start_link(saga) do
     id = SagaID.new()
-    GenServer.start_link(__MODULE__, {id, saga, nil})
+    GenServer.start_link(__MODULE__, {:start, id, saga, nil})
   end
 
   @doc """
@@ -117,8 +140,16 @@ defmodule Cizen.Saga do
     saga.__struct__
   end
 
+  @doc """
+  Resumes a saga with the given state.
+  """
+  @spec resume(SagaID.t(), t(), state) :: GenServer.on_start()
+  def resume(id, saga, state) do
+    GenServer.start(__MODULE__, {:resume, id, saga, state})
+  end
+
   def start_saga(id, saga, lifetime) do
-    {:ok, _pid} = GenServer.start(__MODULE__, {id, saga, lifetime})
+    {:ok, _pid} = GenServer.start(__MODULE__, {:start, id, saga, lifetime})
   end
 
   def end_saga(id) do
@@ -140,24 +171,31 @@ defmodule Cizen.Saga do
   end
 
   @impl true
-  def init({id, saga, lifetime}) do
-    unless is_nil(lifetime), do: Process.monitor(lifetime)
-
+  def init({type, id, saga, lifetime_or_state}) do
     Registry.register(CizenSagaRegistry, id, saga)
     Dispatcher.listen_event_body(%Finish{id: id})
     module = module(saga)
 
-    state =
-      case module.init(id, saga) do
-        {@lazy_launch, state} ->
-          state
-
-        state ->
-          Dispatcher.dispatch(Event.new(id, %Started{id: id}))
-          state
-      end
+    state = init_on(type, id, module, saga, lifetime_or_state)
 
     {:ok, {id, module, state}}
+  end
+
+  defp init_on(:start, id, module, saga, lifetime) do
+    unless is_nil(lifetime), do: Process.monitor(lifetime)
+
+    case module.init(id, saga) do
+      {@lazy_launch, state} ->
+        state
+
+      state ->
+        Dispatcher.dispatch(Event.new(id, %Started{id: id}))
+        state
+    end
+  end
+
+  defp init_on(:resume, id, module, saga, state) do
+    module.resume(id, saga, state)
   end
 
   @impl true

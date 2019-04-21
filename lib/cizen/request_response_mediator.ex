@@ -22,7 +22,7 @@ defmodule Cizen.RequestResponseMediator do
 
     defstruct [:request]
 
-    @behaviour Saga
+    use Saga
 
     @impl true
     def init(id, %__MODULE__{request: request}) do
@@ -75,7 +75,7 @@ defmodule Cizen.RequestResponseMediator do
     end
   end
 
-  @behaviour Saga
+  use Saga
 
   @impl true
   def init(_id, _saga) do

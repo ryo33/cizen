@@ -13,7 +13,7 @@ defmodule Cizen.SagaEnder do
 
   alias Cizen.EndSaga
 
-  @behaviour Saga
+  use Saga
 
   @impl true
   def init(id, _struct) do

@@ -15,7 +15,7 @@ You can create a handle block like this:
 
 ## Pre-defined Effects
 
-Cizen has several pre-defined filters.
+Cizen has several pre-defined effects.
 For convenience, you can alias all of them by;
 
     use Cizen.Effects # aliases all effects.

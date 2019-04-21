@@ -15,7 +15,7 @@ defmodule Cizen.SagaStarter do
 
   alias Cizen.StartSaga
 
-  @behaviour Saga
+  use Saga
 
   @impl true
   def init(id, _struct) do

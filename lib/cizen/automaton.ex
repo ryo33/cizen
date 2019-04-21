@@ -47,7 +47,7 @@ defmodule Cizen.Automaton do
       import Cizen.Automaton, only: [perform: 2, finish: 0]
       require Cizen.Filter
 
-      @behaviour Saga
+      use Saga
       @behaviour Automaton
 
       @impl Automaton
