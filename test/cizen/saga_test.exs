@@ -392,23 +392,66 @@ defmodule Cizen.SagaTest do
       assert_receive :next_state
     end
 
-    defmodule TestSagaCrash do
+    defmodule TestSagaNoResume do
       use Saga
-      defstruct []
+      defstruct [:value]
 
       @impl true
-      def init(_, _) do
-        nil
+      def init(id, saga) do
+        Dispatcher.dispatch(Event.new(id, %TestEvent{value: {:called_init, saga}}))
+        :state
       end
 
       @impl true
-      def handle_event(_, _, _) do
-        nil
+      def handle_event(id, event, state) do
+        Dispatcher.dispatch(
+          Event.new(id, %TestEvent{value: {:called_handle_event, event, state}})
+        )
+
+        :next_state
       end
     end
 
-    test "crashes the saga when resume callback is not implemented" do
-      refute match?({:ok, _pid}, Saga.resume(SagaID.new(), %TestSagaCrash{}, nil))
+    test "invokes init instead of resume when resume is not defined" do
+      saga_id = SagaID.new()
+      saga = %TestSagaNoResume{value: :some_value}
+      Dispatcher.listen_event_type(TestEvent)
+
+      {:ok, _pid} =
+        Saga.resume(
+          saga_id,
+          saga,
+          nil
+        )
+
+      assert_receive %Event{
+        source_saga_id: ^saga_id,
+        body: %TestEvent{value: {:called_init, ^saga}}
+      }
+    end
+
+    test "use the given state as next state" do
+      saga_id = SagaID.new()
+      Dispatcher.listen_event_type(TestEvent)
+
+      {:ok, _pid} =
+        Saga.resume(
+          saga_id,
+          %TestSagaNoResume{},
+          :resumed_state
+        )
+
+      receive do
+        %Event{source_saga_id: ^saga_id, body: %TestEvent{value: {:called_init, _}}} -> :ok
+      end
+
+      event = Event.new(nil, %TestEvent{value: :some_value})
+      Saga.send_to(saga_id, event)
+
+      assert_receive %Event{
+        source_saga_id: ^saga_id,
+        body: %TestEvent{value: {:called_handle_event, ^event, :resumed_state}}
+      }
     end
   end
 end

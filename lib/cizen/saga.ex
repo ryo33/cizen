@@ -35,21 +35,29 @@ defmodule Cizen.Saga do
   Invoked when the saga is started.
   Saga.Started event will be dispatched after this callback.
 
-  Returned value will be used as the next state to pass `handle_event/3` callback.
+  Returned value will be used as the next state to pass `c:handle_event/3` callback.
   """
   @callback init(SagaID.t(), t()) :: state
 
   @doc """
   Invoked when the saga receives an event.
 
-  Returned value will be used as the next state to pass `handle_event/3` callback.
+  Returned value will be used as the next state to pass `c:handle_event/3` callback.
   """
   @callback handle_event(SagaID.t(), Event.t(), state) :: state
 
   @doc """
   Invoked when the saga is resumed.
 
-  Returned value will be used as the next state to pass `handle_event/3` callback.
+  Returned value will be used as the next state to pass `c:handle_event/3` callback.
+
+  This callback is predefined. The default implementation is here:
+  ```
+  def resume(id, saga, state) do
+    init(id, saga)
+    state
+  end
+  ```
   """
   @callback resume(SagaID.t(), t(), state) :: state
 
@@ -58,11 +66,9 @@ defmodule Cizen.Saga do
       @behaviour Cizen.Saga
 
       @impl true
-      def resume(_id, saga, _state) do
-        alias Cizen.Saga
-
-        raise UndefinedFunctionError,
-              "function #{Saga.module(saga)}.resume/3 is undefined or private"
+      def resume(id, saga, state) do
+        init(id, saga)
+        state
       end
 
       defoverridable resume: 3

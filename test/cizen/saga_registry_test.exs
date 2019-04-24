@@ -8,7 +8,7 @@ defmodule Cizen.SagaRegistryTest do
   alias Cizen.SagaRegistry
 
   defp setup_registry(_context) do
-    {:ok, _} = SagaRegistry.start_link(keys: :unique, name: __MODULE__)
+    SagaRegistry.start_link(keys: :unique, name: __MODULE__)
     :ok
   end
 
