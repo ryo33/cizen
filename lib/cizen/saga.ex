@@ -21,6 +21,9 @@ defmodule Cizen.Saga do
   """
 
   @type t :: struct
+  @type state :: any
+  # `pid | {atom, node} | atom` is the same as the Process.monitor/1's argument.
+  @type lifetime :: pid | {atom, node} | atom | nil
 
   use GenServer
 
@@ -28,8 +31,6 @@ defmodule Cizen.Saga do
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.SagaID
-
-  @type state :: any
 
   @doc """
   Invoked when the saga is started.
@@ -82,6 +83,11 @@ defmodule Cizen.Saga do
 
   defmodule Started do
     @moduledoc "A event fired on start"
+    defstruct([:id])
+  end
+
+  defmodule Resumed do
+    @moduledoc "A event fired on resume"
     defstruct([:id])
   end
 
@@ -149,9 +155,9 @@ defmodule Cizen.Saga do
   @doc """
   Resumes a saga with the given state.
   """
-  @spec resume(SagaID.t(), t(), state) :: GenServer.on_start()
-  def resume(id, saga, state) do
-    GenServer.start(__MODULE__, {:resume, id, saga, state})
+  @spec resume(SagaID.t(), t(), state, pid | nil) :: GenServer.on_start()
+  def resume(id, saga, state, lifetime \\ nil) do
+    GenServer.start(__MODULE__, {:resume, id, saga, state, lifetime})
   end
 
   def start_saga(id, saga, lifetime) do
@@ -177,31 +183,33 @@ defmodule Cizen.Saga do
   end
 
   @impl true
-  def init({type, id, saga, lifetime_or_state}) do
+  def init({:start, id, saga, lifetime}) do
+    init_with(id, saga, lifetime, %Started{id: id}, :init, [id, saga])
+  end
+
+  @impl true
+  def init({:resume, id, saga, state, lifetime}) do
+    init_with(id, saga, lifetime, %Resumed{id: id}, :resume, [id, saga, state])
+  end
+
+  defp init_with(id, saga, lifetime, event, function, arguments) do
     Registry.register(CizenSagaRegistry, id, saga)
     Dispatcher.listen_event_body(%Finish{id: id})
     module = module(saga)
 
-    state = init_on(type, id, module, saga, lifetime_or_state)
-
-    {:ok, {id, module, state}}
-  end
-
-  defp init_on(:start, id, module, saga, lifetime) do
     unless is_nil(lifetime), do: Process.monitor(lifetime)
 
-    case module.init(id, saga) do
-      {@lazy_launch, state} ->
-        state
+    state =
+      case apply(module, function, arguments) do
+        {@lazy_launch, state} ->
+          state
 
-      state ->
-        Dispatcher.dispatch(Event.new(id, %Started{id: id}))
-        state
-    end
-  end
+        state ->
+          Dispatcher.dispatch(Event.new(id, event))
+          state
+      end
 
-  defp init_on(:resume, id, module, saga, state) do
-    module.resume(id, saga, state)
+    {:ok, {id, module, state}}
   end
 
   @impl true

@@ -41,6 +41,22 @@ defmodule Cizen.Automaton do
   """
   @callback yield(SagaID.t(), state) :: finish | state
 
+  @doc """
+  Invoked when the automaton is resumed.
+
+  Returned value will be used as the next state to pass `c:yield/2` callback.
+  Returning `Automaton.finish()` will cause the automaton to finish.
+
+  This callback is predefined. The default implementation is here:
+  ```
+  def respawn(id, saga, state) do
+    spawn(id, saga)
+    state
+  end
+  ```
+  """
+  @callback respawn(SagaID.t(), Saga.t(), state) :: finish | state
+
   defmacro __using__(_opts) do
     quote do
       alias Cizen.Automaton
@@ -56,15 +72,26 @@ defmodule Cizen.Automaton do
       end
 
       @impl Automaton
+      def respawn(id, saga, state) do
+        spawn(id, saga)
+        state
+      end
+
+      @impl Automaton
       def yield(_id, _state) do
         finish()
       end
 
-      defoverridable spawn: 2, yield: 2
+      defoverridable spawn: 2, respawn: 3, yield: 2
 
       @impl Saga
       def init(id, struct) do
         Automaton.init(id, struct)
+      end
+
+      @impl Saga
+      def resume(id, struct, state) do
+        Automaton.resume(id, struct, state)
       end
 
       @impl Saga
@@ -106,13 +133,21 @@ defmodule Cizen.Automaton do
   end
 
   def init(id, saga) do
+    init_with(id, saga, %Saga.Started{id: id}, :spawn, [id, saga])
+  end
+
+  def resume(id, saga, state) do
+    init_with(id, saga, %Saga.Resumed{id: id}, :respawn, [id, saga, state])
+  end
+
+  defp init_with(id, saga, event, function, arguments) do
     module = Saga.module(saga)
 
     pid =
       spawn_link(fn ->
         try do
-          state = module.spawn(id, saga)
-          Dispatcher.dispatch(Event.new(id, %Saga.Started{id: id}))
+          state = apply(module, function, arguments)
+          Dispatcher.dispatch(Event.new(id, event))
           do_yield(module, id, state)
         rescue
           reason -> Saga.exit(id, reason, __STACKTRACE__)

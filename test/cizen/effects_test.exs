@@ -48,7 +48,7 @@ defmodule Cizen.EffectsTest do
   test "Elixir.Map's interfaces are available when use Cizen.Effects" do
     use Cizen.Effects
     %Map{effect: %Receive{}, transform: fn x -> x end}
-    assert 1 == Map.size(%{a: :a})
+    assert 1 == Map.get(%{a: 1}, :a)
     assert %{a: :a, b: :b} == Map.put(%{a: :a}, :b, :b)
   end
 end

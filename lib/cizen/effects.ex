@@ -67,7 +67,7 @@ defmodule Cizen.Effects do
     @impl true
     def handle_event(_, _, _, _), do: :ok
 
-    @deprecated_functions [{:replace, 3}]
+    @deprecated_functions [{:replace, 3}, {:size, 1}]
     for {name, arity} <- Elixir.Map.__info__(:functions) do
       unless {name, arity} in @deprecated_functions do
         args =

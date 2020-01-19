@@ -392,6 +392,20 @@ defmodule Cizen.SagaTest do
       assert_receive :next_state
     end
 
+    test "dispatches Resumed event" do
+      Dispatcher.listen_event_type(Saga.Resumed)
+      saga_id = SagaID.new()
+
+      {:ok, _pid} =
+        Saga.resume(
+          saga_id,
+          %TestSaga{},
+          nil
+        )
+
+      assert_receive %Event{body: %Saga.Resumed{id: ^saga_id}}
+    end
+
     defmodule TestSagaNoResume do
       use Saga
       defstruct [:value]
@@ -452,6 +466,20 @@ defmodule Cizen.SagaTest do
         source_saga_id: ^saga_id,
         body: %TestEvent{value: {:called_handle_event, ^event, :resumed_state}}
       }
+    end
+
+    test "finishes when the given lifetime process exits" do
+      saga_id = SagaID.new()
+
+      {:ok, pid} = Agent.start(fn -> :ok end)
+
+      Saga.resume(saga_id, %TestSaga{extra: :some_value}, nil, pid)
+
+      assert {:ok, _} = Saga.get_pid(saga_id)
+
+      Agent.stop(pid)
+
+      assert_condition(100, :error == Saga.get_pid(saga_id))
     end
   end
 end

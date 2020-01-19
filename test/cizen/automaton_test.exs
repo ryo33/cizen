@@ -80,35 +80,6 @@ defmodule Cizen.AutomatonTest do
       refute_receive %Event{body: %Saga.Finish{id: ^saga_id}}
     end
 
-    defmodule TestAutomatonFinishOnYield do
-      use Automaton
-
-      defstruct []
-
-      @impl true
-      def yield(_id, %__MODULE__{}) do
-        :next
-      end
-
-      def yield(_id, :next) do
-        Automaton.finish()
-      end
-    end
-
-    test "finishes when yields Automaton.finish()" do
-      saga_id = SagaID.new()
-      Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
-
-      Dispatcher.dispatch(
-        Event.new(nil, %StartSaga{
-          id: saga_id,
-          saga: %TestAutomatonFinishOnYield{}
-        })
-      )
-
-      assert_receive %Event{body: %Saga.Finish{id: ^saga_id}}
-    end
-
     defmodule TestAutomatonFinishOnSpawn do
       use Automaton
 
@@ -149,7 +120,19 @@ defmodule Cizen.AutomatonTest do
           Filter.new(fn %Event{body: %TestEvent{}} -> true end)
         )
 
-        send(pid, :launched)
+        send(pid, :spawned)
+        send(pid, perform(id, %TestEffect{value: :a}))
+        {:b, pid}
+      end
+
+      @impl true
+      def respawn(id, %__MODULE__{pid: pid}, _) do
+        Messenger.subscribe_message(
+          id,
+          Filter.new(fn %Event{body: %TestEvent{}} -> true end)
+        )
+
+        send(pid, :respawned)
         send(pid, perform(id, %TestEffect{value: :a}))
         {:b, pid}
       end
@@ -177,7 +160,7 @@ defmodule Cizen.AutomatonTest do
         })
       )
 
-      assert_receive :launched
+      assert_receive :spawned
 
       Dispatcher.dispatch(
         Event.new(nil, %TestEvent{
@@ -235,7 +218,7 @@ defmodule Cizen.AutomatonTest do
         })
       )
 
-      assert_receive :launched
+      assert_receive :spawned
 
       refute_receive %Event{
         body: %Saga.Started{id: ^saga_id}
@@ -253,6 +236,34 @@ defmodule Cizen.AutomatonTest do
       }
     end
 
+    test "dispatches Saga.Resumed event after respawn/2" do
+      saga_id = SagaID.new()
+      saga = %TestAutomaton{pid: self()}
+      Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
+      Dispatcher.listen_event_body(%Saga.Resumed{id: saga_id})
+
+      Saga.resume(saga_id, saga, nil)
+
+      assert_receive :respawned
+
+      refute_receive %Event{
+        body: %Saga.Resumed{id: ^saga_id}
+      }
+
+      Dispatcher.dispatch(
+        Event.new(nil, %TestEvent{
+          value: :a,
+          count: 1
+        })
+      )
+
+      assert_receive %Event{
+        body: %Saga.Resumed{id: ^saga_id}
+      }
+    end
+  end
+
+  describe "spawn/2 callback" do
     defmodule TestAutomatonNoSpawn do
       use Automaton
 
@@ -268,8 +279,6 @@ defmodule Cizen.AutomatonTest do
 
     test "works with no spawn/2" do
       saga_id = SagaID.new()
-      Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
-      Dispatcher.listen_event_body(%Saga.Started{id: saga_id})
 
       Dispatcher.dispatch(
         Event.new(nil, %StartSaga{
@@ -278,17 +287,11 @@ defmodule Cizen.AutomatonTest do
         })
       )
 
-      assert_receive %Event{
-        body: %Saga.Finish{id: ^saga_id}
-      }
-
       assert_receive :called
-
-      assert_receive %Event{
-        body: %Saga.Started{id: ^saga_id}
-      }
     end
+  end
 
+  describe "yield/2 callback" do
     defmodule TestAutomatonNoYield do
       use Automaton
 
@@ -304,8 +307,8 @@ defmodule Cizen.AutomatonTest do
 
     test "works with no yield/2" do
       saga_id = SagaID.new()
-      Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
       Dispatcher.listen_event_body(%Saga.Started{id: saga_id})
+      Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
 
       Dispatcher.dispatch(
         Event.new(nil, %StartSaga{
@@ -314,15 +317,44 @@ defmodule Cizen.AutomatonTest do
         })
       )
 
+      assert_receive %Event{
+        body: %Saga.Started{id: ^saga_id}
+      }
+
       assert_receive :called
 
       assert_receive %Event{
         body: %Saga.Finish{id: ^saga_id}
       }
+    end
 
-      assert_receive %Event{
-        body: %Saga.Started{id: ^saga_id}
-      }
+    defmodule TestAutomatonFinishOnYield do
+      use Automaton
+
+      defstruct []
+
+      @impl true
+      def yield(_id, %__MODULE__{}) do
+        :next
+      end
+
+      def yield(_id, :next) do
+        Automaton.finish()
+      end
+    end
+
+    test "finishes when yields Automaton.finish()" do
+      saga_id = SagaID.new()
+      Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
+
+      Dispatcher.dispatch(
+        Event.new(nil, %StartSaga{
+          id: saga_id,
+          saga: %TestAutomatonFinishOnYield{}
+        })
+      )
+
+      assert_receive %Event{body: %Saga.Finish{id: ^saga_id}}
     end
 
     defmodule TestAutomatonCrash do
@@ -601,6 +633,163 @@ defmodule Cizen.AutomatonTest do
           state: :b
         }
       }
+    end
+  end
+
+  describe "respawn/3 callback" do
+    defmodule TestAutomatonResume do
+      use Automaton
+      defstruct [:value]
+
+      @impl true
+      def spawn(id, saga) do
+        Dispatcher.dispatch(Event.new(id, %TestEvent{value: {:called_spawn, saga}}))
+        :a
+      end
+
+      @impl true
+      def respawn(id, saga, state) do
+        Dispatcher.dispatch(Event.new(id, %TestEvent{value: {:called_respawn, saga, state}}))
+        state + 2
+      end
+
+      @impl true
+      def yield(id, state) do
+        perform id, %Receive{}
+        Dispatcher.dispatch(Event.new(id, %TestEvent{value: {:called_yield, state}}))
+        state
+      end
+    end
+
+    test "does not invoke spawn callback" do
+      Dispatcher.listen_event_type(TestEvent)
+      saga_id = SagaID.new()
+
+      {:ok, _pid} =
+        Saga.resume(
+          saga_id,
+          %TestAutomatonResume{},
+          1
+        )
+
+      refute_receive %Event{body: %TestEvent{value: {:called_spawn, _}}}
+    end
+
+    test "invokes respawn callback" do
+      Dispatcher.listen_event_type(TestEvent)
+      saga_id = SagaID.new()
+      saga = %TestAutomatonResume{value: :some}
+
+      {:ok, _pid} =
+        Saga.resume(
+          saga_id,
+          saga,
+          1
+        )
+
+      assert_receive %Event{body: %TestEvent{value: {:called_respawn, ^saga, 1}}}
+    end
+
+    test "uses a respawn callback's result as the next state" do
+      Dispatcher.listen_event_type(TestEvent)
+      saga_id = SagaID.new()
+      saga = %TestAutomatonResume{value: :some}
+
+      {:ok, _pid} =
+        Saga.resume(
+          saga_id,
+          saga,
+          3
+        )
+
+      Saga.send_to(saga_id, Event.new(nil, %TestEvent{}))
+
+      assert_receive %Event{body: %TestEvent{value: {:called_yield, 5}}}
+    end
+
+    test "dispatches Yield event on respawn" do
+      saga_id = SagaID.new()
+      saga = %TestAutomatonResume{value: :some}
+
+      Dispatcher.listen(
+        Filter.new(fn %Event{source_saga_id: id, body: %Automaton.Yield{}} ->
+          id == saga_id
+        end)
+      )
+
+      {:ok, _pid} =
+        Saga.resume(
+          saga_id,
+          saga,
+          3
+        )
+
+      assert_receive %Event{
+        body: %Automaton.Yield{
+          state: 5
+        }
+      }
+    end
+
+    defmodule TestAutomatonFinishOnRespawn do
+      use Automaton
+
+      defstruct []
+
+      @impl true
+      def respawn(_id, %__MODULE__{}, _state) do
+        Automaton.finish()
+      end
+
+      @impl true
+      def yield(_id, _state), do: :ok
+    end
+
+    test "finishes when respawn/3 returns Automaton.finish()" do
+      saga_id = SagaID.new()
+      saga = %TestAutomatonFinishOnRespawn{}
+      Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
+
+      {:ok, _pid} =
+        Saga.resume(
+          saga_id,
+          saga,
+          3
+        )
+
+      assert_receive %Event{body: %Saga.Finish{id: ^saga_id}}
+    end
+
+    defmodule TestAutomatonNoRespawn do
+      use Automaton
+
+      defstruct []
+
+      @impl true
+
+      def spawn(_id, %__MODULE__{}) do
+        :spawn_state
+      end
+
+      def yield(_id, {:resume_state, pid}) do
+        send(pid, :called)
+        Automaton.finish()
+      end
+    end
+
+    test "works with no respawn/2" do
+      pid = self()
+      saga_id = SagaID.new()
+      saga = %TestAutomatonNoRespawn{}
+
+      {:ok, _pid} =
+        Saga.resume(
+          saga_id,
+          saga,
+          {:resume_state, pid}
+        )
+
+      assert_receive :called
     end
   end
 end
