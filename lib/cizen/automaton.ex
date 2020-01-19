@@ -156,7 +156,7 @@ defmodule Cizen.Automaton do
 
     handler_state = EffectHandler.init(id)
 
-    {Saga.lazy_launch(), {pid, handler_state}}
+    {Saga.lazy_init(), {pid, handler_state}}
   end
 
   def handle_event(_id, %Event{body: %PerformEffect{effect: effect}}, {pid, handler}) do

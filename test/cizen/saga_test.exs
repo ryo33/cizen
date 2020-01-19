@@ -156,7 +156,7 @@ defmodule Cizen.SagaTest do
       @impl true
       def init(_, _) do
         Dispatcher.listen_event_type(TestEvent)
-        {Saga.lazy_launch(), :ok}
+        {Saga.lazy_init(), :ok}
       end
 
       @impl true

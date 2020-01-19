@@ -140,9 +140,9 @@ defmodule Cizen.Saga do
   @spec get_saga(SagaID.t()) :: {:ok, t()} | :error
   defdelegate get_saga(saga_id), to: CizenSagaRegistry
 
-  @lazy_launch {__MODULE__, :lazy_launch}
+  @lazy_init {__MODULE__, :lazy_init}
 
-  def lazy_launch, do: @lazy_launch
+  def lazy_init, do: @lazy_init
 
   @doc """
   Returns the module for a saga.
@@ -201,7 +201,7 @@ defmodule Cizen.Saga do
 
     state =
       case apply(module, function, arguments) do
-        {@lazy_launch, state} ->
+        {@lazy_init, state} ->
           state
 
         state ->
