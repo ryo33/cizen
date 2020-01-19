@@ -4,7 +4,7 @@ defmodule Cizen.MixProject do
   def project do
     [
       app: :cizen,
-      version: "0.14.1",
+      version: "0.15.0",
       package: package(),
       elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -71,57 +71,50 @@ defmodule Cizen.MixProject do
     [
       {"README.md", [filename: "readme", title: "Read Me"]},
       "guides/getting_started.md",
-
       "guides/basic_concepts/event.md",
       "guides/basic_concepts/filter.md",
       "guides/basic_concepts/saga.md",
       "guides/basic_concepts/effect.md",
       "guides/basic_concepts/test.md",
-
-      "guides/advanced_concepts/channel.md",
+      "guides/advanced_concepts/channel.md"
     ]
   end
 
   defp groups_for_extras do
     [
-      "Guides": ~r/guides\/[^\/]+\.md/,
+      Guides: ~r/guides\/[^\/]+\.md/,
       "Basic Concepts": ~r/guides\/basic_concepts\/.?/,
-      "Advanced Concepts": ~r/guides\/advanced_concepts\/.?/,
+      "Advanced Concepts": ~r/guides\/advanced_concepts\/.?/
     ]
   end
 
   defp groups_for_modules do
     [
-      "Automaton": [
-        Cizen.Automaton,
+      Automaton: [
+        Cizen.Automaton
       ],
-
       "Automaton Internal": [
         Cizen.Automaton.PerformEffect,
         Cizen.Effect,
-        Cizen.EffectHandler,
+        Cizen.EffectHandler
       ],
-
-      "Channel": [
+      Channel: [
         Cizen.Channel,
         Cizen.Channel.EmitMessage,
         Cizen.Channel.FeedMessage,
         Cizen.RegisterChannel,
-        Cizen.RegisterChannel.Registered,
+        Cizen.RegisterChannel.Registered
       ],
-
-      "Dispatchers": [
+      Dispatchers: [
         Cizen.Dispatcher,
-        Cizen.FilterDispatcher,
+        Cizen.FilterDispatcher
       ],
-
       "Dispatcher Internal": [
         Cizen.DefaultEventRouter,
         Cizen.EventRouter,
-        Cizen.FilterDispatcher.PushEvent,
+        Cizen.FilterDispatcher.PushEvent
       ],
-
-      "Effects": [
+      Effects: [
         Cizen.Effects,
         Cizen.Effects.All,
         Cizen.Effects.Chain,
@@ -134,45 +127,37 @@ defmodule Cizen.MixProject do
         Cizen.Effects.Receive,
         Cizen.Effects.Request,
         Cizen.Effects.Start,
-        Cizen.Effects.Subscribe,
+        Cizen.Effects.Subscribe
       ],
-
       "Effects Internal": [
-        Cizen.Effects.HybridMap,
+        Cizen.Effects.HybridMap
       ],
-
-      "Effectful": [
-        Cizen.Effectful,
+      Effectful: [
+        Cizen.Effectful
       ],
-
-      "Event": [
+      Event: [
         Cizen.Event,
         Cizen.Filter,
-        Cizen.EventID,
+        Cizen.EventID
       ],
-
-      "Messaging": [
+      Messaging: [
         Cizen.SubscribeMessage,
-        Cizen.SubscribeMessage.Subscribed,
+        Cizen.SubscribeMessage.Subscribed
       ],
-
       "Messaging Internal": [
         Cizen.Messenger,
         Cizen.Messenger.Transmitter,
-        Cizen.SendMessage,
+        Cizen.SendMessage
       ],
-
-      "Requesting": [
+      Requesting: [
         Cizen.Request,
-        Cizen.Request.Response,
+        Cizen.Request.Response
       ],
-
       "Requesting Internal": [
         Cizen.RequestResponseMediator,
-        Cizen.RequestResponseMediator.Worker,
+        Cizen.RequestResponseMediator.Worker
       ],
-
-      "Saga": [
+      Saga: [
         Cizen.CizenSagaRegistry,
         Cizen.CrashLogger,
         Cizen.EndSaga,
@@ -187,18 +172,16 @@ defmodule Cizen.MixProject do
         Cizen.SagaID,
         Cizen.SagaMonitor,
         Cizen.SagaRegistry,
-        Cizen.StartSaga,
+        Cizen.StartSaga
       ],
-
       "Saga Internal": [
         Cizen.SagaEnder,
         Cizen.SagaLauncher,
         Cizen.SagaLauncher.LaunchSaga,
         Cizen.SagaLauncher.UnlaunchSaga,
-        Cizen.SagaStarter,
+        Cizen.SagaStarter
       ],
-
-      "Test": [
+      Test: [
         Cizen.Test
       ]
     ]
