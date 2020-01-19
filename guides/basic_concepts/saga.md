@@ -10,7 +10,7 @@ We call the defined struct "saga struct" and use it for starting sagas and filte
 ### Example
 
     defmodule SomeSaga do
-      @behaviour Cizen.Saga
+      use Cizen.Saga
       defstruct [:some_field]
 
       @impl true
