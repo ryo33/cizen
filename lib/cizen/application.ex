@@ -36,6 +36,11 @@ defmodule Cizen.Application do
     })
 
     Supervisor.start_child(Cizen.Supervisor, %{
+      id: Cizen.SagaResumer,
+      start: {Cizen.SagaResumer, :start_link, []}
+    })
+
+    Supervisor.start_child(Cizen.Supervisor, %{
       id: Cizen.FilterDispatcher,
       start: {Cizen.FilterDispatcher, :start_link, []}
     })
