@@ -1,6 +1,6 @@
 defmodule Cizen.Effects.Start do
   @moduledoc """
-  An effect to state an saga.
+  An effect to start a saga.
 
   Returns the started saga ID.
 
