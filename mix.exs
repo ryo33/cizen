@@ -126,6 +126,7 @@ defmodule Cizen.MixProject do
         Cizen.Effects.Race,
         Cizen.Effects.Receive,
         Cizen.Effects.Request,
+        Cizen.Effects.Resume,
         Cizen.Effects.Start,
         Cizen.Effects.Subscribe
       ],
@@ -163,6 +164,7 @@ defmodule Cizen.MixProject do
         Cizen.EndSaga,
         Cizen.MonitorSaga,
         Cizen.MonitorSaga.Down,
+        Cizen.ResumeSaga,
         Cizen.Saga,
         Cizen.Saga.Crashed,
         Cizen.Saga.Finish,
@@ -179,6 +181,7 @@ defmodule Cizen.MixProject do
         Cizen.SagaLauncher,
         Cizen.SagaLauncher.LaunchSaga,
         Cizen.SagaLauncher.UnlaunchSaga,
+        Cizen.SagaResumer,
         Cizen.SagaStarter
       ],
       Test: [
