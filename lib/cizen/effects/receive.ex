@@ -19,7 +19,7 @@ defmodule Cizen.Effects.Receive do
   alias Cizen.Effect
   alias Cizen.Event
   alias Cizen.Filter
-  alias Cizen.Request.Response
+  alias Cizen.Request.{Response, Timeout}
 
   defstruct event_filter: %Filter{}
 
@@ -31,7 +31,9 @@ defmodule Cizen.Effects.Receive do
   end
 
   @impl true
-  def handle_event(_handler, %Event{body: %Response{}}, _, state), do: state
+  def handle_event(_handler, %Event{body: %event_type{}}, _, state)
+      when event_type in [Response, Timeout],
+      do: state
 
   def handle_event(_handler, event, effect, state) do
     if Filter.match?(effect.event_filter, event) do

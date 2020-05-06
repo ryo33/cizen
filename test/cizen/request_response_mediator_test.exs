@@ -114,7 +114,7 @@ defmodule Cizen.RequestResponseMediatorTest do
       assert_receive %Event{
         body: %Request.Timeout{
           request_event_id: ^request_id,
-          requestor_saga_id: ^requestor_id,
+          requestor_saga_id: ^requestor_id
         }
       }
     end
@@ -145,7 +145,7 @@ defmodule Cizen.RequestResponseMediatorTest do
       refute_receive %Event{
         body: %Request.Timeout{
           request_event_id: ^request_id,
-          requestor_saga_id: ^requestor_id,
+          requestor_saga_id: ^requestor_id
         }
       }
 
@@ -154,7 +154,7 @@ defmodule Cizen.RequestResponseMediatorTest do
       assert_receive %Event{
         body: %Request.Timeout{
           request_event_id: ^request_id,
-          requestor_saga_id: ^requestor_id,
+          requestor_saga_id: ^requestor_id
         }
       }
     end

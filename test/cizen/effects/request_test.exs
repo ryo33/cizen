@@ -6,7 +6,7 @@ defmodule Cizen.Effects.RequestTest do
   alias Cizen.Dispatcher
   alias Cizen.Effect
   alias Cizen.Effects
-  alias Cizen.Effects.Request.ReceiveResponse
+  alias Cizen.Effects.Request.ReceiveResponseOrTimeout
   alias Cizen.Event
   alias Cizen.EventID
   alias Cizen.Filter
@@ -33,6 +33,21 @@ defmodule Cizen.Effects.RequestTest do
   end
 
   describe "Request" do
+    test "dispatches Request event" do
+      Dispatcher.listen_event_type(Request)
+
+      assert_handle(fn id ->
+        perform id, %Effects.Request{
+          body: %TestRequest{value: 42},
+          timeout: 10
+        }
+      end)
+
+      assert_receive %Event{
+        body: %Request{requestor_saga_id: _, body: %TestRequest{value: 42}, timeout: 10}
+      }
+    end
+
     test "does not resolves on a response for another request" do
       saga_id = TestHelper.launch_test_saga()
 
@@ -53,17 +68,36 @@ defmodule Cizen.Effects.RequestTest do
       refute match?({:resolve, _}, Effect.handle_event(saga_id, event, effect, state))
     end
 
+    test "does not resolves on a timeout for another request" do
+      saga_id = TestHelper.launch_test_saga()
+
+      {effect, state} =
+        Effect.init(saga_id, %Effects.Request{
+          body: %TestRequest{value: 1},
+          timeout: 10
+        })
+
+      event =
+        Event.new(nil, %Request.Timeout{
+          requestor_saga_id: saga_id,
+          request_event_id: EventID.new()
+        })
+
+      refute match?({:resolve, _}, Effect.handle_event(saga_id, event, effect, state))
+    end
+
     defmodule TestAutomaton do
       use Automaton
 
-      defstruct [:pid]
+      defstruct [:pid, timeout: 5000]
 
       @impl true
-      def yield(id, %__MODULE__{pid: pid}) do
+      def yield(id, %__MODULE__{pid: pid, timeout: timeout}) do
         send(
           pid,
           perform(id, %Effects.Request{
-            body: %TestRequest{value: 1}
+            body: %TestRequest{value: 1},
+            timeout: timeout
           })
         )
 
@@ -71,7 +105,7 @@ defmodule Cizen.Effects.RequestTest do
       end
     end
 
-    test "works with Automaton" do
+    test "works Response with Automaton" do
       spawn_link(fn ->
         Dispatcher.listen_event_type(TestRequest)
 
@@ -90,20 +124,41 @@ defmodule Cizen.Effects.RequestTest do
 
       assert_receive %Event{body: %TestRequest.TestResponse{value: 2}}
     end
+
+    test "works Timeout with Automaton" do
+      spawn_link(fn ->
+        Dispatcher.listen_event_type(TestRequest)
+
+        receive do
+          %Event{body: %TestRequest{value: value}} ->
+            :timer.sleep(110)
+            Dispatcher.dispatch(Event.new(nil, %TestRequest.TestResponse{value: value + 1}))
+        end
+      end)
+
+      Dispatcher.dispatch(
+        Event.new(nil, %StartSaga{
+          id: SagaID.new(),
+          saga: %TestAutomaton{pid: self(), timeout: 100}
+        })
+      )
+
+      assert_receive %Event{body: %Request.Timeout{}}, 1_000
+    end
   end
 
   defp setup_receive_response(_context) do
     id = SagaID.new()
     request_id = EventID.new()
 
-    effect = %ReceiveResponse{
+    effect = %ReceiveResponseOrTimeout{
       request_event_id: request_id
     }
 
     %{handler: id, request: request_id, effect: effect}
   end
 
-  describe "ReceiveResponse" do
+  describe "ReceiveResponseOrTimeout" do
     setup [:setup_receive_response]
 
     defmodule(TestEvent, do: defstruct([]))
@@ -120,6 +175,18 @@ defmodule Cizen.Effects.RequestTest do
           requestor_saga_id: SagaID.new(),
           request_event_id: request,
           event: %TestEvent{}
+        })
+
+      assert {:resolve, ^event} = Effect.handle_event(id, event, effect, state)
+    end
+
+    test "resolves on Timeout event", %{handler: id, request: request, effect: effect} do
+      {_, state} = Effect.init(id, effect)
+
+      event =
+        Event.new(nil, %Request.Timeout{
+          requestor_saga_id: SagaID.new(),
+          request_event_id: request
         })
 
       assert {:resolve, ^event} = Effect.handle_event(id, event, effect, state)

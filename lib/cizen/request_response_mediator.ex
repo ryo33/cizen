@@ -23,6 +23,7 @@ defmodule Cizen.RequestResponseMediator do
     defstruct [:request]
 
     defmodule Timeout do
+      @moduledoc false
       defstruct [:worker_id]
     end
 

@@ -2,7 +2,7 @@ defmodule Cizen.Effects.Race do
   @moduledoc """
   An effect to run a race for the given effects.
 
-  ## Named Race
+  ## Anonymous race
       perform id, %Race{
         effects: [
           effect1,
@@ -12,7 +12,7 @@ defmodule Cizen.Effects.Race do
       # If effect2 resolves faster than effect1 with :somevalue,
       # the race returns the :somevalue
 
-  ## Anonymous race
+  ## Named Race
       perform id, %Race{
         effects: [
           effect1: effect1,
