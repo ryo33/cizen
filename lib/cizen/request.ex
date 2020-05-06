@@ -11,15 +11,23 @@ defmodule Cizen.Request do
   """
   @callback response_event_filter(Event.t()) :: Filter.t()
 
-  @keys [:requestor_saga_id, :body]
-  @enforce_keys @keys
-  defstruct @keys
+  @enforce_keys [:requestor_saga_id, :body]
+  defstruct @enforce_keys ++ [timeout: 5000]
 
   defmodule Response do
     @moduledoc """
     An event to respond to a request.
     """
     @keys [:requestor_saga_id, :request_event_id, :event]
+    @enforce_keys @keys
+    defstruct @keys
+  end
+
+  defmodule Timeout do
+    @moduledoc """
+    An event to notify timeout.
+    """
+    @keys [:requestor_saga_id, :request_event_id]
     @enforce_keys @keys
     defstruct @keys
   end

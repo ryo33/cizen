@@ -87,6 +87,77 @@ defmodule Cizen.RequestResponseMediatorTest do
         }
       }
     end
+
+    @tag timeout: 6000
+    test "dispatches a Timeout event when timeout" do
+      pid = self()
+
+      requestor_id =
+        TestHelper.launch_test_saga(
+          handle_event: fn _id, event, _state ->
+            send(pid, event)
+          end
+        )
+
+      request =
+        Event.new(nil, %Request{
+          requestor_saga_id: requestor_id,
+          body: %TestRequest{}
+        })
+
+      Dispatcher.dispatch(request)
+
+      :timer.sleep(5000)
+
+      request_id = request.id
+
+      assert_receive %Event{
+        body: %Request.Timeout{
+          request_event_id: ^request_id,
+          requestor_saga_id: ^requestor_id,
+        }
+      }
+    end
+
+    @tag timeout: 2000
+    test "dispatches a Timeout event when specific timeout" do
+      pid = self()
+
+      requestor_id =
+        TestHelper.launch_test_saga(
+          handle_event: fn _id, event, _state ->
+            send(pid, event)
+          end
+        )
+
+      request =
+        Event.new(nil, %Request{
+          requestor_saga_id: requestor_id,
+          body: %TestRequest{},
+          timeout: 1000
+        })
+
+      Dispatcher.dispatch(request)
+      request_id = request.id
+
+      :timer.sleep(800)
+
+      refute_receive %Event{
+        body: %Request.Timeout{
+          request_event_id: ^request_id,
+          requestor_saga_id: ^requestor_id,
+        }
+      }
+
+      :timer.sleep(200)
+
+      assert_receive %Event{
+        body: %Request.Timeout{
+          request_event_id: ^request_id,
+          requestor_saga_id: ^requestor_id,
+        }
+      }
+    end
   end
 
   describe "RequestResponseMediator.Worker" do
@@ -142,6 +213,29 @@ defmodule Cizen.RequestResponseMediatorTest do
       worker_saga_id = event.body.id
 
       Test.ensure_finished(requestor_id)
+
+      assert_receive %Event{body: %Saga.Finish{id: ^worker_saga_id}}
+    end
+
+    @tag timeout: 6000
+    test "finishes after timeout" do
+      Dispatcher.listen_event_type(Request.Timeout)
+      Dispatcher.listen_event_type(Saga.Finish)
+
+      requestor_id = TestHelper.launch_test_saga()
+
+      request =
+        Event.new(nil, %Request{
+          requestor_saga_id: requestor_id,
+          body: %TestRequest{}
+        })
+
+      Dispatcher.dispatch(request)
+
+      :timer.sleep(5000)
+
+      event = assert_receive %Event{body: %Request.Timeout{}}
+      worker_saga_id = event.source_saga_id
 
       assert_receive %Event{body: %Saga.Finish{id: ^worker_saga_id}}
     end
