@@ -4,6 +4,8 @@ defmodule Cizen.Filter.Code do
 
   @additional_operators [:is_nil, :to_string, :to_charlist]
 
+  @type t :: term
+
   def with_prefix({:access, keys}, prefix) do
     {:access, prefix ++ keys}
   end
