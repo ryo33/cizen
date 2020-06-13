@@ -1,7 +1,7 @@
 defmodule Cizen.Dispatcher.Intake do
   use GenServer
 
-  alias Cizen.Dispatcher.Sender
+  alias Cizen.Dispatcher.{Sender, RootNode, Node}
 
   def start_link do
     GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
@@ -20,7 +20,19 @@ defmodule Cizen.Dispatcher.Intake do
   end
 
   def handle_continue(:start_sender, state) do
+    {:noreply, create_new_sender(state)}
+  end
+
+  def handle_cast({:push, event}, state) do
+    Sender.wait_node(state.sender, {:global, RootNode})
+    Sender.put_event(state.sender, event)
+    Node.push({:global, RootNode}, state.sender, event)
+    state = create_new_sender(state)
+    {:noreply, state}
+  end
+
+  defp create_new_sender(state) do
     {:ok, pid} = Sender.start_link(state.sender)
-    put_in(state.sender, pid)
+    %{state | sender: pid}
   end
 end

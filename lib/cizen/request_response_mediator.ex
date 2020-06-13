@@ -5,7 +5,6 @@ defmodule Cizen.RequestResponseMediator do
 
   alias Cizen.Dispatcher
   alias Cizen.Event
-  alias Cizen.FilterDispatcher
   alias Cizen.Saga
   alias Cizen.SagaID
   alias Cizen.SagaLauncher
@@ -37,7 +36,7 @@ defmodule Cizen.RequestResponseMediator do
 
       event
       |> module.response_event_filter()
-      |> FilterDispatcher.listen()
+      |> Dispatcher.listen()
 
       Dispatcher.dispatch(event)
 

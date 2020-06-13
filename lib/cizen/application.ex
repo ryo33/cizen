@@ -15,10 +15,6 @@ defmodule Cizen.Application do
       %{
         id: Cizen.CizenSagaRegistry,
         start: {Cizen.CizenSagaRegistry, :start_link, []}
-      },
-      %{
-        id: Cizen.EventRouter,
-        start: {Application.get_env(:cizen, :event_router), :start_link, []}
       }
     ]
 
@@ -41,8 +37,8 @@ defmodule Cizen.Application do
     })
 
     Supervisor.start_child(Cizen.Supervisor, %{
-      id: Cizen.FilterDispatcher,
-      start: {Cizen.FilterDispatcher, :start_link, []}
+      id: Cizen.Dispatcher.Node,
+      start: {Cizen.Dispatcher.Node, :start_root_node, []}
     })
 
     Supervisor.start_child(Cizen.Supervisor, %{
@@ -57,8 +53,6 @@ defmodule Cizen.Application do
     alias Cizen.Saga
 
     daemon_sagas = [
-      %Cizen.Messenger{},
-      %Cizen.Messenger.Transmitter{},
       %Cizen.SagaStarter{},
       %Cizen.SagaEnder{},
       %Cizen.RequestResponseMediator{},

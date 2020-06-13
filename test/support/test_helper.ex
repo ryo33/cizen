@@ -64,21 +64,11 @@ defmodule Cizen.TestHelper do
     @moduledoc false
     use Cizen.Automaton
 
-    alias Cizen.Effects.{Receive, Request}
-    alias Cizen.Filter
-    alias Cizen.RegisterChannel
-    alias Cizen.Saga
+    alias Cizen.Effects.Receive
 
     defstruct []
 
-    def spawn(id, %__MODULE__{}) do
-      perform(id, %Request{
-        body: %RegisterChannel{
-          channel_saga_id: id,
-          event_filter: Filter.new(fn %Event{body: %Saga.Crashed{}} -> true end)
-        }
-      })
-
+    def spawn(_id, %__MODULE__{}) do
       :loop
     end
 
