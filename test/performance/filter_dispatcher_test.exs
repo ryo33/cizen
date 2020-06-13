@@ -1,7 +1,6 @@
-defmodule Cizen.Performance.FilterDispatcherTest do
+defmodule Cizen.Performance.DispatcherTest do
   use ExUnit.Case
 
-  alias Cizen.FilterDispatcher
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.Filter
@@ -15,20 +14,13 @@ defmodule Cizen.Performance.FilterDispatcherTest do
       tasks =
         1..num
         |> Enum.map(fn i ->
-          filter = Filter.new(fn %Event{body: %TestEvent{num: ^i}} -> true end)
-
-          task =
-            Task.async(fn ->
-              receive do
-                _ -> :ok
-              end
-            end)
-
-          GenServer.cast(FilterDispatcher, {:listen, task.pid, filter, nil, []})
-
-          # GenServer.cast(FilterDispatcher, {:listen, task.pid, filter})
-
-          task
+          Task.async(fn ->
+            Filter.new(fn %Event{body: %TestEvent{num: ^i}} -> true end)
+            |> Dispatcher.listen()
+            receive do
+              _ -> :ok
+            end
+          end)
         end)
 
       1..num

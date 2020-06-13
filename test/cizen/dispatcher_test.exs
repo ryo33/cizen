@@ -16,6 +16,7 @@ defmodule Cizen.DispatcherTest do
     end
   end
 
+  @tag :skip
   test "listen_all" do
     pid = self()
 
@@ -74,6 +75,7 @@ defmodule Cizen.DispatcherTest do
     Task.await(task2)
   end
 
+  @tag :skip
   test "listen_event_body" do
     pid = self()
 

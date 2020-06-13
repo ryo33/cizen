@@ -3,31 +3,25 @@ defmodule Cizen.Dispatcher do
   The dispatcher.
   """
 
+  alias Cizen.Dispatcher.{Intake, RootNode, Node}
   alias Cizen.Event
   alias Cizen.EventBody
   alias Cizen.EventType
+  alias Cizen.Filter
+
+  require Filter
 
   @doc false
   def start_link do
-    Registry.start_link(keys: :duplicate, name: __MODULE__)
+    Intake.start_link()
   end
 
   @doc """
   Dispatch the event.
   """
-  @spec dispatch(Cizen.Event.t()) :: :ok
+  @spec dispatch(Event.t()) :: :ok
   def dispatch(event) do
-    Registry.dispatch(__MODULE__, :all, fn entries ->
-      for {pid, :ok} <- entries, do: send(pid, event)
-    end)
-
-    Registry.dispatch(__MODULE__, Event.type(event), fn entries ->
-      for {pid, :ok} <- entries, do: send(pid, event)
-    end)
-
-    Registry.dispatch(__MODULE__, event.body, fn entries ->
-      for {pid, :ok} <- entries, do: send(pid, event)
-    end)
+    Intake.push(event)
   end
 
   @doc """
@@ -35,8 +29,7 @@ defmodule Cizen.Dispatcher do
   """
   @spec listen_all :: :ok
   def listen_all do
-    {:ok, _} = Registry.register(__MODULE__, :all, :ok)
-    :ok
+    Node.put({:global, RootNode}, true, self())
   end
 
   @doc """
@@ -44,8 +37,9 @@ defmodule Cizen.Dispatcher do
   """
   @spec listen_event_type(EventType.t()) :: :ok
   def listen_event_type(event_type) do
-    {:ok, _} = Registry.register(__MODULE__, event_type, :ok)
-    :ok
+    IO.inspect(event_type, label: "event_type")
+    %{code: code} = Filter.new(fn %Event{body: %event_type{}} -> true end)
+    Node.put({:global, RootNode}, code, self())
   end
 
   @doc """
@@ -53,12 +47,15 @@ defmodule Cizen.Dispatcher do
   """
   @spec listen_event_body(EventBody.t()) :: :ok
   def listen_event_body(event_body) do
-    {:ok, _} = Registry.register(__MODULE__, event_body, :ok)
-    :ok
+    %{code: code} = Filter.new(fn %Event{body: ^event_body} -> true end)
+    Node.put({:global, RootNode}, code, self())
   end
 
   @doc """
   Listen events with the given event filter.
   """
-  defdelegate listen(event_filter), to: Cizen.FilterDispatcher
+  def listen(event_filter) do
+    %{code: code} = event_filter
+    Node.put({:global, RootNode}, code, self())
+  end
 end

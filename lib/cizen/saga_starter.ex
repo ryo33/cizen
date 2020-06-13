@@ -8,7 +8,6 @@ defmodule Cizen.SagaStarter do
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.Filter
-  alias Cizen.Messenger
   alias Cizen.Saga
 
   alias Cizen.SagaLauncher.LaunchSaga
@@ -18,9 +17,10 @@ defmodule Cizen.SagaStarter do
   use Saga
 
   @impl true
-  def init(id, _struct) do
+  def init(_id, _struct) do
     require Filter
-    Messenger.subscribe_message(id, Filter.new(fn %Event{body: %StartSaga{}} -> true end))
+    Filter.new(fn %Event{body: %StartSaga{}} -> true end)
+    |> Dispatcher.listen()
     :ok
   end
 
