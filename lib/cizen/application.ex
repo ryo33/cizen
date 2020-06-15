@@ -27,6 +27,11 @@ defmodule Cizen.Application do
   @impl true
   def start_phase(:start_children, _start_type, _args) do
     Supervisor.start_child(Cizen.Supervisor, %{
+      id: Cizen.Dispatcher.Node,
+      start: {Cizen.Dispatcher.Node, :start_root_node, []}
+    })
+
+    Supervisor.start_child(Cizen.Supervisor, %{
       id: Cizen.SagaLauncher,
       start: {Cizen.SagaLauncher, :start_link, []}
     })
@@ -34,11 +39,6 @@ defmodule Cizen.Application do
     Supervisor.start_child(Cizen.Supervisor, %{
       id: Cizen.SagaResumer,
       start: {Cizen.SagaResumer, :start_link, []}
-    })
-
-    Supervisor.start_child(Cizen.Supervisor, %{
-      id: Cizen.Dispatcher.Node,
-      start: {Cizen.Dispatcher.Node, :start_root_node, []}
     })
 
     Supervisor.start_child(Cizen.Supervisor, %{

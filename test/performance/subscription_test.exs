@@ -32,6 +32,7 @@ defmodule Cizen.Performance.SubscriptionTest do
   end
 
   @tag timeout: 10000
+  @tag :skip
   test "many subscriptions" do
     Dispatcher.listen(
       Filter.new(fn %Event{body: %Saga.Started{}, source_saga: %TestSaga{}} -> true end)

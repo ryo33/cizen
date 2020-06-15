@@ -3,28 +3,43 @@ defmodule Cizen.Dispatcher.Node do
 
   alias Cizen.Dispatcher.Sender
   alias Cizen.Event
+  alias Cizen.Filter
   alias Cizen.Filter.Code
 
   def start_root_node do
-    GenServer.start_link(__MODULE__, :ok, name: {:global, Cizen.Dispatcher.RootNode})
+    GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
   end
 
   def start_link do
     GenServer.start_link(__MODULE__, :ok)
   end
 
+  def expand(node) do
+    :sys.get_state(node)
+    |> update_in([:operations], fn operations ->
+      Enum.reduce(operations, operations, fn {operation, _}, operations ->
+        operations
+        |> update_in([operation], fn nodes ->
+          Enum.reduce(nodes, nodes, fn {value, child}, nodes ->
+            update_in(nodes, [value], fn _ -> expand(child) end)
+          end)
+        end)
+      end)
+    end)
+  end
+
   @spec push(GenServer.server(), pid, Event.t()) :: :ok
-  def push(node, sender, event) do
+  def push(node \\ __MODULE__, sender, event) do
     GenServer.cast(node, {:push, node, sender, event})
   end
 
   @spec put(GenServer.server(), Code.t(), pid) :: :ok
-  def put(node, code, subscriber) do
+  def put(node \\ __MODULE__, code, subscriber) do
     GenServer.cast(node, {:put, code, subscriber})
   end
 
   @spec delete(GenServer.server(), Code.t(), pid) :: :ok
-  def delete(node, code, subscriber) do
+  def delete(node \\ __MODULE__, code, subscriber) do
     GenServer.cast(node, {:delete, code, subscriber})
   end
 
@@ -37,18 +52,30 @@ defmodule Cizen.Dispatcher.Node do
     {:ok, state}
   end
 
+  def handle_info({:DOWN, _, _, subscriber, _}, state) do
+    state =
+      state
+      |> update_in([:subscribers], &MapSet.delete(&1, subscriber))
+
+    {:noreply, state}
+  end
+
   def handle_cast({:push, from_node, sender, event}, state) do
     following_nodes =
-      Enum.map(state.operations, fn {_, values} ->
-        Enum.map(values, fn {_, following_node} -> following_node end)
+      Enum.reduce(state.operations, MapSet.new(), fn {operation, nodes}, following_nodes ->
+        value = Filter.eval(operation, event)
+
+        case Map.get(nodes, value) do
+          nil -> following_nodes
+          following_node -> MapSet.put(following_nodes, following_node)
+        end
       end)
-      |> List.flatten()
 
     Sender.put_subscribers_and_following_nodes(
       sender,
       from_node,
       MapSet.to_list(state.subscribers),
-      following_nodes
+      MapSet.to_list(following_nodes)
     )
 
     Enum.each(following_nodes, fn following_node ->
@@ -107,6 +134,7 @@ defmodule Cizen.Dispatcher.Node do
   end
 
   defp run(state, {:put_subscriber, subscriber}) do
+    Process.monitor(subscriber)
     update_in(state.subscribers, &MapSet.put(&1, subscriber))
   end
 

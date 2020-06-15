@@ -17,8 +17,9 @@ defmodule Cizen.SagaEnder do
   @impl true
   def init(_id, _struct) do
     require Filter
-    Filter.new(fn %Event{body: %EndSaga{}} -> true end)
-    |> Dispatcher.listen()
+    # Filter.new(fn %Event{body: %EndSaga{}} -> true end)
+    # |> Dispatcher.listen()
+    Dispatcher.listen_event_type(EndSaga)
     :ok
   end
 

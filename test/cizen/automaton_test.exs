@@ -7,12 +7,13 @@ defmodule Cizen.AutomatonTest do
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.Filter
-  alias Cizen.Messenger
   alias Cizen.Saga
   alias Cizen.SagaID
 
   alias Cizen.Automaton.PerformEffect
   alias Cizen.StartSaga
+
+  require Filter
 
   defmodule(UnknownEvent, do: defstruct([]))
 
@@ -115,10 +116,7 @@ defmodule Cizen.AutomatonTest do
 
       @impl true
       def spawn(id, %__MODULE__{pid: pid}) do
-        Messenger.subscribe_message(
-          id,
-          Filter.new(fn %Event{body: %TestEvent{}} -> true end)
-        )
+        Dispatcher.listen(id, Filter.new(fn %Event{body: %TestEvent{}} -> true end))
 
         send(pid, :spawned)
         send(pid, perform(id, %TestEffect{value: :a}))
@@ -127,10 +125,7 @@ defmodule Cizen.AutomatonTest do
 
       @impl true
       def respawn(id, %__MODULE__{pid: pid}, _) do
-        Messenger.subscribe_message(
-          id,
-          Filter.new(fn %Event{body: %TestEvent{}} -> true end)
-        )
+        Dispatcher.listen(id, Filter.new(fn %Event{body: %TestEvent{}} -> true end))
 
         send(pid, :respawned)
         send(pid, perform(id, %TestEffect{value: :a}))

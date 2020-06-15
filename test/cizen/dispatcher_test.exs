@@ -1,9 +1,11 @@
 defmodule Cizen.DispatcherTest do
-  use ExUnit.Case
+  use Cizen.SagaCase
+  alias Cizen.TestHelper
 
   alias Cizen.Dispatcher
   alias Cizen.Event
   alias Cizen.Filter
+  alias Cizen.SagaID
   require Cizen.Filter
 
   defmodule(TestEvent, do: defstruct([:value]))
@@ -16,7 +18,6 @@ defmodule Cizen.DispatcherTest do
     end
   end
 
-  @tag :skip
   test "listen_all" do
     pid = self()
 
@@ -75,7 +76,6 @@ defmodule Cizen.DispatcherTest do
     Task.await(task2)
   end
 
-  @tag :skip
   test "listen_event_body" do
     pid = self()
 
@@ -130,5 +130,32 @@ defmodule Cizen.DispatcherTest do
     Dispatcher.dispatch(Event.new(nil, %TestEventB{}))
     Task.await(task1)
     Task.await(task2)
+  end
+
+  test "listen with saga ID" do
+    pid = self()
+
+    saga_id =
+      TestHelper.launch_test_saga(
+        handle_event: fn _id, event, _state ->
+          case event do
+            %Event{body: %TestEventA{}} ->
+              send(pid, :received)
+          end
+        end
+      )
+
+    Dispatcher.listen(saga_id, Filter.new(fn %Event{body: %TestEventA{}} -> true end))
+
+    Dispatcher.dispatch(Event.new(nil, %TestEventA{}))
+
+    wait_until_receive(:received)
+  end
+
+  test "listen with saga ID which not alive" do
+    saga_id = SagaID.new()
+
+    assert :ok ==
+             Dispatcher.listen(saga_id, Filter.new(fn %Event{body: %TestEventA{}} -> true end))
   end
 end

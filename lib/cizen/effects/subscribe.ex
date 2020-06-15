@@ -6,37 +6,24 @@ defmodule Cizen.Effects.Subscribe do
 
   ## Example
       perform id, %Subscribe{
-        event_filter: Filter.new(fn %Event{body: %SomeEvent{}} -> true end),
-        lifetime_saga_id: some_saga_id
+        event_filter: Filter.new(fn %Event{body: %SomeEvent{}} -> true end)
       }
   """
 
   @enforce_keys [:event_filter]
-  defstruct [:event_filter, :lifetime_saga_id]
+  defstruct [:event_filter]
 
   alias Cizen.Effect
-  alias Cizen.Effects.{Map, Request}
-
-  alias Cizen.SubscribeMessage
+  alias Cizen.Dispatcher
 
   use Effect
 
   @impl true
-  def expand(id, %__MODULE__{} = saga) do
-    %__MODULE__{
-      event_filter: event_filter,
-      lifetime_saga_id: lifetime_saga_id
-    } = saga
-
-    %Map{
-      effect: %Request{
-        body: %SubscribeMessage{
-          subscriber_saga_id: id,
-          event_filter: event_filter,
-          lifetime_saga_id: lifetime_saga_id
-        }
-      },
-      transform: fn _response -> :ok end
-    }
+  def init(handler, %__MODULE__{event_filter: event_filter}) do
+    Dispatcher.listen(handler, event_filter)
+    {:resolve, :ok}
   end
+
+  @impl true
+  def handle_event(_, _, _, _), do: nil
 end

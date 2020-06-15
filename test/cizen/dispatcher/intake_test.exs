@@ -3,7 +3,7 @@ defmodule Cizen.Dispatcher.IntakeTest do
 
   import Mock
 
-  alias Cizen.Dispatcher.{Intake, Sender, RootNode, Node}
+  alias Cizen.Dispatcher.{Intake, Sender, Node}
   alias Cizen.Event
 
   defmodule(TestEvent, do: defstruct([]))
@@ -13,7 +13,6 @@ defmodule Cizen.Dispatcher.IntakeTest do
       Sender,
       [:passthrough],
       [
-        init: fn _ -> {:ok, nil} end,
         wait_node: fn _, _ -> :ok end,
         put_event: fn _, _ -> :ok end
       ]
@@ -22,7 +21,6 @@ defmodule Cizen.Dispatcher.IntakeTest do
       Node,
       [:passthrough],
       [
-        init: fn _ -> {:ok, nil} end,
         push: fn _, _, _ -> :ok end
       ]
     }
@@ -32,12 +30,9 @@ defmodule Cizen.Dispatcher.IntakeTest do
   end
 
   test "starts sender with nil for first time of starting" do
-    # Restart Intake here
-    {:error, {:already_started, intake}} = Intake.start_link()
-    GenServer.stop(intake)
-    Intake.start_link()
+    GenServer.start_link(Intake, :ok, name: TestIntake)
 
-    :timer.sleep(50)
+    :timer.sleep(10)
     assert_called(Sender.start_link(nil))
   end
 
@@ -46,7 +41,7 @@ defmodule Cizen.Dispatcher.IntakeTest do
     %{sender: preceding} = :sys.get_state(Intake)
     Intake.push(event)
 
-    :timer.sleep(50)
+    :timer.sleep(10)
     assert_called(Sender.start_link(preceding))
   end
 
@@ -55,8 +50,8 @@ defmodule Cizen.Dispatcher.IntakeTest do
     %{sender: sender} = :sys.get_state(Intake)
     Intake.push(event)
 
-    :timer.sleep(50)
-    assert_called(Node.push({:global, RootNode}, sender, event))
+    :timer.sleep(10)
+    assert_called(Node.push(sender, event))
   end
 
   test "sends root node and event to sender before pushing an event to root node", %{
@@ -66,9 +61,9 @@ defmodule Cizen.Dispatcher.IntakeTest do
     %{sender: sender} = :sys.get_state(Intake)
     Intake.push(event)
 
-    :timer.sleep(50)
+    :timer.sleep(10)
     assert_called(Sender.put_event(sender, event))
-    assert_called(Sender.wait_node(sender, {:global, RootNode}))
-    assert_called(Node.push({:global, RootNode}, sender, event))
+    assert_called(Sender.wait_node(sender, Node))
+    assert_called(Node.push(sender, event))
   end
 end

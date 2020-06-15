@@ -5,6 +5,9 @@ defmodule Cizen.CrashLoggerTest do
 
   alias Cizen.Dispatcher
   alias Cizen.Event
+  alias Cizen.Filter
+
+  require Filter
 
   defmodule(CrashTestEvent, do: defstruct([]))
 

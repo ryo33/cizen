@@ -142,15 +142,6 @@ defmodule Cizen.MixProject do
         Cizen.Filter,
         Cizen.EventID
       ],
-      Messaging: [
-        Cizen.SubscribeMessage,
-        Cizen.SubscribeMessage.Subscribed
-      ],
-      "Messaging Internal": [
-        Cizen.Messenger,
-        Cizen.Messenger.Transmitter,
-        Cizen.SendMessage
-      ],
       Requesting: [
         Cizen.Request,
         Cizen.Request.Response
