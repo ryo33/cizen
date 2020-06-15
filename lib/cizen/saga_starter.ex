@@ -7,7 +7,6 @@ defmodule Cizen.SagaStarter do
 
   alias Cizen.Dispatcher
   alias Cizen.Event
-  alias Cizen.Filter
   alias Cizen.Saga
 
   alias Cizen.SagaLauncher.LaunchSaga
@@ -18,9 +17,7 @@ defmodule Cizen.SagaStarter do
 
   @impl true
   def init(_id, _struct) do
-    require Filter
-    Filter.new(fn %Event{body: %StartSaga{}} -> true end)
-    |> Dispatcher.listen()
+    Dispatcher.listen_event_type(StartSaga)
     :ok
   end
 

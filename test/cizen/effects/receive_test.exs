@@ -7,7 +7,6 @@ defmodule Cizen.Effects.ReceiveTest do
   alias Cizen.Effects.Receive
   alias Cizen.Event
   alias Cizen.Filter
-  alias Cizen.Messenger
   alias Cizen.Saga
   alias Cizen.SagaID
 
@@ -119,11 +118,10 @@ defmodule Cizen.Effects.ReceiveTest do
       @impl true
       def yield(id, %__MODULE__{pid: pid}) do
         test_event1_filter = Filter.new(fn %Event{body: %TestEvent1{}} -> true end)
-
         test_event2_filter = Filter.new(fn %Event{body: %TestEvent2{}} -> true end)
 
-        Messenger.subscribe_message(id, test_event1_filter)
-        Messenger.subscribe_message(id, test_event2_filter)
+        Dispatcher.listen(test_event1_filter)
+        Dispatcher.listen(test_event2_filter)
 
         send(pid, :launched)
 

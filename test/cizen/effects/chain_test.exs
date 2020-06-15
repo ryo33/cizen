@@ -8,11 +8,12 @@ defmodule Cizen.Effects.ChainTest do
   alias Cizen.Effects.Chain
   alias Cizen.Event
   alias Cizen.Filter
-  alias Cizen.Messenger
   alias Cizen.Saga
   alias Cizen.SagaID
 
   alias Cizen.StartSaga
+
+  require Filter
 
   describe "Chain" do
     test "resolves immediately with no effects" do
@@ -225,10 +226,7 @@ defmodule Cizen.Effects.ChainTest do
 
       @impl true
       def yield(id, %__MODULE__{pid: pid}) do
-        Messenger.subscribe_message(
-          id,
-          Filter.new(fn %Event{body: %TestEvent{}} -> true end)
-        )
+        Dispatcher.listen(id, Filter.new(fn %Event{body: %TestEvent{}} -> true end))
 
         send(pid, :launched)
 

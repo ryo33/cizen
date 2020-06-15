@@ -4,7 +4,9 @@ defmodule Cizen.Dispatcher.NodeTest do
   import Mock
 
   alias Cizen.Dispatcher.{Node, Sender}
-  alias Cizen.Event
+  alias Cizen.Filter
+
+  require Filter
 
   defmodule(TestEvent, do: defstruct([]))
 
@@ -19,45 +21,52 @@ defmodule Cizen.Dispatcher.NodeTest do
     },
     {Node, [:passthrough], []}
   ]) do
-    event = Event.new(nil, %TestEvent{})
-    %{some_event: event}
+    :ok
   end
 
   describe "push" do
-    test "pushes an event to following nodes", %{some_event: event} do
+    test "pushes an event to following nodes" do
       subscriber = self()
       {:ok, sender} = Sender.start_link(nil)
       {:ok, node} = Node.start_link()
 
-      Node.put(node, {:or, ["a", {:or, ["b", "c"]}]}, subscriber)
+      %{code: code} = Filter.new(fn a -> a == "a" or a == "b" end)
+      event = "a"
+      Node.put(node, code, subscriber)
       Node.push(node, sender, event)
 
-      :timer.sleep(50)
+      :timer.sleep(10)
 
-      :sys.get_state(node)
-      |> Map.get(:operations)
-      |> Enum.each(fn {_, %{true: following_node}} ->
-        assert_called(Node.push(following_node, sender, event))
-      end)
+      following_node =
+        :sys.get_state(node)
+        |> get_in([:operations, {:access, []}, "a"])
+
+      assert_called(Node.push(following_node, sender, event))
     end
 
-    test "sends subscribers and following nodes to sender before pushing an event to following nodes",
-         %{some_event: event} do
+    test "sends subscribers and following nodes to sender before pushing an event to following nodes" do
       subscriber = self()
       {:ok, sender} = Sender.start_link(nil)
       {:ok, node} = Node.start_link()
 
-      Node.put(node, {:or, ["a", {:or, ["b", "c"]}]}, subscriber)
+      %{code: code} = Filter.new(fn a -> a == "a" or a == "b" end)
+      event = "a"
+      Node.put(node, code, subscriber)
       Node.push(node, sender, event)
 
-      :timer.sleep(50)
+      :timer.sleep(10)
 
-      following_nodes =
+      following_node =
         :sys.get_state(node)
-        |> Map.get(:operations)
-        |> Enum.map(fn {_, %{true: following_node}} -> following_node end)
+        |> get_in([:operations, {:access, []}, "a"])
 
-      assert_called(Sender.put_subscribers_and_following_nodes(sender, node, [], following_nodes))
+      assert_called(
+        Sender.put_subscribers_and_following_nodes(sender, node, [], [following_node])
+      )
+
+      assert_called(
+        Sender.put_subscribers_and_following_nodes(sender, following_node, [subscriber], [])
+      )
     end
   end
 
@@ -84,7 +93,7 @@ defmodule Cizen.Dispatcher.NodeTest do
       with_mock Node, [:passthrough], [] do
         Node.put(node, {:<>, ["a", "b"]}, subscriber)
 
-        :timer.sleep(50)
+        :timer.sleep(10)
         assert_called(Node.handle_cast({:run, {:put_subscriber, subscriber}}, :_))
       end
     end
@@ -96,7 +105,7 @@ defmodule Cizen.Dispatcher.NodeTest do
       with_mock Node, [:passthrough], [] do
         Node.put(node, {:==, [{:access, [:key]}, "a"]}, subscriber)
 
-        :timer.sleep(50)
+        :timer.sleep(10)
         assert_called(Node.handle_cast({:run, {:put_subscriber, subscriber}}, :_))
       end
     end
@@ -108,7 +117,7 @@ defmodule Cizen.Dispatcher.NodeTest do
       with_mock Node, [:passthrough], [] do
         Node.put(node, {:not, [{:access, [:key]}]}, subscriber)
 
-        :timer.sleep(50)
+        :timer.sleep(10)
         assert_called(Node.handle_cast({:run, {:put_subscriber, subscriber}}, :_))
       end
     end
@@ -120,7 +129,7 @@ defmodule Cizen.Dispatcher.NodeTest do
       with_mock Node, [:passthrough], [] do
         Node.put(node, {:and, ["a", {:and, ["b", "c"]}]}, subscriber)
 
-        :timer.sleep(50)
+        :timer.sleep(10)
         assert_called(Node.handle_cast({:run, {:put_subscriber, subscriber}}, :_))
       end
     end
@@ -132,7 +141,7 @@ defmodule Cizen.Dispatcher.NodeTest do
       with_mock Node, [:passthrough], [] do
         Node.put(node, {:or, ["a", {:or, ["b", "c"]}]}, subscriber)
 
-        :timer.sleep(50)
+        :timer.sleep(10)
         assert_called(Node.handle_cast({:run, {:put_subscriber, subscriber}}, :_))
       end
     end
@@ -165,9 +174,27 @@ defmodule Cizen.Dispatcher.NodeTest do
         Node.put(node, {:<>, ["a", "b"]}, subscriber)
         Node.delete(node, {:<>, ["a", "b"]}, subscriber)
 
-        :timer.sleep(50)
+        :timer.sleep(10)
         assert_called(Node.handle_cast({:run, {:delete_subscriber, subscriber}}, :_))
       end
     end
+  end
+
+  test "delete the subscriber from subscribers when it downed" do
+    subscriber =
+      spawn(fn ->
+        receive do
+          :stop -> :ok
+        end
+      end)
+
+    {:ok, node} = Node.start_link()
+    set = MapSet.new([subscriber])
+    empty = MapSet.new()
+
+    Node.put(node, true, subscriber)
+    assert %{subscribers: ^set} = Node.expand(node)
+    send(subscriber, :stop)
+    assert %{subscribers: ^empty} = Node.expand(node)
   end
 end

@@ -7,11 +7,11 @@ defmodule Cizen.Effects.MapTest do
   alias Cizen.Effect
   alias Cizen.Event
   alias Cizen.Filter
-  alias Cizen.Messenger
   alias Cizen.Saga
   alias Cizen.SagaID
-
   alias Cizen.StartSaga
+
+  require Filter
 
   use Cizen.Effects, only: [Map]
 
@@ -101,10 +101,7 @@ defmodule Cizen.Effects.MapTest do
 
       @impl true
       def yield(id, %__MODULE__{pid: pid}) do
-        Messenger.subscribe_message(
-          id,
-          Filter.new(fn %Event{body: %TestEvent{}} -> true end)
-        )
+        Dispatcher.listen(id, Filter.new(fn %Event{body: %TestEvent{}} -> true end))
 
         send(pid, :launched)
 
