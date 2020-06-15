@@ -20,19 +20,14 @@ defmodule Cizen.Dispatcher.Intake do
   end
 
   def handle_continue(:start_sender, state) do
-    {:noreply, create_new_sender(state)}
+    {:ok, pid} = Sender.start_link(state.sender)
+    {:noreply, %{state | sender: pid}}
   end
 
   def handle_cast({:push, event}, state) do
     Sender.wait_node(state.sender, Node)
     Sender.put_event(state.sender, event)
     Node.push(state.sender, event)
-    state = create_new_sender(state)
-    {:noreply, state}
-  end
-
-  defp create_new_sender(state) do
-    {:ok, pid} = Sender.start_link(state.sender)
-    %{state | sender: pid}
+    {:noreply, state, {:continue, :start_sender}}
   end
 end

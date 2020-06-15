@@ -120,8 +120,8 @@ defmodule Cizen.Effects.ReceiveTest do
         test_event1_filter = Filter.new(fn %Event{body: %TestEvent1{}} -> true end)
         test_event2_filter = Filter.new(fn %Event{body: %TestEvent2{}} -> true end)
 
-        Dispatcher.listen(test_event1_filter)
-        Dispatcher.listen(test_event2_filter)
+        Dispatcher.listen(id, test_event1_filter)
+        Dispatcher.listen(id, test_event2_filter)
 
         send(pid, :launched)
 
