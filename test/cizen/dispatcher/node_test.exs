@@ -180,21 +180,78 @@ defmodule Cizen.Dispatcher.NodeTest do
     end
   end
 
-  test "delete the subscriber from subscribers when it downed" do
-    subscriber =
+  test "deletes the subscriber from subscribers when it downed" do
+    subscriber1 =
       spawn(fn ->
         receive do
           :stop -> :ok
         end
       end)
+    subscriber2 = spawn(fn -> :timer.sleep(:infinity) end)
 
     {:ok, node} = Node.start_link()
-    set = MapSet.new([subscriber])
-    empty = MapSet.new()
+    before_set = MapSet.new([subscriber1, subscriber2])
+    after_set = MapSet.new([subscriber2])
 
+    Node.put(node, true, subscriber1)
+    Node.put(node, true, subscriber2)
+    assert %{subscribers: ^before_set} = Node.expand(node)
+    send(subscriber1, :stop)
+    assert %{subscribers: ^after_set} = Node.expand(node)
+  end
+
+  test "deletes operation value when the next node downed" do
+    subscriber1 = spawn(fn -> :timer.sleep(:infinity) end)
+    subscriber2 = spawn(fn -> :timer.sleep(:infinity) end)
+    {:ok, node} = Node.start_link()
+    %{code: code} = Filter.new(fn a -> a == "a" or a == "b" end)
+    Node.put(node, code, subscriber1)
+    Node.put(node, code, subscriber2)
+
+    get_a_node = fn ->
+      :sys.get_state(node)
+      |> get_in([:operations, {:access, []}, "a"])
+    end
+
+    a_node = get_a_node.()
+    GenServer.stop(a_node)
+    assert nil == get_a_node.()
+  end
+
+  test "deletes operation when all operation value have deleted" do
+    subscriber = spawn(fn -> :timer.sleep(:infinity) end)
+    {:ok, node} = Node.start_link()
+    %{code: code} = Filter.new(fn a -> a == "a" or a == "b" end)
     Node.put(node, true, subscriber)
-    assert %{subscribers: ^set} = Node.expand(node)
+    Node.put(node, code, subscriber)
+
+    get_operation = fn ->
+      :sys.get_state(node)
+      |> get_in([:operations, {:access, []}])
+    end
+    get_next_node = fn key ->
+      get_in(get_operation.(), [key])
+    end
+
+    assert %{} = get_operation.()
+    GenServer.stop(get_next_node.("a"))
+    GenServer.stop(get_next_node.("b"))
+    assert nil == get_operation.()
+  end
+
+  test "exits if all subscribers have downed and operations is empty" do
+    subscriber = spawn(fn ->
+      receive do
+        :stop -> :ok
+      end
+    end)
+    {:ok, node} = Node.start_link()
+    Process.monitor(node)
+    %{code: code} = Filter.new(fn a -> a == "a" or a == "b" end)
+    Node.put(node, true, subscriber)
+    Node.put(node, code, subscriber)
+
     send(subscriber, :stop)
-    assert %{subscribers: ^empty} = Node.expand(node)
+    assert_receive {:DOWN, _, _, ^node, _}
   end
 end

@@ -52,12 +52,35 @@ defmodule Cizen.Dispatcher.Node do
     {:ok, state}
   end
 
-  def handle_info({:DOWN, _, _, subscriber, _}, state) do
+  def handle_info({:DOWN, _, _, subscriber_or_downed_node, _}, state) do
     state =
-      state
-      |> update_in([:subscribers], &MapSet.delete(&1, subscriber))
+      if MapSet.member?(state.subscribers, subscriber_or_downed_node) do
+        update_in(state.subscribers, &MapSet.delete(&1, subscriber_or_downed_node))
+      else
+        update_in(state.operations, fn operations ->
+          Enum.reduce(operations, %{}, fn {operation, nodes}, operations ->
+            nodes =
+              nodes
+              |> Enum.filter(fn {_, node} -> node !== subscriber_or_downed_node end)
+              |> Enum.into(%{})
+            if Enum.empty?(nodes) do
+              operations
+            else
+              put_in(operations, [operation], nodes)
+            end
+          end)
+        end)
+      end
 
-    {:noreply, state}
+    {:noreply, state, {:continue, :exit_if_empty}}
+  end
+
+  def handle_continue(:exit_if_empty, state) do
+    if Enum.empty?(state.operations) and Enum.empty?(state.subscribers) do
+      {:stop, :normal, state}
+    else
+      {:noreply, state}
+    end
   end
 
   def handle_cast({:push, from_node, sender, event}, state) do
@@ -149,12 +172,12 @@ defmodule Cizen.Dispatcher.Node do
       case Map.get(values, value) do
         nil ->
           {:ok, node} = start_link()
+          Process.monitor(node)
           node
 
         node ->
           node
       end
-
     run_command(next_node, next)
 
     state = put_in(state.operations[operation], values)
