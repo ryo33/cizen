@@ -32,7 +32,6 @@ defmodule Cizen.Performance.SubscriptionTest do
   end
 
   @tag timeout: 10000
-  @tag :skip
   test "many subscriptions" do
     Dispatcher.listen(
       Filter.new(fn %Event{body: %Saga.Started{}, source_saga: %TestSaga{}} -> true end)
@@ -56,7 +55,7 @@ defmodule Cizen.Performance.SubscriptionTest do
         end)
         |> Enum.take(num)
 
-      for i <- 1..num do
+      for _ <- 1..num do
         receive do
           %Event{body: %Saga.Started{}, source_saga: %TestSaga{}} ->
             :ok
