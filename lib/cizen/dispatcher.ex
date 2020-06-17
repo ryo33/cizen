@@ -14,6 +14,7 @@ defmodule Cizen.Dispatcher do
 
   @doc false
   def start_link do
+    Registry.start_link(keys: :duplicate, name: __MODULE__)
     Intake.start_link()
   end
 
@@ -23,6 +24,18 @@ defmodule Cizen.Dispatcher do
   @spec dispatch(Event.t()) :: :ok
   def dispatch(event) do
     Intake.push(event)
+
+    Registry.dispatch(__MODULE__, :all, fn entries ->
+      for {pid, :ok} <- entries, do: send(pid, event)
+    end)
+
+    Registry.dispatch(__MODULE__, Event.type(event), fn entries ->
+      for {pid, :ok} <- entries, do: send(pid, event)
+    end)
+
+    Registry.dispatch(__MODULE__, event.body, fn entries ->
+      for {pid, :ok} <- entries, do: send(pid, event)
+    end)
   end
 
   @doc """
@@ -30,7 +43,8 @@ defmodule Cizen.Dispatcher do
   """
   @spec listen_all :: :ok
   def listen_all do
-    Node.put(true, self())
+    {:ok, _} = Registry.register(__MODULE__, :all, :ok)
+    :ok
   end
 
   @doc """
@@ -38,8 +52,8 @@ defmodule Cizen.Dispatcher do
   """
   @spec listen_event_type(EventType.t()) :: :ok
   def listen_event_type(event_type) do
-    Filter.new(fn %Event{body: a} -> a.__struct__ == event_type end)
-    |> listen()
+    {:ok, _} = Registry.register(__MODULE__, event_type, :ok)
+    :ok
   end
 
   @doc """
@@ -47,8 +61,8 @@ defmodule Cizen.Dispatcher do
   """
   @spec listen_event_body(EventBody.t()) :: :ok
   def listen_event_body(event_body) do
-    Filter.new(fn %Event{body: ^event_body} -> true end)
-    |> listen()
+    {:ok, _} = Registry.register(__MODULE__, event_body, :ok)
+    :ok
   end
 
   @doc """
