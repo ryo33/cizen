@@ -46,30 +46,30 @@ defmodule Cizen.Dispatcher.Node do
   def init(_) do
     state = %{
       operations: %{},
-      subscribers: MapSet.new()
+      subscribers: MapSet.new(),
+      monitors: %{}
     }
 
     {:ok, state}
   end
 
-  def handle_info({:DOWN, _, _, subscriber_or_downed_node, _}, state) do
+  def handle_info({:DOWN, ref, :process, downed_process, _}, state) do
+    {monitor, state} = pop_in(state, [:monitors, ref])
+
     state =
-      if MapSet.member?(state.subscribers, subscriber_or_downed_node) do
-        update_in(state.subscribers, &MapSet.delete(&1, subscriber_or_downed_node))
-      else
-        update_in(state.operations, fn operations ->
-          Enum.reduce(operations, %{}, fn {operation, nodes}, operations ->
-            nodes =
-              nodes
-              |> Enum.filter(fn {_, node} -> node !== subscriber_or_downed_node end)
-              |> Enum.into(%{})
-            if Enum.empty?(nodes) do
-              operations
-            else
-              put_in(operations, [operation], nodes)
-            end
-          end)
-        end)
+      case monitor do
+        [:subscribers] ->
+          update_in(state.subscribers, &MapSet.delete(&1, downed_process))
+
+        [:operations, operation, _value] = path ->
+          {_, state} = pop_in(state, path)
+
+          if Enum.empty?(state.operations[operation]) do
+            {_, state} = pop_in(state, [:operations, operation])
+            state
+          else
+            state
+          end
       end
 
     {:noreply, state, {:continue, :exit_if_empty}}
@@ -157,8 +157,11 @@ defmodule Cizen.Dispatcher.Node do
   end
 
   defp run(state, {:put_subscriber, subscriber}) do
-    Process.monitor(subscriber)
-    update_in(state.subscribers, &MapSet.put(&1, subscriber))
+    ref = Process.monitor(subscriber)
+
+    state
+    |> update_in([:subscribers], &MapSet.put(&1, subscriber))
+    |> put_in([:monitors, ref], [:subscribers])
   end
 
   defp run(state, {:delete_subscriber, subscriber}) do
@@ -167,20 +170,24 @@ defmodule Cizen.Dispatcher.Node do
 
   defp update_operation(state, operation, value, next) do
     values = Map.get(state.operations, operation, %{})
+    next_node_path = [:operations, operation, value]
 
-    next_node =
+    {next_node, monitor} =
       case Map.get(values, value) do
         nil ->
           {:ok, node} = start_link()
-          Process.monitor(node)
-          node
+          ref = Process.monitor(node)
+          {node, %{ref => next_node_path}}
 
         node ->
-          node
+          {node, %{}}
       end
+
     run_command(next_node, next)
 
-    state = put_in(state.operations[operation], values)
-    put_in(state.operations[operation][value], next_node)
+    state
+    |> put_in([:operations, operation], values)
+    |> update_in([:monitors], &Map.merge(&1, monitor))
+    |> put_in(next_node_path, next_node)
   end
 end
