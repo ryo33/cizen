@@ -83,7 +83,8 @@ defmodule Cizen.Dispatcher.NodeTest do
         subscribers: MapSet.new([subscriber])
       }
 
-      assert expected == actual
+      assert expected.operations == actual.operations
+      assert expected.subscribers == actual.subscribers
     end
 
     test "put operation" do
@@ -148,7 +149,6 @@ defmodule Cizen.Dispatcher.NodeTest do
   end
 
   describe "delete" do
-    # 1
     test "delete true" do
       subscriber = self()
       {:ok, node} = Node.start_link()
@@ -162,10 +162,10 @@ defmodule Cizen.Dispatcher.NodeTest do
         subscribers: MapSet.new()
       }
 
-      assert expected == actual
+      assert expected.operations == actual.operations
+      assert expected.subscribers == actual.subscribers
     end
 
-    # x -> x + 1 (mock)
     test "delete operation" do
       subscriber = self()
       {:ok, node} = Node.start_link()
@@ -187,6 +187,7 @@ defmodule Cizen.Dispatcher.NodeTest do
           :stop -> :ok
         end
       end)
+
     subscriber2 = spawn(fn -> :timer.sleep(:infinity) end)
 
     {:ok, node} = Node.start_link()
@@ -229,6 +230,7 @@ defmodule Cizen.Dispatcher.NodeTest do
       :sys.get_state(node)
       |> get_in([:operations, {:access, []}])
     end
+
     get_next_node = fn key ->
       get_in(get_operation.(), [key])
     end
@@ -240,11 +242,13 @@ defmodule Cizen.Dispatcher.NodeTest do
   end
 
   test "exits if all subscribers have downed and operations is empty" do
-    subscriber = spawn(fn ->
-      receive do
-        :stop -> :ok
-      end
-    end)
+    subscriber =
+      spawn(fn ->
+        receive do
+          :stop -> :ok
+        end
+      end)
+
     {:ok, node} = Node.start_link()
     Process.monitor(node)
     %{code: code} = Filter.new(fn a -> a == "a" or a == "b" end)
