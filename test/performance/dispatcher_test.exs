@@ -16,19 +16,32 @@ defmodule Cizen.Performance.DispatcherTest do
     end
   end
 
-  @tag timeout: 5000
+  @tag timeout: 200_000
   test "log" do
-    pid = self()
+    max_num = 100
 
     dispatch = fn num ->
-      1..num
-      |> Enum.each(fn i ->
-        spawn_link(fn ->
-          Dispatcher.listen_event_body(%TestEvent{num: :rand.uniform()})
-          send(pid, {:subscribed, i})
-          :timer.sleep(100_000)
+      pid = self()
+      Process.put(:count, 0)
+
+      subscribers =
+        1..num
+        |> Enum.map(fn i ->
+          rand = :rand.uniform(min(num, max_num))
+
+          if rand == 1 do
+            Process.put(:count, Process.get(:count) + 1)
+          end
+
+          spawn(fn ->
+            Dispatcher.listen_event_body(%TestEvent{num: rand})
+            send(pid, {:subscribed, i})
+
+            receive do
+              :stop -> :ok
+            end
+          end)
         end)
-      end)
 
       for i <- 1..num do
         receive do
@@ -36,8 +49,8 @@ defmodule Cizen.Performance.DispatcherTest do
         end
       end
 
-      spawn_link(fn ->
-        Dispatcher.listen_event_body(%TestEvent{num: 0})
+      spawn(fn ->
+        Dispatcher.listen_event_body(%TestEvent{num: 1})
         send(pid, :subscribed)
 
         receive do
@@ -52,14 +65,23 @@ defmodule Cizen.Performance.DispatcherTest do
 
       {time, _} =
         :timer.tc(fn ->
-          Dispatcher.dispatch(Event.new(nil, %TestEvent{num: 0}))
+          Dispatcher.dispatch(Event.new(nil, %TestEvent{num: 1}))
 
           receive do
             :received -> :ok
           end
         end)
 
-      IO.puts("#{num}: subscriber(s) in #{inspect(time / 1000)} milliseconds")
+      Enum.each(subscribers, &Process.exit(&1, :kill))
+
+      links = Process.info(pid) |> Keyword.get(:links) |> length
+
+      IO.puts(
+        "#{Process.get(:count)} subscriber(s) #{inspect(time / 1000)} milliseconds (#{num} subscriber(s)) (#{
+          links
+        } links)"
+      )
+
       time / 1000
     end
 
@@ -68,10 +90,55 @@ defmodule Cizen.Performance.DispatcherTest do
 
     0..4
     |> Enum.map(fn e ->
-      num = :math.pow(10, e) |> round()
-      time = dispatch.(num)
-      log_order = bias + :math.log(num) / :math.log(base_of_log)
-      assert time < log_order
+      for _ <- 1..10 do
+        Task.async(fn ->
+          num = :math.pow(10, e) |> round()
+          time = dispatch.(num)
+          # log_order = bias + :math.log(num) / :math.log(base_of_log)
+          # assert time < log_order
+        end)
+        |> Task.await()
+      end
     end)
+
+    # alias Cizen.Dispatcher.Node
+
+    # Node.expand(Node)
+    # |> IO.inspect()
+
+    4..0
+    |> Enum.map(fn e ->
+      for _ <- 1..10 do
+        Task.async(fn ->
+          num = :math.pow(10, e) |> round()
+          time = dispatch.(num)
+          # log_order = bias + :math.log(num) / :math.log(base_of_log)
+          # assert time < log_order
+        end)
+        |> Task.await()
+
+        :timer.sleep(1000)
+      end
+    end)
+
+    processes = :erlang.processes()
+    IO.puts(length(processes))
+
+    processes
+    |> Enum.map(&Process.info(&1))
+    |> Enum.group_by(fn info ->
+      dict = info[:dictionary]
+
+      if dict do
+        case dict[:"$initial_call"] do
+          {mod, _, _} -> mod
+          _ -> nil
+        end
+      end
+    end)
+    |> Enum.map(fn {key, value} -> {inspect(key), length(value), nil} end)
+    |> Enum.sort_by(&elem(&1, 1), :desc)
+    |> Enum.take(30)
+    |> IO.inspect()
   end
 end
