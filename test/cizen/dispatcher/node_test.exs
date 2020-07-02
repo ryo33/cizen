@@ -1,5 +1,5 @@
 defmodule Cizen.Dispatcher.NodeTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: false
 
   import Mock
 
