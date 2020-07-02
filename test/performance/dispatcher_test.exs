@@ -8,14 +8,6 @@ defmodule Cizen.Performance.DispatcherTest do
 
   defmodule(TestEvent, do: defstruct([:num]))
 
-  defp wait_until_receive(message) do
-    receive do
-      ^message -> :ok
-    after
-      100 -> flunk("#{message} timeout")
-    end
-  end
-
   @tag timeout: 100000
   test "log" do
     max_num = 100
