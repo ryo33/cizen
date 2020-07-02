@@ -16,7 +16,7 @@ defmodule Cizen.Performance.DispatcherTest do
     end
   end
 
-  @tag timeout: 200_000
+  @tag timeout: 100000
   test "log" do
     max_num = 100
 
@@ -34,7 +34,7 @@ defmodule Cizen.Performance.DispatcherTest do
           end
 
           spawn(fn ->
-            Dispatcher.listen_event_body(%TestEvent{num: rand})
+            Dispatcher.listen(Filter.new(fn %Event{body: %TestEvent{num: ^rand}} -> true end))
             send(pid, {:subscribed, i})
 
             receive do
@@ -50,7 +50,7 @@ defmodule Cizen.Performance.DispatcherTest do
       end
 
       spawn(fn ->
-        Dispatcher.listen_event_body(%TestEvent{num: 1})
+        Dispatcher.listen(Filter.new(fn %Event{body: %TestEvent{num: 1}} -> true end))
         send(pid, :subscribed)
 
         receive do
@@ -65,6 +65,9 @@ defmodule Cizen.Performance.DispatcherTest do
 
       {time, _} =
         :timer.tc(fn ->
+          for _ <- 1..100000 do
+            Dispatcher.dispatch(Event.new(nil, %TestEvent{num: :rand.uniform(max_num) + 100}))
+          end
           Dispatcher.dispatch(Event.new(nil, %TestEvent{num: 1}))
 
           receive do
@@ -88,57 +91,38 @@ defmodule Cizen.Performance.DispatcherTest do
     bias = 0.5
     base_of_log = 1.01
 
-    0..4
+    0..0
     |> Enum.map(fn e ->
-      for _ <- 1..10 do
-        Task.async(fn ->
-          num = :math.pow(10, e) |> round()
-          time = dispatch.(num)
-          # log_order = bias + :math.log(num) / :math.log(base_of_log)
-          # assert time < log_order
-        end)
-        |> Task.await()
+      for _ <- 1..1 do
+        num = :math.pow(10, e) |> round()
+        time = dispatch.(num)
+        # log_order = bias + :math.log(num) / :math.log(base_of_log)
+        # assert time < log_order
       end
     end)
 
-    # alias Cizen.Dispatcher.Node
+    # logs = Agent.get(:trace, & &1)
+    # |> Enum.reverse()
+    # |> Enum.reject(&is_nil(&1.event))
 
-    # Node.expand(Node)
-    # |> IO.inspect()
+    # first_log = List.first(logs)
 
-    4..0
-    |> Enum.map(fn e ->
-      for _ <- 1..10 do
-        Task.async(fn ->
-          num = :math.pow(10, e) |> round()
-          time = dispatch.(num)
-          # log_order = bias + :math.log(num) / :math.log(base_of_log)
-          # assert time < log_order
-        end)
-        |> Task.await()
+    # logs
+    # |> Enum.with_index()
+    # |> Enum.map(fn {log, i} -> Map.put(log, :index, i) end)
+    # |> Enum.group_by(& &1.event.id)
+    # |> Enum.sort_by(fn {_event_id, [log | _]} -> log.index end, :asc)
+    # |> Enum.reduce(first_log.time, fn {_event_id, logs}, previous_event_time ->
+    #   first_log = List.first(logs)
+    #   IO.puts("#{inspect first_log.event.body}: #{NaiveDateTime.diff(first_log.time, previous_event_time, :microsecond)}")
 
-        :timer.sleep(1000)
-      end
-    end)
+    #   logs
+    #   |> Enum.reduce(first_log.time, fn log, previous_time ->
+    #     IO.puts("#{NaiveDateTime.diff(log.time, previous_time, :microsecond)}\t#{log.message}")
+    #     log.time
+    #   end)
 
-    processes = :erlang.processes()
-    IO.puts(length(processes))
-
-    processes
-    |> Enum.map(&Process.info(&1))
-    |> Enum.group_by(fn info ->
-      dict = info[:dictionary]
-
-      if dict do
-        case dict[:"$initial_call"] do
-          {mod, _, _} -> mod
-          _ -> nil
-        end
-      end
-    end)
-    |> Enum.map(fn {key, value} -> {inspect(key), length(value), nil} end)
-    |> Enum.sort_by(&elem(&1, 1), :desc)
-    |> Enum.take(30)
-    |> IO.inspect()
+    #   first_log.time
+    # end)
   end
 end

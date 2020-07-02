@@ -111,7 +111,6 @@ defmodule Cizen.Automaton do
   """
   def perform(id, effect) do
     event = Event.new(id, %PerformEffect{handler: id, effect: effect})
-    Dispatcher.dispatch(event)
     Saga.send_to(id, event)
 
     receive do
@@ -120,8 +119,6 @@ defmodule Cizen.Automaton do
   end
 
   defp do_yield(module, id, state) do
-    Dispatcher.dispatch(Event.new(id, %Yield{state: state}))
-
     case state do
       @finish ->
         Dispatcher.dispatch(Event.new(id, %Saga.Finish{id: id}))
