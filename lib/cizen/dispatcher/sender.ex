@@ -1,4 +1,5 @@
 defmodule Cizen.Dispatcher.Sender do
+  @moduledoc false
   use GenServer
 
   def start_link(event) do
@@ -71,10 +72,13 @@ defmodule Cizen.Dispatcher.Sender do
     state =
       state
       |> update_in([:waiting_nodes], fn nodes ->
-        case nodes do
-          nil -> MapSet.new()
-          _ -> nodes
-        end
+        nodes =
+          case nodes do
+            nil -> MapSet.new()
+            _ -> nodes
+          end
+
+        nodes
         |> MapSet.union(MapSet.new(following_nodes))
         |> MapSet.difference(MapSet.new(from_nodes))
       end)

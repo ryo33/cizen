@@ -1,7 +1,7 @@
 defmodule Cizen.Dispatcher.SenderTest do
   use ExUnit.Case
 
-  alias Cizen.Dispatcher.{Sender, Node}
+  alias Cizen.Dispatcher.{Node, Sender}
   alias Cizen.Event
 
   defmodule(TestEvent, do: defstruct([]))

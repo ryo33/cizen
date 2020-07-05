@@ -1,7 +1,8 @@
 defmodule Cizen.Dispatcher.Intake do
+  @moduledoc false
   use GenServer
 
-  alias Cizen.Dispatcher.{Sender, Node}
+  alias Cizen.Dispatcher.{Node, Sender}
 
   def start_link do
     GenServer.start_link(__MODULE__, nil, name: __MODULE__)

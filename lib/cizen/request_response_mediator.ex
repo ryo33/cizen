@@ -5,8 +5,8 @@ defmodule Cizen.RequestResponseMediator do
 
   alias Cizen.Dispatcher
   alias Cizen.Event
-  alias Cizen.Saga
   alias Cizen.Request
+  alias Cizen.Saga
 
   defstruct []
 
