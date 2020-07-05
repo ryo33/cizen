@@ -8,7 +8,7 @@ defmodule Cizen.Performance.DispatcherTest do
 
   defmodule(TestEvent, do: defstruct([:num]))
 
-  @tag timeout: 100000
+  @tag timeout: 100_000
   test "log" do
     max_num = 100
 
@@ -57,9 +57,10 @@ defmodule Cizen.Performance.DispatcherTest do
 
       {time, _} =
         :timer.tc(fn ->
-          for _ <- 1..100000 do
+          for _ <- 1..100_000 do
             Dispatcher.dispatch(Event.new(nil, %TestEvent{num: :rand.uniform(max_num) + 100}))
           end
+
           Dispatcher.dispatch(Event.new(nil, %TestEvent{num: 1}))
 
           receive do

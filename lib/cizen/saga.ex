@@ -30,7 +30,10 @@ defmodule Cizen.Saga do
   alias Cizen.CizenSagaRegistry
   alias Cizen.Dispatcher
   alias Cizen.Event
+  alias Cizen.Filter
   alias Cizen.SagaID
+
+  require Filter
 
   @doc """
   Invoked when the saga is started.
@@ -236,13 +239,12 @@ defmodule Cizen.Saga do
   end
 
   def terminate({:shutdown, :finish}, {id, _module, _state}) do
-    Dispatcher.dispatch(Event.new(id, %Finished{id: id}))
+    dispatch_async(Event.new(id, %Finished{id: id}))
     :shutdown
   end
 
   def terminate({:shutdown, {reason, trace}}, {id, _module, _state}) do
-    Dispatcher.dispatch(Event.new(id, %Crashed{id: id, reason: reason, stacktrace: trace}))
-
+    dispatch_async(Event.new(id, %Crashed{id: id, reason: reason, stacktrace: trace}))
     :shutdown
   end
 
@@ -272,5 +274,18 @@ defmodule Cizen.Saga do
 
   def handle_request({:update_value, registry, key, callback}) do
     Registry.update_value(registry, key, fn {saga_id, value} -> {saga_id, callback.(value)} end)
+  end
+
+  defp dispatch_async(event) do
+    Task.start(fn ->
+      Dispatcher.listen(Filter.new(fn %Event{id: ^event.id} -> true end))
+      Dispatcher.dispatch(event)
+
+      receive do
+        _ -> :ok
+      after
+        60_000 -> :ok
+      end
+    end)
   end
 end

@@ -28,22 +28,24 @@ defmodule Cizen.Dispatcher.Sender do
 
   def init(event) do
     state = %{
-      preceding_downed: false,
-      waiting_nodes: MapSet.new([]),
+      initialized?: false,
+      preceding_downed?: false,
+      waiting_nodes: nil,
       event: event,
-      subscribers: MapSet.new([])
+      subscribers: MapSet.new()
     }
 
     {:ok, state}
   end
 
   def handle_info({:DOWN, _, _, _, _}, state) do
-    {:noreply, %{state | preceding_downed: true}, {:continue, :send_and_exit_if_fulfilled}}
+    {:noreply, %{state | preceding_downed?: true}, {:continue, :send_and_exit_if_fulfilled}}
   end
 
   def handle_continue(:send_and_exit_if_fulfilled, state) do
-    if state.preceding_downed and Enum.empty?(state.waiting_nodes) do
-      Enum.map(state.subscribers, fn subscriber ->
+    if state.preceding_downed? and
+         not is_nil(state.waiting_nodes) && Enum.empty?(state.waiting_nodes) do
+      Enum.each(state.subscribers, fn subscriber ->
         send(subscriber, state.event)
       end)
 
@@ -55,7 +57,7 @@ defmodule Cizen.Dispatcher.Sender do
 
   def handle_cast({:monitor, pid}, state) do
     if is_nil(pid) do
-      {:noreply, %{state | preceding_downed: true}}
+      {:noreply, %{state | preceding_downed?: true}}
     else
       Process.monitor(pid)
       {:noreply, state}
@@ -69,7 +71,10 @@ defmodule Cizen.Dispatcher.Sender do
     state =
       state
       |> update_in([:waiting_nodes], fn nodes ->
-        nodes
+        case nodes do
+          nil -> MapSet.new()
+          _ -> nodes
+        end
         |> MapSet.union(MapSet.new(following_nodes))
         |> MapSet.difference(MapSet.new(from_nodes))
       end)
