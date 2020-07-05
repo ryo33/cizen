@@ -119,7 +119,7 @@ defmodule Cizen.RequestResponseMediatorTest do
       }
     end
 
-    @tag timeout: 2000
+    @tag timeout: 200
     test "dispatches a Timeout event when specific timeout" do
       pid = self()
 
@@ -134,22 +134,22 @@ defmodule Cizen.RequestResponseMediatorTest do
         Event.new(nil, %Request{
           requestor_saga_id: requestor_id,
           body: %TestRequest{},
-          timeout: 1000
+          timeout: 100
         })
 
       Dispatcher.dispatch(request)
       request_id = request.id
 
-      :timer.sleep(800)
+      :timer.sleep(90)
 
-      refute_receive %Event{
+      refute_received %Event{
         body: %Request.Timeout{
           request_event_id: ^request_id,
           requestor_saga_id: ^requestor_id
         }
       }
 
-      :timer.sleep(200)
+      :timer.sleep(20)
 
       assert_receive %Event{
         body: %Request.Timeout{
@@ -160,10 +160,9 @@ defmodule Cizen.RequestResponseMediatorTest do
     end
   end
 
-  describe "RequestResponseMediator.Worker" do
+  describe "RequestResponseMediator.do_work/1" do
     test "finishes after respond" do
       Dispatcher.listen_event_type(Request.Response)
-      Dispatcher.listen_event_type(Saga.Finish)
 
       requestor_id = TestHelper.launch_test_saga()
 
@@ -182,17 +181,19 @@ defmodule Cizen.RequestResponseMediatorTest do
           body: %TestRequest{}
         })
 
-      Dispatcher.dispatch(request)
+      {:ok, worker_pid} =
+        Task.start_link(fn ->
+          RequestResponseMediator.do_work(request)
+        end)
 
-      event = assert_receive %Event{body: %Request.Response{}}
-      worker_saga_id = event.source_saga_id
-      assert_receive %Event{body: %Saga.Finish{id: ^worker_saga_id}}
+      Process.monitor(worker_pid)
+
+      refute_received {:DOWN, _, :process, ^worker_pid, :normal}
+      assert_receive %Event{body: %Request.Response{}}
+      assert_receive {:DOWN, _, :process, ^worker_pid, :normal}
     end
 
     test "finishes after requestor finished" do
-      Dispatcher.listen_event_type(SagaLauncher.LaunchSaga)
-      Dispatcher.listen_event_type(Saga.Finish)
-
       requestor_id = TestHelper.launch_test_saga()
 
       request =
@@ -201,43 +202,42 @@ defmodule Cizen.RequestResponseMediatorTest do
           body: %TestRequest{}
         })
 
-      Dispatcher.dispatch(request)
+      {:ok, worker_pid} =
+        Task.start_link(fn ->
+          RequestResponseMediator.do_work(request)
+        end)
 
-      event =
-        assert_receive %Event{
-          body: %SagaLauncher.LaunchSaga{
-            saga: %RequestResponseMediator.Worker{}
-          }
-        }
+      Process.monitor(worker_pid)
 
-      worker_saga_id = event.body.id
-
+      refute_received {:DOWN, _, :process, ^worker_pid, :normal}
       Test.ensure_finished(requestor_id)
-
-      assert_receive %Event{body: %Saga.Finish{id: ^worker_saga_id}}
+      assert_receive {:DOWN, _, :process, ^worker_pid, :normal}
     end
 
-    @tag timeout: 6000
+    @tag timeout: 200
     test "finishes after timeout" do
       Dispatcher.listen_event_type(Request.Timeout)
-      Dispatcher.listen_event_type(Saga.Finish)
 
       requestor_id = TestHelper.launch_test_saga()
 
       request =
         Event.new(nil, %Request{
           requestor_saga_id: requestor_id,
-          body: %TestRequest{}
+          body: %TestRequest{},
+          timeout: 100
         })
 
-      Dispatcher.dispatch(request)
+      {:ok, worker_pid} =
+        Task.start_link(fn ->
+          RequestResponseMediator.do_work(request)
+        end)
 
-      :timer.sleep(5000)
+      Process.monitor(worker_pid)
 
-      event = assert_receive %Event{body: %Request.Timeout{}}
-      worker_saga_id = event.source_saga_id
-
-      assert_receive %Event{body: %Saga.Finish{id: ^worker_saga_id}}
+      :timer.sleep(90)
+      refute_received {:DOWN, _, :process, ^worker_pid, :normal}
+      assert_receive %Event{body: %Request.Timeout{}}
+      assert_receive {:DOWN, _, :process, ^worker_pid, :normal}
     end
   end
 end
