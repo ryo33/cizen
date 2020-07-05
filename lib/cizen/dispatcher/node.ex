@@ -84,48 +84,23 @@ defmodule Cizen.Dispatcher.Node do
   end
 
   def handle_cast({:push, from_node, sender, event}, state) do
-    # Agent.update(:trace, fn list ->
-    #   [
-    #     %{
-    #       event: event,
-    #       time: NaiveDateTime.utc_now(),
-    #       message: "#{__ENV__.module}.#{__ENV__.function |> elem(0)}:#{__ENV__.line}"
-    #     }
-    #     | list
-    #   ]
-    # end)
-
     following_nodes =
-      Enum.reduce(state.operations, MapSet.new(), fn {operation, nodes}, following_nodes ->
-        value = Filter.eval(operation, event)
-
-        case Map.get(nodes, value) do
-          nil -> following_nodes
-          following_node -> MapSet.put(following_nodes, following_node)
-        end
+      Enum.map(state.operations, fn {operation, nodes} ->
+        Map.get(nodes, Filter.eval(operation, event), [])
       end)
+      |> List.flatten()
+      |> Enum.uniq()
 
     Sender.put_subscribers_and_following_nodes(
       sender,
       from_node,
       MapSet.to_list(state.subscribers),
-      MapSet.to_list(following_nodes)
+      following_nodes
     )
 
     Enum.each(following_nodes, fn following_node ->
       __MODULE__.push(following_node, sender, event)
     end)
-
-    # Agent.update(:trace, fn list ->
-    #   [
-    #     %{
-    #       event: event,
-    #       time: NaiveDateTime.utc_now(),
-    #       message: "#{__ENV__.module}.#{__ENV__.function |> elem(0)}:#{__ENV__.line}"
-    #     }
-    #     | list
-    #   ]
-    # end)
 
     {:noreply, state}
   end

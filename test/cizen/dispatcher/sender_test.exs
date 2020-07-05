@@ -1,20 +1,12 @@
 defmodule Cizen.Dispatcher.SenderTest do
-  use ExUnit.Case, async: false
-
-  import Mock
+  use ExUnit.Case
 
   alias Cizen.Dispatcher.{Sender, Node}
   alias Cizen.Event
 
   defmodule(TestEvent, do: defstruct([]))
 
-  setup_with_mocks([
-    {
-      Node,
-      [:passthrough],
-      [init: fn _ -> {:ok, nil} end]
-    }
-  ]) do
+  setup do
     event = Event.new(nil, %TestEvent{})
 
     subscriber1 =
@@ -42,11 +34,11 @@ defmodule Cizen.Dispatcher.SenderTest do
     subscriber1: subscriber1,
     subscriber2: subscriber2
   } do
-    {:ok, sender} = Sender.start_link(nil)
+    {:ok, sender} = Sender.start_link(event)
     {:ok, root_node} = Node.start_link()
     {:ok, leaf_node} = Node.start_link()
+    Sender.register_preceding(sender, nil)
     Sender.wait_node(sender, root_node)
-    Sender.put_event(sender, event)
 
     refute_receive {:trace, ^subscriber1, :receive, ^event}
     refute_receive {:trace, ^subscriber2, :receive, ^event}
@@ -62,11 +54,11 @@ defmodule Cizen.Dispatcher.SenderTest do
     some_event: event,
     subscriber1: subscriber
   } do
-    {:ok, preceding} = Sender.start_link(nil)
-    {:ok, sender} = Sender.start_link(preceding)
+    {:ok, preceding} = Sender.start_link(event)
+    {:ok, sender} = Sender.start_link(event)
     {:ok, node} = Node.start_link()
+    Sender.register_preceding(sender, preceding)
     Sender.wait_node(sender, node)
-    Sender.put_event(sender, event)
 
     Sender.put_subscribers_and_following_nodes(sender, node, [subscriber], [])
     refute_receive {:trace, ^subscriber, :receive, ^event}
@@ -74,29 +66,15 @@ defmodule Cizen.Dispatcher.SenderTest do
     assert_receive {:trace, ^subscriber, :receive, ^event}
   end
 
-  test "sender does not send event to subscribers if event is not given", %{
-    some_event: event,
-    subscriber1: subscriber
-  } do
-    {:ok, sender} = Sender.start_link(nil)
-    {:ok, node} = Node.start_link()
-    Sender.wait_node(sender, node)
-
-    Sender.put_subscribers_and_following_nodes(sender, node, [subscriber], [])
-    refute_receive {:trace, ^subscriber, :receive, ^event}
-    Sender.put_event(sender, event)
-    assert_receive {:trace, ^subscriber, :receive, ^event}
-  end
-
   test "sender does not send event to subscribers if waiting one or more nodes", %{
     some_event: event,
     subscriber1: subscriber
   } do
-    {:ok, sender} = Sender.start_link(nil)
+    {:ok, sender} = Sender.start_link(event)
     {:ok, root_node} = Node.start_link()
     {:ok, leaf_node} = Node.start_link()
+    Sender.register_preceding(sender, nil)
     Sender.wait_node(sender, root_node)
-    Sender.put_event(sender, event)
 
     Sender.put_subscribers_and_following_nodes(sender, root_node, [subscriber], [leaf_node])
     refute_receive {:trace, ^subscriber, :receive, ^event}
@@ -105,11 +83,11 @@ defmodule Cizen.Dispatcher.SenderTest do
   end
 
   test "sender exits", %{some_event: event} do
-    {:ok, sender} = Sender.start_link(nil)
+    {:ok, sender} = Sender.start_link(event)
     {:ok, node} = Node.start_link()
     Process.monitor(sender)
+    Sender.register_preceding(sender, nil)
     Sender.wait_node(sender, node)
-    Sender.put_event(sender, event)
 
     refute_receive {:DOWN, _, _, _, _}
     Sender.put_subscribers_and_following_nodes(sender, node, [], [])

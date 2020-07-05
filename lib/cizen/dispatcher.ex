@@ -23,17 +23,6 @@ defmodule Cizen.Dispatcher do
   """
   @spec dispatch(Event.t()) :: :ok
   def dispatch(event) do
-    # Agent.update(:trace, fn list ->
-    #   [
-    #     %{
-    #       event: event,
-    #       time: NaiveDateTime.utc_now(),
-    #       message: "#{__ENV__.module}.#{__ENV__.function |> elem(0)}:#{__ENV__.line}"
-    #     }
-    #     | list
-    #   ]
-    # end)
-
     Intake.push(event)
 
     Registry.dispatch(__MODULE__, :all, fn entries ->
@@ -47,17 +36,6 @@ defmodule Cizen.Dispatcher do
     Registry.dispatch(__MODULE__, event.body, fn entries ->
       for {pid, :ok} <- entries, do: send(pid, event)
     end)
-
-    # Agent.update(:trace, fn list ->
-    #   [
-    #     %{
-    #       event: event,
-    #       time: NaiveDateTime.utc_now(),
-    #       message: "#{__ENV__.module}.#{__ENV__.function |> elem(0)}:#{__ENV__.line}"
-    #     }
-    #     | list
-    #   ]
-    # end)
   end
 
   @doc """
