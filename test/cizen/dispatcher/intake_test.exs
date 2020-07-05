@@ -17,7 +17,8 @@ defmodule Cizen.Dispatcher.IntakeTest do
   test "pushes an event to root node" do
     event = Event.new(nil, %TestEvent{})
 
-    GenServer.whereis(Node)
+    Node
+    |> GenServer.whereis()
     |> :erlang.trace(true, [:receive])
 
     Intake.push(event)

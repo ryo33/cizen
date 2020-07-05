@@ -1,4 +1,5 @@
 defmodule Cizen.Dispatcher.Node do
+  @moduledoc false
   use GenServer
 
   alias Cizen.Dispatcher.Sender
@@ -12,20 +13,6 @@ defmodule Cizen.Dispatcher.Node do
 
   def start_link do
     GenServer.start_link(__MODULE__, :ok)
-  end
-
-  def expand(node) do
-    :sys.get_state(node)
-    |> update_in([:operations], fn operations ->
-      Enum.reduce(operations, operations, fn {operation, _}, operations ->
-        operations
-        |> update_in([operation], fn nodes ->
-          Enum.reduce(nodes, nodes, fn {value, child}, nodes ->
-            update_in(nodes, [value], fn _ -> expand(child) end)
-          end)
-        end)
-      end)
-    end)
   end
 
   @spec push(GenServer.server(), pid, Event.t()) :: :ok
@@ -88,6 +75,9 @@ defmodule Cizen.Dispatcher.Node do
       Enum.map(state.operations, fn {operation, nodes} ->
         Map.get(nodes, Filter.eval(operation, event), [])
       end)
+
+    following_nodes =
+      following_nodes
       |> List.flatten()
       |> Enum.uniq()
 

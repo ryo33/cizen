@@ -70,7 +70,7 @@ defmodule Cizen.Performance.DispatcherTest do
 
       Enum.each(subscribers, &Process.exit(&1, :kill))
 
-      links = Process.info(pid) |> Keyword.get(:links) |> length
+      links = pid |> Process.info() |> Keyword.get(:links) |> length
 
       IO.puts(
         "#{Process.get(:count)} subscriber(s) #{inspect(time / 1000)} milliseconds (#{num} subscriber(s)) (#{
@@ -87,7 +87,7 @@ defmodule Cizen.Performance.DispatcherTest do
     0..0
     |> Enum.map(fn e ->
       for _ <- 1..1 do
-        num = :math.pow(10, e) |> round()
+        num = round(:math.pow(10, e))
         time = dispatch.(num)
         # log_order = bias + :math.log(num) / :math.log(base_of_log)
         # assert time < log_order

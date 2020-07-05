@@ -13,8 +13,8 @@ defmodule Cizen.Effects.Subscribe do
   @enforce_keys [:event_filter]
   defstruct [:event_filter]
 
-  alias Cizen.Effect
   alias Cizen.Dispatcher
+  alias Cizen.Effect
 
   use Effect
 

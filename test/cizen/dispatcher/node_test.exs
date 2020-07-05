@@ -13,6 +13,22 @@ defmodule Cizen.Dispatcher.NodeTest do
     to
   end
 
+  defp expand_node(node) do
+    node
+    |> :sys.get_state()
+    |> update_in([:operations], fn operations ->
+      Enum.reduce(operations, operations, fn {operation, _}, operations ->
+        update_in(operations[operation], &expand_operation_nodes(&1))
+      end)
+    end)
+  end
+
+  defp expand_operation_nodes(nodes) do
+    Enum.reduce(nodes, nodes, fn {value, child}, nodes ->
+      update_in(nodes, [value], fn _ -> expand_node(child) end)
+    end)
+  end
+
   describe "push" do
     test "pushes an event to following nodes" do
       event = "a"
@@ -24,7 +40,8 @@ defmodule Cizen.Dispatcher.NodeTest do
       Node.put(node, code, subscriber)
 
       following_node =
-        :sys.get_state(node)
+        node
+        |> :sys.get_state()
         |> get_in([:operations, {:access, []}, "a"])
 
       :erlang.trace(following_node, true, [:receive])
@@ -44,7 +61,8 @@ defmodule Cizen.Dispatcher.NodeTest do
       Node.put(node, code, subscriber)
 
       following_node =
-        :sys.get_state(node)
+        node
+        |> :sys.get_state()
         |> get_in([:operations, {:access, []}, "a"])
 
       :erlang.trace(sender, true, [:receive])
@@ -175,11 +193,11 @@ defmodule Cizen.Dispatcher.NodeTest do
 
     Node.put(node, true, subscriber1)
     Node.put(node, true, subscriber2)
-    assert %{subscribers: ^before_set} = Node.expand(node)
+    assert %{subscribers: ^before_set} = expand_node(node)
     :erlang.trace(node, true, [:receive])
     Process.exit(subscriber1, :kill)
     assert_receive {:trace, _, _, {:DOWN, _, _, ^subscriber1, _}}
-    assert %{subscribers: ^after_set} = Node.expand(node)
+    assert %{subscribers: ^after_set} = expand_node(node)
   end
 
   test "deletes operation value when the next node downed" do
@@ -191,7 +209,8 @@ defmodule Cizen.Dispatcher.NodeTest do
     Node.put(node, code, subscriber2)
 
     get_a_node = fn ->
-      :sys.get_state(node)
+      node
+      |> :sys.get_state()
       |> get_in([:operations, {:access, []}, "a"])
     end
 
@@ -208,7 +227,8 @@ defmodule Cizen.Dispatcher.NodeTest do
     Node.put(node, code, subscriber)
 
     get_operation = fn ->
-      :sys.get_state(node)
+      node
+      |> :sys.get_state()
       |> get_in([:operations, {:access, []}])
     end
 
