@@ -82,6 +82,23 @@ defmodule Cizen.Dispatcher.SenderTest do
     assert_receive {:trace, ^subscriber, :receive, ^event}
   end
 
+  test "sender does not send event to subscribers when no node is waiting yet", %{
+    some_event: event,
+    subscriber1: subscriber
+  } do
+    {:ok, preceding} = Sender.start_link(event)
+    {:ok, sender} = Sender.start_link(event)
+    {:ok, node} = Node.start_link()
+    Sender.register_preceding(sender, preceding)
+
+    refute_receive {:trace, ^subscriber, :receive, ^event}
+    GenServer.stop(preceding)
+    refute_receive {:trace, ^subscriber, :receive, ^event}
+    Sender.wait_node(sender, node)
+    Sender.put_subscribers_and_following_nodes(sender, node, [subscriber], [])
+    assert_receive {:trace, ^subscriber, :receive, ^event}
+  end
+
   test "sender exits", %{some_event: event} do
     {:ok, sender} = Sender.start_link(event)
     {:ok, node} = Node.start_link()

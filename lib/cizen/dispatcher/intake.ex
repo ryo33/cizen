@@ -7,9 +7,9 @@ defmodule Cizen.Dispatcher.Intake do
     GenServer.start_link(__MODULE__, nil, name: __MODULE__)
   end
 
-  def push(intake \\ __MODULE__, event) do
+  def push(event) do
     {:ok, sender} = Sender.start_link(event)
-    preceding = GenServer.call(intake, {:push, sender})
+    preceding = GenServer.call(__MODULE__, {:push, sender})
     Sender.register_preceding(sender, preceding)
     Sender.wait_node(sender, Node)
     Node.push(sender, event)

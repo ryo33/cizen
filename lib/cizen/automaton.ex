@@ -121,6 +121,7 @@ defmodule Cizen.Automaton do
 
   defp do_yield(module, id, state) do
     Dispatcher.dispatch(Event.new(id, %Yield{state: state}))
+
     case state do
       @finish ->
         Dispatcher.dispatch(Event.new(id, %Saga.Finish{id: id}))
