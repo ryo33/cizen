@@ -1,69 +1,28 @@
 defmodule Cizen.Dispatcher.IntakeTest do
-  use ExUnit.Case, async: false
+  use ExUnit.Case
 
-  import Mock
-
-  alias Cizen.Dispatcher.{Intake, Sender, Node}
+  alias Cizen.Dispatcher.{Intake, Node}
   alias Cizen.Event
 
   defmodule(TestEvent, do: defstruct([]))
 
-  setup_with_mocks([
-    {
-      Sender,
-      [:passthrough],
-      [
-        wait_node: fn _, _ -> :ok end,
-        put_event: fn _, _ -> :ok end
-      ]
-    },
-    {
-      Node,
-      [:passthrough],
-      [
-        push: fn _, _, _ -> :ok end
-      ]
-    }
-  ]) do
+  test "starts sender with event" do
     event = Event.new(nil, %TestEvent{})
-    %{some_event: event}
+    {:ok, intake} = GenServer.start_link(Intake, nil)
+    Intake.push(intake, event)
+    sender = :sys.get_state(intake)
+
+    assert %{event: ^event} = :sys.get_state(sender)
   end
 
-  test "starts sender with nil for first time of starting" do
-    GenServer.start_link(Intake, :ok, name: TestIntake)
+  test "pushes an event to root node" do
+    event = Event.new(nil, %TestEvent{})
+    {:ok, intake} = GenServer.start_link(Intake, nil)
 
-    :timer.sleep(10)
-    assert_called(Sender.start_link(nil))
-  end
+    GenServer.whereis(Node)
+    |> :erlang.trace(true, [:receive])
 
-  test "starts sender with preceding one for second or later", %{some_event: event} do
-    Intake.start_link()
-    %{sender: preceding} = :sys.get_state(Intake)
-    Intake.push(event)
-
-    :timer.sleep(10)
-    assert_called(Sender.start_link(preceding))
-  end
-
-  test "pushes an event to root node", %{some_event: event} do
-    Intake.start_link()
-    %{sender: sender} = :sys.get_state(Intake)
-    Intake.push(event)
-
-    :timer.sleep(10)
-    assert_called(Node.push(sender, event))
-  end
-
-  test "sends root node and event to sender before pushing an event to root node", %{
-    some_event: event
-  } do
-    Intake.start_link()
-    %{sender: sender} = :sys.get_state(Intake)
-    Intake.push(event)
-
-    :timer.sleep(10)
-    assert_called(Sender.put_event(sender, event))
-    assert_called(Sender.wait_node(sender, Node))
-    assert_called(Node.push(sender, event))
+    Intake.push(intake, event)
+    assert_receive {:trace, _, _, {:"$gen_cast", {:push, _, _, ^event}}}
   end
 end

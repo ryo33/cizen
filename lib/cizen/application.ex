@@ -9,10 +9,6 @@ defmodule Cizen.Application do
     children = [
       # Starts a worker by calling: Cizen.Worker.start_link(arg)
       %{
-        id: :trace,
-        start: {Agent, :start_link, [fn -> [] end, [name: :trace]]}
-      },
-      %{
         id: Cizen.Dispatcher,
         start: {Cizen.Dispatcher, :start_link, []}
       },

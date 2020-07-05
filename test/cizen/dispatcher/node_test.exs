@@ -1,7 +1,5 @@
 defmodule Cizen.Dispatcher.NodeTest do
-  use ExUnit.Case, async: false
-
-  import Mock
+  use ExUnit.Case
 
   alias Cizen.Dispatcher.{Node, Sender}
   alias Cizen.Filter
@@ -10,63 +8,53 @@ defmodule Cizen.Dispatcher.NodeTest do
 
   defmodule(TestEvent, do: defstruct([]))
 
-  setup_with_mocks([
-    {
-      Sender,
-      [:passthrough],
-      [
-        init: fn _ -> {:ok, nil} end,
-        put_subscribers_and_following_nodes: fn _, _, _, _ -> :ok end
-      ]
-    },
-    {Node, [:passthrough], []}
-  ]) do
-    :ok
+  defp assert_gen_cast_from(from, message) do
+    assert_receive {:trace, ^from, :send, {:"$gen_cast", ^message}, to}
+    to
   end
 
   describe "push" do
     test "pushes an event to following nodes" do
+      event = "a"
       subscriber = self()
-      {:ok, sender} = Sender.start_link(nil)
+      {:ok, sender} = Sender.start_link(event)
       {:ok, node} = Node.start_link()
 
       %{code: code} = Filter.new(fn a -> a == "a" or a == "b" end)
-      event = "a"
       Node.put(node, code, subscriber)
-      Node.push(node, sender, event)
-
-      :timer.sleep(10)
 
       following_node =
         :sys.get_state(node)
         |> get_in([:operations, {:access, []}, "a"])
 
-      assert_called(Node.push(following_node, sender, event))
+      :erlang.trace(following_node, true, [:receive])
+      Node.push(node, sender, event)
+
+      assert_receive {:trace, _, _, {:"$gen_cast", {:push, _, _, ^event}}}
     end
 
     test "sends subscribers and following nodes to sender before pushing an event to following nodes" do
+      event = "a"
       subscriber = self()
-      {:ok, sender} = Sender.start_link(nil)
+      {:ok, sender} = Sender.start_link(event)
       {:ok, node} = Node.start_link()
 
       %{code: code} = Filter.new(fn a -> a == "a" or a == "b" end)
-      event = "a"
+      Node.put(node, true, subscriber)
       Node.put(node, code, subscriber)
-      Node.push(node, sender, event)
-
-      :timer.sleep(10)
 
       following_node =
         :sys.get_state(node)
         |> get_in([:operations, {:access, []}, "a"])
 
-      assert_called(
-        Sender.put_subscribers_and_following_nodes(sender, node, [], [following_node])
-      )
+      :erlang.trace(sender, true, [:receive])
+      :erlang.trace(following_node, true, [:receive])
+      Node.push(node, sender, event)
 
-      assert_called(
-        Sender.put_subscribers_and_following_nodes(sender, following_node, [subscriber], [])
-      )
+      assert_receive {:trace, ^sender, _,
+                      {:"$gen_cast", {:update, [^node], [^subscriber], [^following_node]}}}
+
+      assert_receive {:trace, ^following_node, _, {:"$gen_cast", {:push, _, _, ^event}}}
     end
   end
 
@@ -74,77 +62,71 @@ defmodule Cizen.Dispatcher.NodeTest do
     test "put true" do
       subscriber = self()
       {:ok, node} = Node.start_link()
+
       Node.put(node, true, subscriber)
 
-      actual = :sys.get_state(node)
+      subscribers = MapSet.new([subscriber])
 
-      expected = %{
-        operations: %{},
-        subscribers: MapSet.new([subscriber])
-      }
-
-      assert expected.operations == actual.operations
-      assert expected.subscribers == actual.subscribers
+      assert %{
+               operations: %{},
+               subscribers: ^subscribers
+             } = :sys.get_state(node)
     end
 
     test "put operation" do
       subscriber = self()
       {:ok, node} = Node.start_link()
+      :erlang.trace(node, true, [:send])
 
-      with_mock Node, [:passthrough], [] do
-        Node.put(node, {:<>, ["a", "b"]}, subscriber)
+      Node.put(node, {:<>, ["a", "b"]}, subscriber)
 
-        :timer.sleep(10)
-        assert_called(Node.handle_cast({:run, {:put_subscriber, subscriber}}, :_))
-      end
+      assert_gen_cast_from(node, {:run, {:put_subscriber, subscriber}})
     end
 
     test "put :==" do
       subscriber = self()
       {:ok, node} = Node.start_link()
+      :erlang.trace(node, true, [:send])
 
-      with_mock Node, [:passthrough], [] do
-        Node.put(node, {:==, [{:access, [:key]}, "a"]}, subscriber)
-
-        :timer.sleep(10)
-        assert_called(Node.handle_cast({:run, {:put_subscriber, subscriber}}, :_))
-      end
+      Node.put(node, {:==, [{:access, [:key]}, "a"]}, subscriber)
+      assert_gen_cast_from(node, {:run, {:put_subscriber, subscriber}})
     end
 
     test "put not" do
       subscriber = self()
       {:ok, node} = Node.start_link()
+      :erlang.trace(node, true, [:send])
 
-      with_mock Node, [:passthrough], [] do
-        Node.put(node, {:not, [{:access, [:key]}]}, subscriber)
-
-        :timer.sleep(10)
-        assert_called(Node.handle_cast({:run, {:put_subscriber, subscriber}}, :_))
-      end
+      Node.put(node, {:not, [{:access, [:key]}]}, subscriber)
+      assert_gen_cast_from(node, {:run, {:put_subscriber, subscriber}})
     end
 
     test "put and" do
       subscriber = self()
       {:ok, node} = Node.start_link()
+      :erlang.trace(node, true, [:send])
 
-      with_mock Node, [:passthrough], [] do
-        Node.put(node, {:and, ["a", {:and, ["b", "c"]}]}, subscriber)
+      Node.put(node, {:and, ["a", {:and, ["b", "c"]}]}, subscriber)
 
-        :timer.sleep(10)
-        assert_called(Node.handle_cast({:run, {:put_subscriber, subscriber}}, :_))
-      end
+      a_node =
+        assert_gen_cast_from(
+          node,
+          {:run, {:update, {:and, ["b", "c"]}, {:put_subscriber, subscriber}}}
+        )
+
+      :erlang.trace(a_node, true, [:send])
+      b_node = assert_gen_cast_from(a_node, {:run, {:update, "c", {:put_subscriber, subscriber}}})
+      :erlang.trace(b_node, true, [:send])
+      assert_gen_cast_from(b_node, {:run, {:put_subscriber, subscriber}})
     end
 
     test "put or" do
       subscriber = self()
       {:ok, node} = Node.start_link()
+      :erlang.trace(node, true, [:send])
 
-      with_mock Node, [:passthrough], [] do
-        Node.put(node, {:or, ["a", {:or, ["b", "c"]}]}, subscriber)
-
-        :timer.sleep(10)
-        assert_called(Node.handle_cast({:run, {:put_subscriber, subscriber}}, :_))
-      end
+      Node.put(node, {:or, ["a", {:or, ["b", "c"]}]}, subscriber)
+      assert_gen_cast_from(node, {:run, {:put_subscriber, subscriber}})
     end
   end
 
@@ -169,14 +151,11 @@ defmodule Cizen.Dispatcher.NodeTest do
     test "delete operation" do
       subscriber = self()
       {:ok, node} = Node.start_link()
+      :erlang.trace(node, true, [:send])
 
-      with_mock Node, [:passthrough], [] do
-        Node.put(node, {:<>, ["a", "b"]}, subscriber)
-        Node.delete(node, {:<>, ["a", "b"]}, subscriber)
-
-        :timer.sleep(10)
-        assert_called(Node.handle_cast({:run, {:delete_subscriber, subscriber}}, :_))
-      end
+      Node.put(node, {:<>, ["a", "b"]}, subscriber)
+      Node.delete(node, {:<>, ["a", "b"]}, subscriber)
+      assert_gen_cast_from(node, {:run, {:delete_subscriber, subscriber}})
     end
   end
 
@@ -197,7 +176,9 @@ defmodule Cizen.Dispatcher.NodeTest do
     Node.put(node, true, subscriber1)
     Node.put(node, true, subscriber2)
     assert %{subscribers: ^before_set} = Node.expand(node)
-    send(subscriber1, :stop)
+    :erlang.trace(node, true, [:receive])
+    Process.exit(subscriber1, :kill)
+    assert_receive {:trace, _, _, {:DOWN, _, _, ^subscriber1, _}}
     assert %{subscribers: ^after_set} = Node.expand(node)
   end
 
