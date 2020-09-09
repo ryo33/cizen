@@ -5,22 +5,44 @@ defmodule Cizen.Dispatcher.Intake do
   alias Cizen.Dispatcher.{Node, Sender}
 
   def start_link do
-    GenServer.start_link(__MODULE__, nil, name: __MODULE__)
+    sender_count = 100
+
+    senders =
+      1..sender_count
+      |> Enum.map(fn i ->
+        next_sender = :"#{Sender}_#{(i + 1) |> rem(sender_count)}"
+        sender = :"#{Sender}_#{i}"
+        {:ok, _} = Sender.start_link(root_node: Node, next_sender: next_sender, name: sender)
+        sender
+      end)
+
+    first = List.first(senders)
+    Sender.allow_to_send(first)
+
+    GenServer.start_link(__MODULE__, senders, name: __MODULE__)
   end
 
   def push(event) do
-    {:ok, sender} = Sender.start_link(event)
-    preceding = GenServer.call(__MODULE__, {:push, sender})
-    Sender.register_preceding(sender, preceding)
-    Sender.wait_node(sender, Node)
-    Node.push(sender, event)
+    GenServer.call(__MODULE__, :push)
+    |> Sender.push(event)
   end
 
-  def init(_) do
-    {:ok, nil}
+  def init(senders) do
+    state = %{
+      senders: List.to_tuple(senders),
+      index: 0
+    }
+
+    {:ok, state}
   end
 
-  def handle_call({:push, sender}, _from, preceding) do
-    {:reply, preceding, sender}
+  def handle_call(:push, _from, state) do
+    %{senders: senders, index: index} = state
+
+    sender = elem(senders, index)
+
+    state = %{state | index: (index + 1) |> rem(tuple_size(senders))}
+
+    {:reply, sender, state}
   end
 end
