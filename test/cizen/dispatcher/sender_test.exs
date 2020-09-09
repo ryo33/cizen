@@ -38,7 +38,7 @@ defmodule Cizen.Dispatcher.SenderTest do
     {:ok, root_node} = Node.start_link()
     {:ok, leaf_node} = Node.start_link()
     Sender.register_preceding(sender, nil)
-    Sender.wait_node(sender, root_node)
+    Sender.push(sender, root_node)
 
     refute_receive {:trace, ^subscriber1, :receive, ^event}
     refute_receive {:trace, ^subscriber2, :receive, ^event}
@@ -58,7 +58,7 @@ defmodule Cizen.Dispatcher.SenderTest do
     {:ok, sender} = Sender.start_link(event)
     {:ok, node} = Node.start_link()
     Sender.register_preceding(sender, preceding)
-    Sender.wait_node(sender, node)
+    Sender.push(sender, node)
 
     Sender.put_subscribers_and_following_nodes(sender, node, [subscriber], [])
     refute_receive {:trace, ^subscriber, :receive, ^event}
@@ -74,7 +74,7 @@ defmodule Cizen.Dispatcher.SenderTest do
     {:ok, root_node} = Node.start_link()
     {:ok, leaf_node} = Node.start_link()
     Sender.register_preceding(sender, nil)
-    Sender.wait_node(sender, root_node)
+    Sender.push(sender, root_node)
 
     Sender.put_subscribers_and_following_nodes(sender, root_node, [subscriber], [leaf_node])
     refute_receive {:trace, ^subscriber, :receive, ^event}
@@ -94,7 +94,7 @@ defmodule Cizen.Dispatcher.SenderTest do
     refute_receive {:trace, ^subscriber, :receive, ^event}
     GenServer.stop(preceding)
     refute_receive {:trace, ^subscriber, :receive, ^event}
-    Sender.wait_node(sender, node)
+    Sender.push(sender, node)
     Sender.put_subscribers_and_following_nodes(sender, node, [subscriber], [])
     assert_receive {:trace, ^subscriber, :receive, ^event}
   end
@@ -104,7 +104,7 @@ defmodule Cizen.Dispatcher.SenderTest do
     {:ok, node} = Node.start_link()
     Process.monitor(sender)
     Sender.register_preceding(sender, nil)
-    Sender.wait_node(sender, node)
+    Sender.push(sender, node)
 
     refute_receive {:DOWN, _, _, _, _}
     Sender.put_subscribers_and_following_nodes(sender, node, [], [])
