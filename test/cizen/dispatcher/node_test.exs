@@ -1,7 +1,7 @@
 defmodule Cizen.Dispatcher.NodeTest do
   use ExUnit.Case
 
-  alias Cizen.Dispatcher.{Node, Sender}
+  alias Cizen.Dispatcher.Node
   alias Cizen.Filter
 
   require Filter
@@ -33,8 +33,8 @@ defmodule Cizen.Dispatcher.NodeTest do
     test "pushes an event to following nodes" do
       event = "a"
       subscriber = self()
-      {:ok, sender} = Sender.start_link(event)
       {:ok, node} = Node.start_link()
+      sender = spawn_link(fn -> loop() end)
 
       %{code: code} = Filter.new(fn a -> a == "a" or a == "b" end)
       Node.put(node, code, subscriber)
@@ -53,8 +53,8 @@ defmodule Cizen.Dispatcher.NodeTest do
     test "sends subscribers and following nodes to sender before pushing an event to following nodes" do
       event = "a"
       subscriber = self()
-      {:ok, sender} = Sender.start_link(event)
       {:ok, node} = Node.start_link()
+      sender = spawn_link(fn -> loop() end)
 
       %{code: code} = Filter.new(fn a -> a == "a" or a == "b" end)
       Node.put(node, true, subscriber)
@@ -70,7 +70,7 @@ defmodule Cizen.Dispatcher.NodeTest do
       Node.push(node, sender, event)
 
       assert_receive {:trace, ^sender, _,
-                      {:"$gen_cast", {:update, [^node], [^subscriber], [^following_node]}}}
+                      {:"$gen_cast", {:update, ^node, [^subscriber], [^following_node]}}}
 
       assert_receive {:trace, ^following_node, _, {:"$gen_cast", {:push, _, _, ^event}}}
     end
@@ -258,5 +258,11 @@ defmodule Cizen.Dispatcher.NodeTest do
 
     send(subscriber, :stop)
     assert_receive {:DOWN, _, _, ^node, _}
+  end
+
+  defp loop do
+    receive do
+      _ -> loop()
+    end
   end
 end

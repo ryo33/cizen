@@ -1,5 +1,5 @@
 defmodule Cizen.CrashLoggerTest do
-  use Cizen.SagaCase
+  use Cizen.SagaCase, async: false
   import ExUnit.CaptureLog
   alias Cizen.TestHelper
 
@@ -31,9 +31,9 @@ defmodule Cizen.CrashLoggerTest do
     output =
       capture_log(fn ->
         Dispatcher.dispatch(Event.new(nil, %CrashTestEvent{}))
+        :timer.sleep(100)
         require Logger
         Logger.flush()
-        :timer.sleep(50)
       end)
 
     assert output =~ "saga #{saga_id} is crashed"
