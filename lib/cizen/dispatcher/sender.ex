@@ -49,7 +49,7 @@ defmodule Cizen.Dispatcher.Sender do
     case :queue.out(queue) do
       {{:value, event}, queue} ->
         state = %{state | event: event, event_queue: queue}
-        Node.push(state.name, event)
+        Node.push(state.root_node, state.name, event)
         {:noreply, state}
 
       _ ->

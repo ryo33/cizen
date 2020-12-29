@@ -5,7 +5,7 @@ defmodule Cizen.Dispatcher.Intake do
   alias Cizen.Dispatcher.{Node, Sender}
 
   def start_link do
-    sender_count = 100
+    sender_count = System.schedulers_online() * 2
 
     senders =
       1..sender_count
