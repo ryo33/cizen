@@ -14,8 +14,8 @@ defmodule Cizen.Dispatcher do
 
   @doc false
   def start_link do
+    Node.initialize()
     Registry.start_link(keys: :duplicate, name: __MODULE__)
-    Intake.start_link()
   end
 
   @doc """
@@ -23,8 +23,6 @@ defmodule Cizen.Dispatcher do
   """
   @spec dispatch(Event.t()) :: :ok
   def dispatch(event) do
-    Intake.push(event)
-
     Registry.dispatch(__MODULE__, :all, fn entries ->
       for {pid, :ok} <- entries, do: send(pid, event)
     end)
@@ -36,6 +34,9 @@ defmodule Cizen.Dispatcher do
     Registry.dispatch(__MODULE__, event.body, fn entries ->
       for {pid, :ok} <- entries, do: send(pid, event)
     end)
+
+    Node.push(Node, event)
+    |> Enum.each(&send(&1, event))
   end
 
   @doc """
