@@ -25,7 +25,7 @@ defmodule Cizen.SagaLauncherTest do
       })
     )
 
-    assert_receive {:ok, saga_id}
+    assert_receive {:ok, ^saga_id}
   end
 
   test "SagaLauncher.UnlaunchSaga event" do

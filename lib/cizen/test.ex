@@ -60,7 +60,7 @@ defmodule Cizen.Test do
 
   The default value of the timeout is 1000.
   """
-  defmacro assert_handle(timeout \\ 1000, func) do
+  defmacro assert_handle(timeout \\ 2000, func) do
     quote bind_quoted: [timeout: timeout, func: func] do
       import Cizen.Effectful, only: [handle: 1]
       current = self()

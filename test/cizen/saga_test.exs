@@ -45,7 +45,7 @@ defmodule Cizen.SagaTest do
       Dispatcher.listen_event_type(Saga.Ended)
       id = launch_test_saga()
       Dispatcher.dispatch(Event.new(nil, %SagaLauncher.UnlaunchSaga{id: id}))
-      assert_receive %Event{body: %Saga.Ended{id: id}}
+      assert_receive %Event{body: %Saga.Ended{id: ^id}}
     end
 
     defmodule(CrashTestEvent1, do: defstruct([]))
@@ -130,7 +130,7 @@ defmodule Cizen.SagaTest do
         )
 
       Dispatcher.dispatch(Event.new(nil, %TestEvent{value: id}))
-      assert_receive %Event{body: %TestEventReply{value: id}}
+      assert_receive %Event{body: %TestEventReply{value: ^id}}
     end
 
     test "finishes immediately" do
@@ -264,7 +264,7 @@ defmodule Cizen.SagaTest do
   describe "Saga.get_pid/1" do
     test "launched saga is registered" do
       id = launch_test_saga()
-      assert {:ok, pid} = Saga.get_pid(id)
+      assert {:ok, _pid} = Saga.get_pid(id)
     end
 
     test "killed saga is unregistered" do
