@@ -43,9 +43,7 @@ defmodule Cizen.Dispatcher.NodeTest do
     end
 
     test "put operation" do
-      # subscriber = self()
       # {:ok, node} = Node.start_link()
-      # :erlang.trace(node, true, [:send])
 
       # Node.put(node, {:<>, ["a", "b"]}, subscriber)
 
@@ -53,12 +51,18 @@ defmodule Cizen.Dispatcher.NodeTest do
     end
 
     test "put :==" do
-      # subscriber = self()
-      # {:ok, node} = Node.start_link()
-      # :erlang.trace(node, true, [:send])
+      subscriber = self()
+      {:ok, node} = Node.start_link()
 
-      # Node.put(node, {:==, [{:access, [:key]}, "a"]}, subscriber)
-      # assert_gen_cast_from(node, {:run, {:put_subscriber, subscriber}})
+      Node.put(node, {:==, [{:access, [:key]}, "a"]}, subscriber)
+
+      assert %{
+               {:access, [:key]} => %{
+                 "a" => next_node
+               }
+             } = :sys.get_state(node).operations
+
+      assert :sys.get_state(next_node).subscribers == MapSet.new([subscriber])
     end
 
     test "put not" do
@@ -130,13 +134,13 @@ defmodule Cizen.Dispatcher.NodeTest do
 
   test "deletes the subscriber from subscribers when it downed" do
     subscriber1 =
-      spawn(fn ->
+      spawn_link(fn ->
         receive do
           :stop -> :ok
         end
       end)
 
-    subscriber2 = spawn(fn -> :timer.sleep(:infinity) end)
+    subscriber2 = spawn_link(fn -> :timer.sleep(:infinity) end)
 
     {:ok, node} = Node.start_link()
     before_set = MapSet.new([subscriber1, subscriber2])
@@ -146,18 +150,23 @@ defmodule Cizen.Dispatcher.NodeTest do
     Node.put(node, true, subscriber2)
     assert %{subscribers: ^before_set} = expand_node(node)
     :erlang.trace(node, true, [:receive])
-    Process.exit(subscriber1, :kill)
+    send(subscriber1, :stop)
     assert_receive {:trace, _, _, {:DOWN, _, _, ^subscriber1, _}}
     assert %{subscribers: ^after_set} = expand_node(node)
   end
 
   test "deletes operation value when the next node downed" do
-    subscriber1 = spawn(fn -> :timer.sleep(:infinity) end)
-    subscriber2 = spawn(fn -> :timer.sleep(:infinity) end)
+    subscriber =
+      spawn_link(fn ->
+        receive do
+          :stop -> :ok
+        end
+      end)
+
     {:ok, node} = Node.start_link()
-    %{code: code} = Filter.new(fn a -> a == "a" or a == "b" end)
-    Node.put(node, code, subscriber1)
-    Node.put(node, code, subscriber2)
+    %{code: code} = Filter.new(fn a -> a == "a" end)
+
+    Node.put(node, code, subscriber)
 
     get_a_node = fn ->
       node
@@ -165,17 +174,32 @@ defmodule Cizen.Dispatcher.NodeTest do
       |> get_in([:operations, {:access, []}, "a"])
     end
 
-    a_node = get_a_node.()
-    GenServer.stop(a_node)
-    assert nil == get_a_node.()
+    assert not is_nil(get_a_node.())
+    Node.delete(node, code, subscriber)
+    :timer.sleep(100)
+    assert is_nil(get_a_node.())
   end
 
   test "deletes operation when all operation value have deleted" do
-    subscriber = spawn(fn -> :timer.sleep(:infinity) end)
+    subscriber1 =
+      spawn_link(fn ->
+        receive do
+          :stop -> :ok
+        end
+      end)
+
+    subscriber2 =
+      spawn_link(fn ->
+        receive do
+          :stop -> :ok
+        end
+      end)
+
     {:ok, node} = Node.start_link()
-    %{code: code} = Filter.new(fn a -> a == "a" or a == "b" end)
-    Node.put(node, true, subscriber)
-    Node.put(node, code, subscriber)
+    %{code: code1} = Filter.new(fn a -> a == "a" end)
+    %{code: code2} = Filter.new(fn a -> a == "b" end)
+    Node.put(node, code1, subscriber1)
+    Node.put(node, code2, subscriber2)
 
     get_operation = fn ->
       node
@@ -183,19 +207,62 @@ defmodule Cizen.Dispatcher.NodeTest do
       |> get_in([:operations, {:access, []}])
     end
 
-    get_next_node = fn key ->
-      get_in(get_operation.(), [key])
-    end
-
     assert %{} = get_operation.()
-    GenServer.stop(get_next_node.("a"))
-    GenServer.stop(get_next_node.("b"))
+
+    send(subscriber1, :stop)
+    :timer.sleep(100)
+    assert %{} = get_operation.()
+
+    send(subscriber2, :stop)
+    :timer.sleep(100)
     assert nil == get_operation.()
   end
 
-  test "exits if all subscribers have downed and operations is empty" do
+  test "exits when all subscribers have downed and operations is empty" do
     subscriber =
-      spawn(fn ->
+      spawn_link(fn ->
+        receive do
+          :stop -> :ok
+        end
+      end)
+
+    {:ok, parent_node} = Node.start_link()
+    {:ok, node} = Node.start_link(parent_node)
+    Process.monitor(node)
+    %{code: code} = Filter.new(fn a -> a == "a" end)
+    Node.put(node, code, subscriber)
+
+    send(subscriber, :stop)
+    assert_receive {:DOWN, _, _, ^node, _}
+    assert :ets.lookup(Node, node) == []
+  end
+
+  test "deletes a reference from parent node after exit" do
+    subscriber =
+      spawn_link(fn ->
+        receive do
+          :stop -> :ok
+        end
+      end)
+
+    {:ok, parent_node} = Node.start_link()
+    %{code: code} = Filter.new(fn a -> a == "a" end)
+    Node.put(parent_node, code, subscriber)
+    node = :sys.get_state(parent_node).operations[{:access, []}]["a"]
+    Process.monitor(node)
+
+    send(subscriber, :stop)
+
+    receive do
+      {:DOWN, _, _, ^node, _} -> :ok
+    end
+
+    assert :sys.get_state(parent_node).operations == %{}
+  end
+
+  test "does not exit if root even when all subscribers have downed and operations is empty" do
+    subscriber =
+      spawn_link(fn ->
         receive do
           :stop -> :ok
         end
@@ -203,11 +270,67 @@ defmodule Cizen.Dispatcher.NodeTest do
 
     {:ok, node} = Node.start_link()
     Process.monitor(node)
-    %{code: code} = Filter.new(fn a -> a == "a" or a == "b" end)
-    Node.put(node, true, subscriber)
+    %{code: code} = Filter.new(fn a -> a == "a" end)
     Node.put(node, code, subscriber)
 
     send(subscriber, :stop)
-    assert_receive {:DOWN, _, _, ^node, _}
+    refute_receive {:DOWN, _, _, ^node, _}
+  end
+
+  test "pushes an event without raise right after node stops" do
+    subscriber =
+      spawn_link(fn ->
+        receive do
+          :stop -> :ok
+        end
+      end)
+
+    {:ok, node} = Node.start_link()
+
+    %{code: code} = Filter.new(fn a -> a == "a" end)
+
+    Node.put(node, code, subscriber)
+
+    for _ <- 0..100 do
+      spawn_link(fn ->
+        for _ <- 0..100 do
+          Node.push(node, "a")
+        end
+      end)
+    end
+
+    spawn_link(fn ->
+      send(subscriber, :stop)
+    end)
+
+    :timer.sleep(100)
+  end
+
+  test "puts a subscription without raise right after node stops" do
+    subscriber =
+      spawn_link(fn ->
+        receive do
+          :stop -> :ok
+        end
+      end)
+
+    {:ok, node} = Node.start_link()
+
+    %{code: code} = Filter.new(fn a -> a == "a" end)
+    Node.put(node, code, subscriber)
+
+    for _ <- 0..100 do
+      spawn_link(fn ->
+        for _ <- 0..100 do
+          Node.put(node, code, subscriber)
+        end
+      end)
+    end
+
+    spawn_link(fn ->
+      send(subscriber, :stop)
+    end)
+
+    :timer.sleep(100)
   end
 end

@@ -14,26 +14,30 @@ defmodule Cizen.Dispatcher.Node do
     GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
   end
 
-  def start_link do
-    GenServer.start_link(__MODULE__, :ok)
+  def start_link(parent_node \\ nil) do
+    GenServer.start_link(__MODULE__, parent_node)
   end
 
   @spec push(GenServer.server(), Event.t()) :: MapSet.t(pid)
   def push(node, event) do
-    [{_, state}] = :ets.lookup(__MODULE__, GenServer.whereis(node))
+    case :ets.lookup(__MODULE__, GenServer.whereis(node)) do
+      [{_, state}] ->
+        following_nodes =
+          state.operations
+          |> Enum.map(fn {operation, nodes} ->
+            Map.get(nodes, Filter.eval(operation, event), [])
+          end)
+          |> List.flatten()
+          |> Enum.uniq()
 
-    following_nodes =
-      state.operations
-      |> Enum.map(fn {operation, nodes} ->
-        Map.get(nodes, Filter.eval(operation, event), [])
-      end)
-      |> List.flatten()
-      |> Enum.uniq()
+        Enum.reduce(following_nodes, state.subscribers, fn following_node, subscribers ->
+          __MODULE__.push(following_node, event)
+          |> MapSet.union(subscribers)
+        end)
 
-    Enum.reduce(following_nodes, state.subscribers, fn following_node, subscribers ->
-      __MODULE__.push(following_node, event)
-      |> MapSet.union(subscribers)
-    end)
+      [] ->
+        MapSet.new([])
+    end
   end
 
   @spec put(GenServer.server(), Code.t(), pid) :: :ok
@@ -82,12 +86,13 @@ defmodule Cizen.Dispatcher.Node do
   end
 
   defp update_operation(node, operation, value, next) do
-    next_node = GenServer.call(node, {:update_operation, operation, value})
-    run(next_node, next)
+    next_node = GenServer.call(node, {:update_operation, operation, value, next})
+    # run(next_node, next)
   end
 
-  def init(_) do
+  def init(parent_node) do
     state = %{
+      parent_node: parent_node,
       operations: %{},
       subscribers: MapSet.new(),
       monitors: %{}
@@ -97,37 +102,96 @@ defmodule Cizen.Dispatcher.Node do
     {:ok, state}
   end
 
-  def handle_info({:DOWN, ref, :process, downed_process, _}, state) do
-    {monitor, state} = pop_in(state, [:monitors, ref])
+  def handle_continue(:exit_if_empty, state) do
+    if not is_nil(state.parent_node) and empty?(state) do
+      GenServer.cast(state.parent_node, {:delete_node, self()})
+    end
 
-    state =
-      case monitor do
-        [:subscribers] ->
-          update_in(state.subscribers, &MapSet.delete(&1, downed_process))
+    {:noreply, state}
+  end
 
-        [:operations, operation, _value] = path ->
-          {_, state} = pop_in(state, path)
-
-          if Enum.empty?(state.operations[operation]) do
-            {_, state} = pop_in(state, [:operations, operation])
-            state
-          else
-            state
-          end
-      end
+  def handle_info({:DOWN, _ref, :process, downed_process, _}, state) do
+    state = update_in(state.subscribers, &MapSet.delete(&1, downed_process))
 
     sync(state)
 
     {:noreply, state, {:continue, :exit_if_empty}}
   end
 
-  def handle_continue(:exit_if_empty, state) do
-    if Enum.empty?(state.operations) and Enum.empty?(state.subscribers) do
-      {:stop, :normal, state}
+  def handle_cast({:delete_node, node}, state) do
+    if GenServer.call(node, :empty?) do
+      GenServer.stop(node, :normal)
+      {{operation, value}, state} = pop_in(state, [:monitors, node])
+
+      {_, state} = pop_in(state, [:operations, operation, value])
+
+      state =
+        if Enum.empty?(state.operations[operation]) do
+          {_, state} = pop_in(state, [:operations, operation])
+          state
+        else
+          state
+        end
+
+      sync(state)
+
+      {:noreply, state, {:continue, :exit_if_empty}}
     else
       {:noreply, state}
     end
+  catch
+    # We can believe here the node is stopped correctly previously.
+    :exit, _ ->
+      {:noreply, state}
   end
+
+  def handle_call(:empty?, _from, state), do: {:reply, empty?(state), state}
+
+  def handle_call({:put, subscriber}, _from, state) do
+    ref = Process.monitor(subscriber)
+
+    state
+    |> update_in([:subscribers], &MapSet.put(&1, subscriber))
+    |> put_in([:monitors, ref], :subscriber)
+    |> sync_and_reply()
+  end
+
+  def handle_call({:delete, subscriber}, _from, state) do
+    state = update_in(state.subscribers, &MapSet.delete(&1, subscriber))
+
+    sync(state)
+
+    {:reply, :ok, state, {:continue, :exit_if_empty}}
+  end
+
+  def handle_call({:update_operation, operation, value, next}, _from, state) do
+    values = Map.get(state.operations, operation, %{})
+
+    {next_node, monitor} =
+      case Map.get(values, value) do
+        nil ->
+          {:ok, node} = start_link(self())
+          {node, %{node => {operation, value}}}
+
+        node ->
+          {node, %{}}
+      end
+
+    # TODO: This causes full lock of node tree.
+    run(next_node, next)
+
+    state
+    |> put_in([:operations, operation], values)
+    |> update_in([:monitors], &Map.merge(&1, monitor))
+    |> put_in([:operations, operation, value], next_node)
+    |> sync_and_reply(next_node)
+  end
+
+  def terminate(_, _) do
+    :ets.delete(__MODULE__, self())
+  end
+
+  defp empty?(state), do: Enum.empty?(state.operations) and Enum.empty?(state.subscribers)
 
   defp sync(state) do
     :ets.insert(__MODULE__, {self(), Map.take(state, [:subscribers, :operations])})
@@ -136,41 +200,5 @@ defmodule Cizen.Dispatcher.Node do
   defp sync_and_reply(state, reply \\ :ok) do
     sync(state)
     {:reply, reply, state}
-  end
-
-  def handle_call({:put, subscriber}, _from, state) do
-    ref = Process.monitor(subscriber)
-
-    state
-    |> update_in([:subscribers], &MapSet.put(&1, subscriber))
-    |> put_in([:monitors, ref], [:subscribers])
-    |> sync_and_reply()
-  end
-
-  def handle_call({:delete, subscriber}, _from, state) do
-    update_in(state.subscribers, &MapSet.delete(&1, subscriber))
-    |> sync_and_reply()
-  end
-
-  def handle_call({:update_operation, operation, value}, _from, state) do
-    values = Map.get(state.operations, operation, %{})
-    next_node_path = [:operations, operation, value]
-
-    {next_node, monitor} =
-      case Map.get(values, value) do
-        nil ->
-          {:ok, node} = start_link()
-          ref = Process.monitor(node)
-          {node, %{ref => next_node_path}}
-
-        node ->
-          {node, %{}}
-      end
-
-    state
-    |> put_in([:operations, operation], values)
-    |> update_in([:monitors], &Map.merge(&1, monitor))
-    |> put_in(next_node_path, next_node)
-    |> sync_and_reply(next_node)
   end
 end
