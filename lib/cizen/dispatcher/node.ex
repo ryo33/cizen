@@ -42,52 +42,64 @@ defmodule Cizen.Dispatcher.Node do
 
   @spec put(GenServer.server(), Code.t(), pid) :: :ok
   def put(node \\ __MODULE__, code, subscriber) do
-    run(node, {:update, code, {:put, subscriber}})
+    run({node, self()}, {:update, code, {:put, subscriber}})
+
+    [:ok]
+    |> Stream.cycle()
+    |> Enum.reduce_while(0, fn :ok, additional_branches ->
+      receive do
+        :reached_to_end ->
+          if additional_branches == 0 do
+            {:halt, :ok}
+          else
+            {:cont, additional_branches - 1}
+          end
+
+        :added_new_branch ->
+          {:cont, additional_branches + 1}
+      end
+    end)
   end
 
-  @spec delete(GenServer.server(), Code.t(), pid) :: :ok
-  def delete(node \\ __MODULE__, code, subscriber) do
-    run(node, {:update, code, {:delete, subscriber}})
+  defp run(ctx, {:update, true, next}) do
+    run(ctx, next)
   end
 
-  defp run(node, {:update, true, next}) do
-    run(node, next)
-  end
-
-  defp run(node, {:update, {:==, [operation, value]}, next})
+  defp run(ctx, {:update, {:==, [operation, value]}, next})
        when not is_tuple(value) or tuple_size(value) != 2 do
-    update_operation(node, operation, value, next)
+    update_operation(ctx, operation, value, next)
   end
 
-  defp run(node, {:update, {:==, [value, operation]}, next})
+  defp run(ctx, {:update, {:==, [value, operation]}, next})
        when not is_tuple(value) or tuple_size(value) != 2 do
-    update_operation(node, operation, value, next)
+    update_operation(ctx, operation, value, next)
   end
 
-  defp run(node, {:update, {:not, [operation]}, next}) do
-    update_operation(node, operation, false, next)
+  defp run(ctx, {:update, {:not, [operation]}, next}) do
+    update_operation(ctx, operation, false, next)
   end
 
-  defp run(node, {:update, {:and, [left, right]}, next}) do
-    run(node, {:update, left, {:update, right, next}})
+  defp run(ctx, {:update, {:and, [left, right]}, next}) do
+    run(ctx, {:update, left, {:update, right, next}})
   end
 
-  defp run(node, {:update, {:or, [left, right]}, next}) do
-    run(node, {:update, left, next})
-    run(node, {:update, right, next})
+  defp run({_node, caller} = ctx, {:update, {:or, [left, right]}, next}) do
+    send(caller, :added_new_branch)
+    run(ctx, {:update, left, next})
+    run(ctx, {:update, right, next})
   end
 
-  defp run(node, {:update, operation, next}) do
-    update_operation(node, operation, true, next)
+  defp run(ctx, {:update, operation, next}) do
+    update_operation(ctx, operation, true, next)
   end
 
-  defp run(node, {op, _} = command) when op in [:put, :delete] do
-    :ok = GenServer.call(node, command)
+  defp run({node, caller}, {:put, subscriber}) do
+    GenServer.call(node, {:put, subscriber})
+    send(caller, :reached_to_end)
   end
 
-  defp update_operation(node, operation, value, next) do
-    next_node = GenServer.call(node, {:update_operation, operation, value, next})
-    # run(next_node, next)
+  defp update_operation({node, caller}, operation, value, next) do
+    GenServer.call(node, {:update_operation, operation, value, next, caller})
   end
 
   def init(parent_node) do
@@ -150,21 +162,17 @@ defmodule Cizen.Dispatcher.Node do
   def handle_call({:put, subscriber}, _from, state) do
     ref = Process.monitor(subscriber)
 
-    state
-    |> update_in([:subscribers], &MapSet.put(&1, subscriber))
-    |> put_in([:monitors, ref], :subscriber)
-    |> sync_and_reply()
-  end
-
-  def handle_call({:delete, subscriber}, _from, state) do
-    state = update_in(state.subscribers, &MapSet.delete(&1, subscriber))
+    state =
+      state
+      |> update_in([:subscribers], &MapSet.put(&1, subscriber))
+      |> put_in([:monitors, ref], :subscriber)
 
     sync(state)
 
-    {:reply, :ok, state, {:continue, :exit_if_empty}}
+    {:reply, :ok, state}
   end
 
-  def handle_call({:update_operation, operation, value, next}, _from, state) do
+  def handle_call({:update_operation, operation, value, next, caller}, from, state) do
     values = Map.get(state.operations, operation, %{})
 
     {next_node, monitor} =
@@ -177,14 +185,20 @@ defmodule Cizen.Dispatcher.Node do
           {node, %{}}
       end
 
-    # TODO: This causes full lock of node tree.
-    run(next_node, next)
+    # early return
+    GenServer.reply(from, :ok)
 
-    state
-    |> put_in([:operations, operation], values)
-    |> update_in([:monitors], &Map.merge(&1, monitor))
-    |> put_in([:operations, operation, value], next_node)
-    |> sync_and_reply(next_node)
+    run({next_node, caller}, next)
+
+    state =
+      state
+      |> put_in([:operations, operation], values)
+      |> update_in([:monitors], &Map.merge(&1, monitor))
+      |> put_in([:operations, operation, value], next_node)
+
+    sync(state)
+
+    {:noreply, state}
   end
 
   def terminate(_, _) do
@@ -195,10 +209,5 @@ defmodule Cizen.Dispatcher.Node do
 
   defp sync(state) do
     :ets.insert(__MODULE__, {self(), Map.take(state, [:subscribers, :operations])})
-  end
-
-  defp sync_and_reply(state, reply \\ :ok) do
-    sync(state)
-    {:reply, reply, state}
   end
 end

@@ -101,34 +101,14 @@ defmodule Cizen.Dispatcher.NodeTest do
       # Node.put(node, {:or, ["a", {:or, ["b", "c"]}]}, subscriber)
       # assert_gen_cast_from(node, {:run, {:put_subscriber, subscriber}})
     end
-  end
 
-  describe "delete" do
-    test "delete true" do
+    test "does not receive nothing after put :or" do
       subscriber = self()
       {:ok, node} = Node.start_link()
-      Node.put(node, true, subscriber)
-      Node.delete(node, true, subscriber)
 
-      actual = :sys.get_state(node)
-
-      expected = %{
-        operations: %{},
-        subscribers: MapSet.new()
-      }
-
-      assert expected.operations == actual.operations
-      assert expected.subscribers == actual.subscribers
-    end
-
-    test "delete operation" do
-      # subscriber = self()
-      # {:ok, node} = Node.start_link()
-      # :erlang.trace(node, true, [:send])
-
-      # Node.put(node, {:<>, ["a", "b"]}, subscriber)
-      # Node.delete(node, {:<>, ["a", "b"]}, subscriber)
-      # assert_gen_cast_from(node, {:run, {:delete_subscriber, subscriber}})
+      %{code: code} = Filter.new(fn a -> a == "a" or a == "b" end)
+      Node.put(node, code, subscriber)
+      refute_receive _
     end
   end
 
@@ -175,7 +155,7 @@ defmodule Cizen.Dispatcher.NodeTest do
     end
 
     assert not is_nil(get_a_node.())
-    Node.delete(node, code, subscriber)
+    send(subscriber, :stop)
     :timer.sleep(100)
     assert is_nil(get_a_node.())
   end
@@ -307,30 +287,32 @@ defmodule Cizen.Dispatcher.NodeTest do
   end
 
   test "puts a subscription without raise right after node stops" do
-    subscriber =
+    for _ <- 0..5 do
+      subscriber =
+        spawn_link(fn ->
+          receive do
+            :stop -> :ok
+          end
+        end)
+
+      {:ok, node} = Node.start_link()
+
+      %{code: code} = Filter.new(fn a -> a == "a" end)
+      Node.put(node, code, subscriber)
+
+      for _ <- 0..100 do
+        spawn_link(fn ->
+          for _ <- 0..100 do
+            Node.put(node, code, subscriber)
+          end
+        end)
+      end
+
       spawn_link(fn ->
-        receive do
-          :stop -> :ok
-        end
+        send(subscriber, :stop)
       end)
 
-    {:ok, node} = Node.start_link()
-
-    %{code: code} = Filter.new(fn a -> a == "a" end)
-    Node.put(node, code, subscriber)
-
-    for _ <- 0..100 do
-      spawn_link(fn ->
-        for _ <- 0..100 do
-          Node.put(node, code, subscriber)
-        end
-      end)
+      :timer.sleep(100)
     end
-
-    spawn_link(fn ->
-      send(subscriber, :stop)
-    end)
-
-    :timer.sleep(100)
   end
 end
