@@ -15,6 +15,8 @@ defmodule Cizen.Dispatcher do
   @doc false
   def start_link do
     Node.initialize()
+    # TODO: supervise
+    Intake.start_link()
     Registry.start_link(keys: :duplicate, name: __MODULE__)
   end
 
@@ -35,8 +37,7 @@ defmodule Cizen.Dispatcher do
       for {pid, :ok} <- entries, do: send(pid, event)
     end)
 
-    Node.push(Node, event)
-    |> Enum.each(&send(&1, event))
+    Intake.push(event)
   end
 
   @doc """

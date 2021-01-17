@@ -102,12 +102,13 @@ defmodule Cizen.RequestResponseMediatorTest do
       request =
         Event.new(nil, %Request{
           requestor_saga_id: requestor_id,
-          body: %TestRequest{}
+          body: %TestRequest{},
+          timeout: 50
         })
 
       Dispatcher.dispatch(request)
 
-      :timer.sleep(5000)
+      :timer.sleep(50)
 
       request_id = request.id
 
