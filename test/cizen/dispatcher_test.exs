@@ -109,7 +109,7 @@ defmodule Cizen.DispatcherTest do
 
     task1 =
       Task.async(fn ->
-        Dispatcher.listen_event_type(TestEventA)
+        Dispatcher.listen(Filter.new(fn %Event{body: %TestEventA{}} -> true end))
         send(pid, :task1)
         assert_receive %Event{body: %TestEventA{}}
         refute_receive %Event{body: %TestEventB{}}
@@ -117,8 +117,8 @@ defmodule Cizen.DispatcherTest do
 
     task2 =
       Task.async(fn ->
-        Dispatcher.listen_event_type(TestEventA)
-        Dispatcher.listen_event_type(TestEventB)
+        Dispatcher.listen(Filter.new(fn %Event{body: %TestEventA{}} -> true end))
+        Dispatcher.listen(Filter.new(fn %Event{body: %TestEventB{}} -> true end))
         send(pid, :task2)
         assert_receive %Event{body: %TestEventA{}}
         assert_receive %Event{body: %TestEventB{}}

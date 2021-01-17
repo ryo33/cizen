@@ -190,11 +190,11 @@ defmodule Cizen.Dispatcher.NodeTest do
     assert %{} = get_operation.()
 
     send(subscriber1, :stop)
-    :timer.sleep(100)
+    :timer.sleep(50)
     assert %{} = get_operation.()
 
     send(subscriber2, :stop)
-    :timer.sleep(100)
+    :timer.sleep(50)
     assert nil == get_operation.()
   end
 
