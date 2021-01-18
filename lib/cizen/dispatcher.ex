@@ -15,9 +15,16 @@ defmodule Cizen.Dispatcher do
   @doc false
   def start_link do
     Node.initialize()
-    # TODO: supervise
-    Intake.start_link()
-    Registry.start_link(keys: :duplicate, name: __MODULE__)
+
+    children = [
+      %{id: Intake, start: {Intake, :start_link, []}},
+      %{
+        id: __MODULE__.Registry,
+        start: {Registry, :start_link, [[keys: :duplicate, name: __MODULE__]]}
+      }
+    ]
+
+    Supervisor.start_link(children, strategy: :one_for_all)
   end
 
   @doc """

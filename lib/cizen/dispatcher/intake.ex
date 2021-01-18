@@ -1,31 +1,36 @@
 defmodule Cizen.Dispatcher.Intake do
+  @moduledoc """
+  The round-robin scheduler module that push an event to senders.
+  """
   alias Cizen.Dispatcher.{Node, Sender}
 
-  def start_link do
-    sender_count = System.schedulers_online()
+  defp sender_name(index, sender_count), do: :"#{Sender}_#{rem(index, sender_count)}"
 
-    senders =
+  def start_link do
+    :ets.new(__MODULE__, [:set, :public, :named_table])
+    sender_count = System.schedulers_online()
+    :ets.insert(__MODULE__, {:sender_count, sender_count})
+
+    children =
       0..(sender_count - 1)
       |> Enum.map(fn i ->
-        sender = :"#{Sender}_#{i}"
+        sender = sender_name(i, sender_count)
+        next_sender = sender_name(i + 1, sender_count)
 
-        next_sender = :"#{Sender}_#{rem(i + 1, sender_count)}"
-
-        # TODO: supervise
-        {:ok, _} = Sender.start_link(root_node: Node, next_sender: next_sender, name: sender)
-        sender
+        %{
+          id: sender,
+          start:
+            {Sender, :start_link,
+             [[allowed_to_send?: i == 0, root_node: Node, next_sender: next_sender, name: sender]]}
+        }
       end)
 
-    first = List.first(senders)
-    Sender.allow_to_send(first)
-
-    :ets.new(__MODULE__, [:set, :public, :named_table])
-    :ok
+    Supervisor.start_link(children, strategy: :one_for_all)
   end
 
   def push(event) do
-    sender_count = System.schedulers_online()
+    [{:sender_count, sender_count}] = :ets.lookup(__MODULE__, :sender_count)
     counter = :ets.update_counter(__MODULE__, :index, {2, 1}, {:index, -1})
-    Sender.push(:"#{Sender}_#{rem(counter, sender_count)}", event)
+    Sender.push(sender_name(counter, sender_count), event)
   end
 end
