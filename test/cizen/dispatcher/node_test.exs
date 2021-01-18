@@ -43,11 +43,18 @@ defmodule Cizen.Dispatcher.NodeTest do
     end
 
     test "put operation" do
-      # {:ok, node} = Node.start_link()
+      subscriber = self()
+      {:ok, node} = Node.start_link()
 
-      # Node.put(node, {:<>, ["a", "b"]}, subscriber)
+      Node.put(node, {:<>, ["a", "b"]}, subscriber)
 
-      # assert_gen_cast_from(node, {:run, {:put_subscriber, subscriber}})
+      assert %{
+               {:<>, ["a", "b"]} => %{
+                 true => next_node
+               }
+             } = :sys.get_state(node).operations
+
+      assert :sys.get_state(next_node).subscribers == MapSet.new([subscriber])
     end
 
     test "put :==" do
@@ -66,40 +73,74 @@ defmodule Cizen.Dispatcher.NodeTest do
     end
 
     test "put not" do
-      # subscriber = self()
-      # {:ok, node} = Node.start_link()
-      # :erlang.trace(node, true, [:send])
+      subscriber = self()
+      {:ok, node} = Node.start_link()
 
-      # Node.put(node, {:not, [{:access, [:key]}]}, subscriber)
-      # assert_gen_cast_from(node, {:run, {:put_subscriber, subscriber}})
+      Node.put(node, {:not, [{:access, [:key]}]}, subscriber)
+
+      assert %{
+               {:access, [:key]} => %{
+                 false => next_node
+               }
+             } = :sys.get_state(node).operations
+
+      assert :sys.get_state(next_node).subscribers == MapSet.new([subscriber])
     end
 
     test "put and" do
-      # subscriber = self()
-      # {:ok, node} = Node.start_link()
-      # :erlang.trace(node, true, [:send])
+      subscriber = self()
+      {:ok, node} = Node.start_link()
 
-      # Node.put(node, {:and, ["a", {:and, ["b", "c"]}]}, subscriber)
+      Node.put(node, {:and, ["a", {:and, ["b", "c"]}]}, subscriber)
 
-      # a_node =
-      #   assert_gen_cast_from(
-      #     node,
-      #     {:run, {:update, {:and, ["b", "c"]}, {:put_subscriber, subscriber}}}
-      #   )
+      assert %{
+               "a" => %{
+                 true => second_node
+               }
+             } = :sys.get_state(node).operations
 
-      # :erlang.trace(a_node, true, [:send])
-      # b_node = assert_gen_cast_from(a_node, {:run, {:update, "c", {:put_subscriber, subscriber}}})
-      # :erlang.trace(b_node, true, [:send])
-      # assert_gen_cast_from(b_node, {:run, {:put_subscriber, subscriber}})
+      assert %{
+               "b" => %{
+                 true => third_node
+               }
+             } = :sys.get_state(second_node).operations
+
+      assert %{
+               "c" => %{
+                 true => forth_node
+               }
+             } = :sys.get_state(third_node).operations
+
+      assert :sys.get_state(forth_node).subscribers == MapSet.new([subscriber])
     end
 
     test "put or" do
-      # subscriber = self()
-      # {:ok, node} = Node.start_link()
-      # :erlang.trace(node, true, [:send])
+      subscriber = self()
+      {:ok, node} = Node.start_link()
 
-      # Node.put(node, {:or, ["a", {:or, ["b", "c"]}]}, subscriber)
-      # assert_gen_cast_from(node, {:run, {:put_subscriber, subscriber}})
+      Node.put(
+        node,
+        {:or, ["a", {:or, [{:==, [:exp, "b"]}, {:or, ["c", {:==, [:exp, "d"]}]}]}]},
+        subscriber
+      )
+
+      assert %{
+               "a" => %{
+                 true => node1
+               },
+               "c" => %{
+                 true => node2
+               },
+               :exp => %{
+                 "b" => node3,
+                 "d" => node4
+               }
+             } = :sys.get_state(node).operations
+
+      assert :sys.get_state(node1).subscribers == MapSet.new([subscriber])
+      assert :sys.get_state(node2).subscribers == MapSet.new([subscriber])
+      assert :sys.get_state(node3).subscribers == MapSet.new([subscriber])
+      assert :sys.get_state(node4).subscribers == MapSet.new([subscriber])
     end
 
     test "does not receive nothing after put :or" do

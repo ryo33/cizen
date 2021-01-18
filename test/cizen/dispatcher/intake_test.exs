@@ -10,11 +10,9 @@ defmodule Cizen.Dispatcher.IntakeTest do
     event = Event.new(nil, %TestEvent{})
 
     [{_, index}] = :ets.lookup(Intake, :index)
+    [{_, sender_count}] = :ets.lookup(Intake, :sender_count)
 
-    sender =
-      GenServer.whereis(
-        :"#{Cizen.Dispatcher.Sender}_#{rem(index + 1, System.schedulers_online())}"
-      )
+    sender = GenServer.whereis(:"#{Cizen.Dispatcher.Sender}_#{rem(index + 1, sender_count)}")
 
     :erlang.trace(sender, true, [:receive])
 

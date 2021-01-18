@@ -1,8 +1,8 @@
 defmodule Cizen.Dispatcher.SenderTest do
   use ExUnit.Case
 
-  alias Cizen.Dispatcher.{Sender, Node}
   alias Cizen.Event
+  alias Cizen.Dispatcher.{Node, Sender}
 
   defmodule(TestEvent, do: defstruct([]))
 
@@ -37,7 +37,7 @@ defmodule Cizen.Dispatcher.SenderTest do
 
   test "sender sends event to subscribers", %{
     node: node,
-    some_event: event,
+    some_event: event
   } do
     {:ok, sender} = Sender.start_link(name: :a, root_node: node, next_sender: self())
 
@@ -50,7 +50,7 @@ defmodule Cizen.Dispatcher.SenderTest do
 
   test "sender does not send event to subscribers if not allowed to send", %{
     node: node,
-    some_event: event,
+    some_event: event
   } do
     {:ok, sender} = Sender.start_link(name: :a, root_node: node, next_sender: self())
 
@@ -58,6 +58,18 @@ defmodule Cizen.Dispatcher.SenderTest do
 
     refute_receive :received_subscriber1
     Sender.allow_to_send(sender)
+    assert_receive :received_subscriber1
+  end
+
+  test "sender sends an event to subscribers if allowed to send on startup", %{
+    node: node,
+    some_event: event
+  } do
+    {:ok, sender} =
+      Sender.start_link(allowed_to_send?: true, name: :a, root_node: node, next_sender: self())
+
+    Sender.push(sender, event)
+
     assert_receive :received_subscriber1
   end
 

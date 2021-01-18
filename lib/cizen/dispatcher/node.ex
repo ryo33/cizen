@@ -31,7 +31,8 @@ defmodule Cizen.Dispatcher.Node do
           |> Enum.uniq()
 
         Enum.reduce(following_nodes, state.subscribers, fn following_node, subscribers ->
-          __MODULE__.push(following_node, event)
+          following_node
+          |> __MODULE__.push(event)
           |> MapSet.union(subscribers)
         end)
 

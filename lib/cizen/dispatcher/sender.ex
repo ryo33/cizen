@@ -5,10 +5,11 @@ defmodule Cizen.Dispatcher.Sender do
   alias Cizen.Dispatcher.Node
 
   def start_link(opts) do
+    allowed_to_send? = Keyword.get(opts, :allowed_to_send?, false)
     root_node = Keyword.get(opts, :root_node, Node)
     next_sender = Keyword.fetch!(opts, :next_sender)
     name = Keyword.fetch!(opts, :name)
-    GenServer.start_link(__MODULE__, {name, root_node, next_sender}, name: name)
+    GenServer.start_link(__MODULE__, {name, root_node, next_sender, allowed_to_send?}, name: name)
   end
 
   def push(sender, event) do
@@ -27,7 +28,7 @@ defmodule Cizen.Dispatcher.Sender do
     |> Map.put(:destinations, nil)
   end
 
-  def init({name, root_node, next_sender}) do
+  def init({name, root_node, next_sender, allowed_to_send?}) do
     state =
       %{
         name: name,
@@ -36,6 +37,7 @@ defmodule Cizen.Dispatcher.Sender do
         event_queue: :queue.new()
       }
       |> reset()
+      |> Map.put(:allowed_to_send?, allowed_to_send?)
 
     {:ok, state}
   end
