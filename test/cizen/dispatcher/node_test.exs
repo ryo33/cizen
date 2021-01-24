@@ -8,25 +8,6 @@ defmodule Cizen.Dispatcher.NodeTest do
 
   defmodule(TestEvent, do: defstruct([]))
 
-  defp expand_node(node) do
-    node
-    |> :sys.get_state()
-    |> update_in([:operations], fn operations ->
-      Enum.reduce(operations, operations, fn {operation, _}, operations ->
-        update_in(operations[operation], &expand_operation_nodes(&1))
-      end)
-    end)
-  end
-
-  defp expand_operation_nodes(nodes) do
-    Enum.reduce(nodes, nodes, fn {value, child}, nodes ->
-      update_in(nodes, [value], fn _ -> expand_node(child) end)
-    end)
-  end
-
-  describe "push" do
-  end
-
   describe "put" do
     test "put true" do
       subscriber = self()
@@ -164,16 +145,18 @@ defmodule Cizen.Dispatcher.NodeTest do
     subscriber2 = spawn_link(fn -> :timer.sleep(:infinity) end)
 
     {:ok, node} = Node.start_link()
-    before_set = MapSet.new([subscriber1, subscriber2])
-    after_set = MapSet.new([subscriber2])
 
     Node.put(node, true, subscriber1)
     Node.put(node, true, subscriber2)
-    assert %{subscribers: ^before_set} = expand_node(node)
+
+    assert :sys.get_state(node).subscribers ==
+             MapSet.new([subscriber1, subscriber2])
+
     :erlang.trace(node, true, [:receive])
     send(subscriber1, :stop)
     assert_receive {:trace, _, _, {:DOWN, _, _, ^subscriber1, _}}
-    assert %{subscribers: ^after_set} = expand_node(node)
+
+    assert :sys.get_state(node).subscribers == MapSet.new([subscriber2])
   end
 
   test "deletes operation value when the next node downed" do
@@ -276,6 +259,8 @@ defmodule Cizen.Dispatcher.NodeTest do
 
     receive do
       {:DOWN, _, _, ^node, _} -> :ok
+    after
+      1000 -> flunk()
     end
 
     assert :sys.get_state(parent_node).operations == %{}

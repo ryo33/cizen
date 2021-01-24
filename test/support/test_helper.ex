@@ -2,19 +2,20 @@ defmodule Cizen.TestHelper do
   @moduledoc false
   import ExUnit.Assertions, only: [flunk: 0]
 
-  alias Cizen.Dispatcher
-  alias Cizen.Event
+  alias Cizen.{Dispatcher, Event, Filter}
   alias Cizen.Saga
   alias Cizen.SagaID
   alias Cizen.SagaLauncher
   alias Cizen.TestSaga
+
+  require Filter
 
   def launch_test_saga(opts \\ []) do
     saga_id = SagaID.new()
 
     task =
       Task.async(fn ->
-        Dispatcher.listen_event_body(%Saga.Started{id: saga_id})
+        Dispatcher.listen(Filter.new(fn %Event{body: %Saga.Started{id: ^saga_id}} -> true end))
 
         Dispatcher.dispatch(
           Event.new(nil, %SagaLauncher.LaunchSaga{

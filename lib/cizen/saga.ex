@@ -197,7 +197,7 @@ defmodule Cizen.Saga do
 
   defp init_with(id, saga, lifetime, event, function, arguments) do
     Registry.register(CizenSagaRegistry, id, saga)
-    Dispatcher.listen_event_body(%Finish{id: id})
+    Dispatcher.listen(Filter.new(fn %Event{body: %Finish{id: ^id}} -> true end))
     module = module(saga)
 
     unless is_nil(lifetime), do: Process.monitor(lifetime)

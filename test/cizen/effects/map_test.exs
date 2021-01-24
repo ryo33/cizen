@@ -127,7 +127,7 @@ defmodule Cizen.Effects.MapTest do
 
     test "transforms the result" do
       saga_id = SagaID.new()
-      Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
+      Dispatcher.listen(Filter.new(fn %Event{body: %Saga.Finish{id: ^saga_id}} -> true end))
 
       Dispatcher.dispatch(
         Event.new(nil, %StartSaga{

@@ -69,7 +69,7 @@ defmodule Cizen.AutomatonTest do
 
     test "does not finishes" do
       saga_id = SagaID.new()
-      Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
+      Dispatcher.listen(Filter.new(fn %Event{body: %Saga.Finish{id: ^saga_id}} -> true end))
 
       Dispatcher.dispatch(
         Event.new(nil, %StartSaga{
@@ -97,7 +97,7 @@ defmodule Cizen.AutomatonTest do
 
     test "finishes when spawn/2 returns Automaton.finish()" do
       saga_id = SagaID.new()
-      Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
+      Dispatcher.listen(Filter.new(fn %Event{body: %Saga.Finish{id: ^saga_id}} -> true end))
 
       Dispatcher.dispatch(
         Event.new(nil, %StartSaga{
@@ -146,7 +146,7 @@ defmodule Cizen.AutomatonTest do
 
     test "works with perform" do
       saga_id = SagaID.new()
-      Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
+      Dispatcher.listen(Filter.new(fn %Event{body: %Saga.Finish{id: ^saga_id}} -> true end))
 
       Dispatcher.dispatch(
         Event.new(nil, %StartSaga{
@@ -203,8 +203,8 @@ defmodule Cizen.AutomatonTest do
 
     test "dispatches Saga.Started event after spawn/2" do
       saga_id = SagaID.new()
-      Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
-      Dispatcher.listen_event_body(%Saga.Started{id: saga_id})
+      Dispatcher.listen(Filter.new(fn %Event{body: %Saga.Finish{id: ^saga_id}} -> true end))
+      Dispatcher.listen(Filter.new(fn %Event{body: %Saga.Started{id: ^saga_id}} -> true end))
 
       Dispatcher.dispatch(
         Event.new(nil, %StartSaga{
@@ -234,8 +234,8 @@ defmodule Cizen.AutomatonTest do
     test "dispatches Saga.Resumed event after respawn/2" do
       saga_id = SagaID.new()
       saga = %TestAutomaton{pid: self()}
-      Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
-      Dispatcher.listen_event_body(%Saga.Resumed{id: saga_id})
+      Dispatcher.listen(Filter.new(fn %Event{body: %Saga.Finish{id: ^saga_id}} -> true end))
+      Dispatcher.listen(Filter.new(fn %Event{body: %Saga.Resumed{id: ^saga_id}} -> true end))
 
       Saga.resume(saga_id, saga, nil)
 
@@ -302,8 +302,8 @@ defmodule Cizen.AutomatonTest do
 
     test "works with no yield/2" do
       saga_id = SagaID.new()
-      Dispatcher.listen_event_body(%Saga.Started{id: saga_id})
-      Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
+      Dispatcher.listen(Filter.new(fn %Event{body: %Saga.Started{id: ^saga_id}} -> true end))
+      Dispatcher.listen(Filter.new(fn %Event{body: %Saga.Finish{id: ^saga_id}} -> true end))
 
       Dispatcher.dispatch(
         Event.new(nil, %StartSaga{
@@ -340,7 +340,7 @@ defmodule Cizen.AutomatonTest do
 
     test "finishes when yields Automaton.finish()" do
       saga_id = SagaID.new()
-      Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
+      Dispatcher.listen(Filter.new(fn %Event{body: %Saga.Finish{id: ^saga_id}} -> true end))
 
       Dispatcher.dispatch(
         Event.new(nil, %StartSaga{
@@ -743,7 +743,7 @@ defmodule Cizen.AutomatonTest do
     test "finishes when respawn/3 returns Automaton.finish()" do
       saga_id = SagaID.new()
       saga = %TestAutomatonFinishOnRespawn{}
-      Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
+      Dispatcher.listen(Filter.new(fn %Event{body: %Saga.Finish{id: ^saga_id}} -> true end))
 
       {:ok, _pid} =
         Saga.resume(

@@ -62,6 +62,7 @@ defmodule Cizen.Filter do
 
   defstruct code: true
 
+  alias Cizen.Event
   alias Cizen.Filter.Code
 
   @doc """
@@ -87,7 +88,7 @@ defmodule Cizen.Filter do
     end)
     |> Elixir.Code.eval_quoted([], __CALLER__)
 
-    code = Code.generate(filter, __CALLER__)
+    code = filter |> Code.generate(__CALLER__) |> remove_assertion()
 
     quote do
       %unquote(__MODULE__){
@@ -95,6 +96,20 @@ defmodule Cizen.Filter do
       }
     end
   end
+
+  defp remove_assertion(
+         {:and,
+          [{:and, [{:is_map, [{:access, []}]}, {:==, [{:access, [:__struct__]}, Event]}]}, second]}
+       ),
+       do: remove_assertion(second)
+
+  defp remove_assertion({:and, [{:is_map, [{:access, [:body]}]}, second]}),
+    do: second
+
+  defp remove_assertion({:and, [first, second]}),
+    do: {:and, [remove_assertion(first), second]}
+
+  defp remove_assertion(code), do: code
 
   @doc """
   Checks whether the given struct matches or not.

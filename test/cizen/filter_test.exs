@@ -1,7 +1,7 @@
 defmodule Cizen.FilterTest do
   use ExUnit.Case
 
-  alias Cizen.Filter
+  alias Cizen.{Event, Filter}
   require Cizen.Filter
 
   defmodule(A, do: defstruct([:key1, :key2]))
@@ -280,5 +280,12 @@ defmodule Cizen.FilterTest do
     refute Filter.eval(filter.code, %A{key1: :a, key2: :a})
     assert Filter.eval(filter.code, %A{key1: :a})
     refute Filter.eval(filter.code, %A{key1: :d})
+  end
+
+  test "remove unnecessary assersions" do
+    filter = Filter.new(fn %Event{body: %A{key1: key1}} -> key1 == :a end)
+    expected = Filter.new(fn event -> event.body.__struct__ == A and event.body.key1 == :a end)
+
+    assert filter == expected
   end
 end

@@ -3,12 +3,13 @@ defmodule Cizen.SagaLauncherTest do
   doctest Cizen.SagaLauncher
   import Cizen.TestHelper, only: [launch_test_saga: 0, assert_condition: 2]
 
-  alias Cizen.Dispatcher
-  alias Cizen.Event
+  alias Cizen.{Dispatcher, Event, Filter}
   alias Cizen.Saga
   alias Cizen.SagaID
   alias Cizen.SagaLauncher
   alias Cizen.TestSaga
+
+  require Filter
 
   test "SagaLauncher.LaunchSaga event" do
     pid = self()
@@ -53,7 +54,7 @@ defmodule Cizen.SagaLauncherTest do
       })
     )
 
-    Dispatcher.listen_event_body(%Saga.Finished{id: saga_id})
+    Dispatcher.listen(Filter.new(fn %Event{body: %Saga.Finished{id: ^saga_id}} -> true end))
 
     refute_receive %Event{body: %Saga.Finished{}}
 

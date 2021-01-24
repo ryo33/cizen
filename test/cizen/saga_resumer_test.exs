@@ -2,20 +2,21 @@ defmodule Cizen.SagaResumerTest do
   use Cizen.SagaCase
   doctest Cizen.SagaResumer
 
-  alias Cizen.Dispatcher
-  alias Cizen.Event
+  alias Cizen.{Dispatcher, Event, Filter}
   alias Cizen.Saga
   alias Cizen.SagaID
   alias Cizen.TestSaga
 
   alias Cizen.ResumeSaga
 
+  require Filter
+
   test "ResumeSaga event" do
     pid = self()
     saga_id = SagaID.new()
     state = :some_state
 
-    Dispatcher.listen_event_body(%Saga.Resumed{id: saga_id})
+    Dispatcher.listen(Filter.new(fn %Event{body: %Saga.Resumed{id: ^saga_id}} -> true end))
 
     Dispatcher.dispatch(
       Event.new(nil, %ResumeSaga{

@@ -7,10 +7,13 @@ defmodule Cizen.Effects.DispatchTest do
   alias Cizen.Effect
   alias Cizen.Effects.Dispatch
   alias Cizen.Event
+  alias Cizen.Filter
   alias Cizen.Saga
   alias Cizen.SagaID
 
   alias Cizen.StartSaga
+
+  require Filter
 
   defmodule(TestEvent, do: defstruct([:value]))
 
@@ -50,7 +53,7 @@ defmodule Cizen.Effects.DispatchTest do
     test "works with Automaton" do
       saga_id = SagaID.new()
       Dispatcher.listen_event_type(TestEvent)
-      Dispatcher.listen_event_body(%Saga.Finish{id: saga_id})
+      Dispatcher.listen(Filter.new(fn %Event{body: %Saga.Finish{id: ^saga_id}} -> true end))
 
       Dispatcher.dispatch(
         Event.new(nil, %StartSaga{

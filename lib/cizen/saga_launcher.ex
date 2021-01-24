@@ -4,10 +4,11 @@ defmodule Cizen.SagaLauncher do
   """
 
   use GenServer
-  alias Cizen.Dispatcher
-  alias Cizen.Event
+  alias Cizen.{Dispatcher, Event, Filter}
   alias Cizen.Saga
   alias Cizen.SagaID
+
+  require Filter
 
   defmodule LaunchSaga do
     @moduledoc """
@@ -41,7 +42,7 @@ defmodule Cizen.SagaLauncher do
 
     task =
       Task.async(fn ->
-        Dispatcher.listen_event_body(%Saga.Started{id: id})
+        Dispatcher.listen(Filter.new(fn %Event{body: %Saga.Started{id: ^id}} -> true end))
 
         receive do
           %Event{body: %Saga.Started{id: ^id}} -> :ok

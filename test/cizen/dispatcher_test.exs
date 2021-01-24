@@ -76,34 +76,6 @@ defmodule Cizen.DispatcherTest do
     Task.await(task2)
   end
 
-  test "listen_event_body" do
-    pid = self()
-
-    task1 =
-      Task.async(fn ->
-        Dispatcher.listen_event_body(%TestEvent{value: :a})
-        send(pid, :task1)
-        assert_receive %Event{body: %TestEvent{value: :a}}
-        refute_receive %Event{body: %TestEvent{value: :b}}
-      end)
-
-    task2 =
-      Task.async(fn ->
-        Dispatcher.listen_event_body(%TestEvent{value: :a})
-        Dispatcher.listen_event_body(%TestEvent{value: :b})
-        send(pid, :task2)
-        assert_receive %Event{body: %TestEvent{value: :a}}
-        assert_receive %Event{body: %TestEvent{value: :b}}
-      end)
-
-    wait_until_receive(:task1)
-    wait_until_receive(:task2)
-    Dispatcher.dispatch(Event.new(nil, %TestEvent{value: :a}))
-    Dispatcher.dispatch(Event.new(nil, %TestEvent{value: :b}))
-    Task.await(task1)
-    Task.await(task2)
-  end
-
   test "listen" do
     pid = self()
 
