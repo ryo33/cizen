@@ -13,6 +13,7 @@ defmodule Cizen.Dispatcher.Sender do
   end
 
   def push(sender, event) do
+    Cizen.Dispatcher.log(event, __ENV__)
     GenServer.cast(sender, {:push, event})
   end
 
@@ -45,9 +46,11 @@ defmodule Cizen.Dispatcher.Sender do
   def handle_continue(:try_dequeue_event, %{event: nil, event_queue: queue} = state) do
     case :queue.out(queue) do
       {{:value, event}, queue} ->
+        Cizen.Dispatcher.log(event, __ENV__)
         state = %{state | event: event, event_queue: queue}
 
         destinations = Node.push(state.root_node, event)
+        Cizen.Dispatcher.log(event, __ENV__)
 
         state = put_in(state.destinations, destinations)
         {:noreply, state, {:continue, :send_if_fulfilled}}
@@ -61,9 +64,13 @@ defmodule Cizen.Dispatcher.Sender do
 
   def handle_continue(:send_if_fulfilled, state) do
     if not is_nil(state.event) and state.allowed_to_send? do
+      Cizen.Dispatcher.log(state.event, __ENV__)
+
       Enum.each(state.destinations, fn pid ->
         send(pid, state.event)
       end)
+
+      Cizen.Dispatcher.log(state.event, __ENV__)
 
       allow_to_send(state.next_sender)
 
@@ -79,6 +86,7 @@ defmodule Cizen.Dispatcher.Sender do
   end
 
   def handle_cast({:push, event}, state) do
+    Cizen.Dispatcher.log(event, __ENV__)
     state = %{state | event_queue: :queue.in(event, state.event_queue)}
     {:noreply, state, {:continue, :try_dequeue_event}}
   end

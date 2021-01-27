@@ -7,9 +7,17 @@ defmodule Cizen.Dispatcher.Intake do
   defp sender_name(index, sender_count), do: :"#{Sender}_#{rem(index, sender_count)}"
 
   def start_link do
-    :ets.new(__MODULE__, [:set, :public, :named_table])
+    :ets.new(__MODULE__, [
+      :set,
+      :public,
+      :named_table,
+      read_concurrency: true
+    ])
+
     sender_count = System.schedulers_online()
     :ets.insert(__MODULE__, {:sender_count, sender_count})
+    counter = :atomics.new(1, [{:signed, false}])
+    :ets.insert(__MODULE__, {:counter, counter})
 
     children =
       0..(sender_count - 1)
@@ -29,8 +37,12 @@ defmodule Cizen.Dispatcher.Intake do
   end
 
   def push(event) do
+    Cizen.Dispatcher.log(event, __ENV__)
     [{:sender_count, sender_count}] = :ets.lookup(__MODULE__, :sender_count)
-    counter = :ets.update_counter(__MODULE__, :index, {2, 1}, {:index, -1})
+    [{:counter, counter}] = :ets.lookup(__MODULE__, :counter)
+    Cizen.Dispatcher.log(event, __ENV__)
+    counter = :atomics.add_get(counter, 1, 1) - 1
+    Cizen.Dispatcher.log(event, __ENV__)
     Sender.push(sender_name(counter, sender_count), event)
   end
 end
